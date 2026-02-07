@@ -57,6 +57,7 @@ import StudentList from "../components/StudentList";
 
 function AdminDashboard() {
   const [page, setPage] = useState("dashboard");
+  const [showSidebar, setShowSidebar] = useState(false);
 
   const logout = async () => {
     await signOut(auth);
@@ -64,20 +65,48 @@ function AdminDashboard() {
   };
 
   return (
-    <div className="d-flex">
-      <Sidebar setPage={setPage} />
-
-      <div className="flex-grow-1 p-4 bg-light">
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h4>Hello Admin!</h4>
-          <button className="btn btn-outline-danger btn-sm" onClick={logout}>
-            Logout
-          </button>
+    <div className="container-fluid min-vh-100 bg-light">
+      <div className="row">
+        {/* ================= SIDEBAR ================= */}
+        <div
+          className={`col-12 col-md-3 col-lg-2 p-0 ${
+            showSidebar ? "d-block" : "d-none d-md-block"
+          }`}
+        >
+          <Sidebar
+            setPage={(p) => {
+              setPage(p);
+              setShowSidebar(false); // auto close on mobile
+            }}
+          />
         </div>
 
-        {page === "dashboard" && <DashboardHome />}
-        {page === "add" && <AddStudent />}
-        {page === "view" && <StudentList />}
+        {/* ================= MAIN CONTENT ================= */}
+        <div className="col-12 col-md-9 col-lg-10 p-3 p-md-4">
+          {/* HEADER */}
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <div className="d-flex align-items-center gap-2">
+              {/* ☰ toggle (mobile only) */}
+              <button
+                className="btn btn-outline-primary btn-sm d-md-none"
+                onClick={() => setShowSidebar(!showSidebar)}
+              >
+                ☰
+              </button>
+
+              <h4 className="mb-0">Hello Admin!</h4>
+            </div>
+
+            <button className="btn btn-outline-danger btn-sm" onClick={logout}>
+              Logout
+            </button>
+          </div>
+
+          {/* PAGES */}
+          {page === "dashboard" && <DashboardHome />}
+          {page === "add" && <AddStudent />}
+          {page === "view" && <StudentList />}
+        </div>
       </div>
     </div>
   );
