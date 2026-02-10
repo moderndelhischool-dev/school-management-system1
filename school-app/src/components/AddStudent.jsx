@@ -9,7 +9,7 @@ function AddStudent() {
   const [gender, setGender] = useState("");
   const [totalFees, setTotalFees] = useState("");
   const [paidFees, setPaidFees] = useState("");
-  const [month, setMonth] = useState("");
+  const [feesDate, setFeesDate] = useState("");
 
   const [successMsg, setSuccessMsg] = useState("");
 
@@ -21,13 +21,14 @@ function AddStudent() {
       !gender ||
       !totalFees ||
       !paidFees ||
-      !month
+      !feesDate
     ) {
       alert("Please fill all fields");
       return;
     }
 
     const pending = Number(totalFees) - Number(paidFees);
+    const isCompleted = pending === 0;
 
     await setDoc(doc(db, "students", email), {
       email,
@@ -37,91 +38,112 @@ function AddStudent() {
       totalFees: Number(totalFees),
       paidFees: Number(paidFees),
       pendingFees: pending,
-      feeStatus: pending === 0 ? "Completed" : "Pending",
-      month,
-      updatedAt: Timestamp.now(),
+      feeStatus: isCompleted ? "Completed" : "Pending",
+      feesDate: feesDate,
+      approvedAt: isCompleted ? Timestamp.now() : null,
+      createdAt: Timestamp.now(),
     });
 
-    // ✅ SUCCESS MESSAGE (same position, top of form)
     setSuccessMsg("✅ Student added / updated successfully");
 
-    // 🔄 Clear form (position unchanged)
+    // reset form
     setEmail("");
     setName("");
     setCls("");
     setGender("");
     setTotalFees("");
     setPaidFees("");
-    setMonth("");
+    setFeesDate("");
 
-    // ⏱ Auto hide
     setTimeout(() => setSuccessMsg(""), 3000);
   };
 
   return (
-    <div className="card p-3">
-      <h5>Add Student</h5>
+    <div className="card p-3 p-md-4 shadow-sm">
+      <h5 className="mb-3">➕ Add / Update Student</h5>
 
-      {/* SUCCESS MESSAGE — FORM KE ANDAR, SAME PLACE */}
       {successMsg && <div className="alert alert-success">{successMsg}</div>}
 
-      <input
-        className="form-control mb-2"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+      <div className="row g-3">
+        <div className="col-md-6">
+          <label>Email</label>
+          <input
+            className="form-control"
+            placeholder="student@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
 
-      <input
-        className="form-control mb-2"
-        placeholder="Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
+        <div className="col-md-6">
+          <label>Name</label>
+          <input
+            className="form-control"
+            placeholder="Student Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
 
-      <input
-        className="form-control mb-2"
-        placeholder="Class"
-        value={cls}
-        onChange={(e) => setCls(e.target.value)}
-      />
+        <div className="col-md-4">
+          <label>Class</label>
+          <input
+            className="form-control"
+            placeholder="10 / +1 / +2"
+            value={cls}
+            onChange={(e) => setCls(e.target.value)}
+          />
+        </div>
 
-      <select
-        className="form-control mb-2"
-        value={gender}
-        onChange={(e) => setGender(e.target.value)}
-      >
-        <option value="">Select Gender</option>
-        <option>Male</option>
-        <option>Female</option>
-      </select>
+        <div className="col-md-4">
+          <label>Gender</label>
+          <select
+            className="form-control"
+            value={gender}
+            onChange={(e) => setGender(e.target.value)}
+          >
+            <option value="">Select</option>
+            <option>Male</option>
+            <option>Female</option>
+          </select>
+        </div>
 
-      <input
-        type="number"
-        className="form-control mb-2"
-        placeholder="Total Fees"
-        value={totalFees}
-        onChange={(e) => setTotalFees(e.target.value)}
-      />
+        <div className="col-md-4">
+          <label>Fees Date</label>
+          <input
+            type="date"
+            className="form-control"
+            value={feesDate}
+            onChange={(e) => setFeesDate(e.target.value)}
+          />
+        </div>
 
-      <input
-        type="number"
-        className="form-control mb-2"
-        placeholder="Paid Fees"
-        value={paidFees}
-        onChange={(e) => setPaidFees(e.target.value)}
-      />
+        <div className="col-md-6">
+          <label>Total Fees</label>
+          <input
+            type="number"
+            className="form-control"
+            value={totalFees}
+            onChange={(e) => setTotalFees(e.target.value)}
+          />
+        </div>
 
-      <input
-        className="form-control mb-3"
-        placeholder="Fees Month"
-        value={month}
-        onChange={(e) => setMonth(e.target.value)}
-      />
+        <div className="col-md-6">
+          <label>Paid Fees</label>
+          <input
+            type="number"
+            className="form-control"
+            value={paidFees}
+            onChange={(e) => setPaidFees(e.target.value)}
+          />
+        </div>
+      </div>
 
-      <button className="btn btn-success" onClick={saveStudent}>
-        Save / Update
-      </button>
+      <div className="mt-4 text-end">
+        <button className="btn btn-success px-4" onClick={saveStudent}>
+          💾 Save Student
+        </button>
+      </div>
     </div>
   );
 }

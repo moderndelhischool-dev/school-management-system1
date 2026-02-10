@@ -1,3 +1,286 @@
+// import { useEffect, useState } from "react";
+// import { db } from "../firebase/firebase";
+// import {
+//   collection,
+//   getDocs,
+//   doc,
+//   updateDoc,
+//   deleteDoc,
+//   Timestamp,
+// } from "firebase/firestore";
+
+// function StudentList() {
+//   const [students, setStudents] = useState([]);
+//   const [selectedClass, setSelectedClass] = useState(null);
+//   const [editStudent, setEditStudent] = useState(null);
+//   const [deleteStudent, setDeleteStudent] = useState(null);
+
+//   /* ================= LOAD STUDENTS ================= */
+//   const loadStudents = async () => {
+//     const snap = await getDocs(collection(db, "students"));
+//     const data = snap.docs.map((d) => ({
+//       id: d.id, // 🔥 REAL FIRESTORE DOC ID
+//       ...d.data(),
+//     }));
+//     setStudents(data);
+//   };
+
+//   useEffect(() => {
+//     loadStudents();
+//   }, []);
+
+//   /* ================= CLASS SORT LOGIC ================= */
+//   const classOrder = (cls) => {
+//     if (cls === "+1") return 11;
+//     if (cls === "+2") return 12;
+//     return parseInt(cls);
+//   };
+
+//   const classes = [...new Set(students.map((s) => s.class))].sort(
+//     (a, b) => classOrder(a) - classOrder(b),
+//   );
+
+//   const filteredStudents = selectedClass
+//     ? students.filter((s) => s.class === selectedClass)
+//     : students;
+
+//   /* ================= UPDATE STUDENT ================= */
+//   const updateStudent = async () => {
+//     const pendingFees =
+//       Number(editStudent.totalFees) - Number(editStudent.paidFees);
+
+//     await updateDoc(doc(db, "students", editStudent.id), {
+//       name: editStudent.name,
+//       class: editStudent.class,
+//       totalFees: Number(editStudent.totalFees),
+//       paidFees: Number(editStudent.paidFees),
+//       pendingFees,
+//       feeStatus: pendingFees === 0 ? "Completed" : "Pending",
+//       month: editStudent.month,
+//       updatedAt: Timestamp.now(),
+//     });
+
+//     alert("✅ Student details updated");
+//     setEditStudent(null);
+//     loadStudents();
+//   };
+
+//   /* ================= DELETE STUDENT ================= */
+//   const confirmDelete = async () => {
+//     await deleteDoc(doc(db, "students", deleteStudent.id));
+//     setDeleteStudent(null);
+//     loadStudents();
+//   };
+
+//   return (
+//     <div className="container-fluid p-0">
+//       <h4 className="mb-3">📋 Students Details</h4>
+
+//       {/* ================= CLASS BOXES ================= */}
+//       <div className="row mb-4">
+//         {classes.map((cls) => (
+//           <div key={cls} className="col-6 col-sm-4 col-md-3 col-lg-2 mb-3">
+//             <div
+//               className={`card text-center p-3 shadow-sm ${
+//                 selectedClass === cls ? "border-primary" : ""
+//               }`}
+//               style={{ cursor: "pointer" }}
+//               onClick={() => setSelectedClass(cls)}
+//             >
+//               <h6 className="mb-1">Class {cls}</h6>
+//               <small className="text-muted">
+//                 {students.filter((s) => s.class === cls).length} students
+//               </small>
+//             </div>
+//           </div>
+//         ))}
+//       </div>
+
+//       {selectedClass && (
+//         <button
+//           className="btn btn-secondary btn-sm mb-3"
+//           onClick={() => setSelectedClass(null)}
+//         >
+//           ⬅ Back to all classes
+//         </button>
+//       )}
+
+//       {/* ================= TABLE ================= */}
+//       <div className="table-responsive">
+//         <table className="table table-bordered align-middle">
+//           <thead className="table-dark">
+//             <tr>
+//               <th>#</th>
+//               <th>Email</th>
+//               <th>Name</th>
+//               <th>Class</th>
+//               <th>Pending Fees</th>
+//               <th>Status</th>
+//               <th>Month</th>
+//               <th>Edit</th>
+//               <th>Delete</th>
+//             </tr>
+//           </thead>
+
+//           <tbody>
+//             {filteredStudents.map((s, i) => (
+//               <tr key={s.id}>
+//                 <td>{i + 1}</td>
+//                 <td>{s.email || "—"}</td>
+//                 <td>{s.name}</td>
+//                 <td>{s.class}</td>
+//                 <td>₹{s.pendingFees}</td>
+//                 <td>
+//                   <span
+//                     className={`badge ${
+//                       s.feeStatus === "Completed" ? "bg-success" : "bg-danger"
+//                     }`}
+//                   >
+//                     {s.feeStatus}
+//                   </span>
+//                 </td>
+//                 <td>{s.month}</td>
+//                 <td>
+//                   <button
+//                     className="btn btn-warning btn-sm"
+//                     onClick={() => setEditStudent(s)}
+//                   >
+//                     Edit
+//                   </button>
+//                 </td>
+//                 <td>
+//                   <button
+//                     className="btn btn-danger btn-sm"
+//                     onClick={() => setDeleteStudent(s)}
+//                   >
+//                     Delete
+//                   </button>
+//                 </td>
+//               </tr>
+//             ))}
+//           </tbody>
+//         </table>
+//       </div>
+
+//       {/* ================= EDIT FORM ================= */}
+//       {editStudent && (
+//         <div className="card shadow mt-4">
+//           <div className="card-header bg-primary text-white">
+//             ✏️ Edit Student
+//           </div>
+
+//           <div className="card-body">
+//             <div className="row g-3">
+//               <div className="col-md-6">
+//                 <label className="form-label">Name</label>
+//                 <input
+//                   className="form-control"
+//                   value={editStudent.name}
+//                   onChange={(e) =>
+//                     setEditStudent({ ...editStudent, name: e.target.value })
+//                   }
+//                 />
+//               </div>
+
+//               <div className="col-md-6">
+//                 <label className="form-label">Class</label>
+//                 <input
+//                   className="form-control"
+//                   value={editStudent.class}
+//                   onChange={(e) =>
+//                     setEditStudent({ ...editStudent, class: e.target.value })
+//                   }
+//                 />
+//               </div>
+
+//               <div className="col-md-4">
+//                 <label className="form-label">Total Fees</label>
+//                 <input
+//                   type="number"
+//                   className="form-control"
+//                   value={editStudent.totalFees}
+//                   onChange={(e) =>
+//                     setEditStudent({
+//                       ...editStudent,
+//                       totalFees: e.target.value,
+//                     })
+//                   }
+//                 />
+//               </div>
+
+//               <div className="col-md-4">
+//                 <label className="form-label">Paid Fees</label>
+//                 <input
+//                   type="number"
+//                   className="form-control"
+//                   value={editStudent.paidFees}
+//                   onChange={(e) =>
+//                     setEditStudent({
+//                       ...editStudent,
+//                       paidFees: e.target.value,
+//                     })
+//                   }
+//                 />
+//               </div>
+
+//               <div className="col-md-4">
+//                 <label className="form-label">Month</label>
+//                 <input
+//                   className="form-control"
+//                   value={editStudent.month}
+//                   onChange={(e) =>
+//                     setEditStudent({ ...editStudent, month: e.target.value })
+//                   }
+//                 />
+//               </div>
+//             </div>
+
+//             <div className="d-flex gap-2 justify-content-end mt-4">
+//               <button className="btn btn-success" onClick={updateStudent}>
+//                 💾 Update
+//               </button>
+//               <button
+//                 className="btn btn-secondary"
+//                 onClick={() => setEditStudent(null)}
+//               >
+//                 Cancel
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+
+//       {/* ================= DELETE MODAL ================= */}
+//       {deleteStudent && (
+//         <div
+//           className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+//           style={{ background: "rgba(0,0,0,0.5)", zIndex: 9999 }}
+//         >
+//           <div className="bg-white p-4 rounded shadow" style={{ width: 400 }}>
+//             <h5 className="text-danger">⚠️ Confirm Delete</h5>
+//             <p>
+//               Are you sure you want to delete <b>{deleteStudent.name}</b>?
+//             </p>
+
+//             <div className="d-flex justify-content-end gap-2">
+//               <button
+//                 className="btn btn-secondary"
+//                 onClick={() => setDeleteStudent(null)}
+//               >
+//                 No
+//               </button>
+//               <button className="btn btn-danger" onClick={confirmDelete}>
+//                 Yes, Delete
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
+
+// export default StudentList;
 import { useEffect, useState } from "react";
 import { db } from "../firebase/firebase";
 import {
@@ -5,43 +288,72 @@ import {
   getDocs,
   doc,
   updateDoc,
+  deleteDoc,
   Timestamp,
 } from "firebase/firestore";
 
 function StudentList() {
   const [students, setStudents] = useState([]);
+  const [selectedClass, setSelectedClass] = useState(null);
   const [editStudent, setEditStudent] = useState(null);
+  const [deleteStudent, setDeleteStudent] = useState(null);
 
-  // 🔹 Load students
+  /* ================= LOAD STUDENTS ================= */
   const loadStudents = async () => {
     const snap = await getDocs(collection(db, "students"));
-    setStudents(snap.docs.map((d) => d.data()));
+    const data = snap.docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
+    }));
+    setStudents(data);
   };
 
   useEffect(() => {
     loadStudents();
   }, []);
 
-  // 🔹 Update student
+  /* ================= CLASS SORT ================= */
+  const classOrder = (cls) => {
+    if (cls === "+1") return 11;
+    if (cls === "+2") return 12;
+    return parseInt(cls);
+  };
+
+  const classes = [...new Set(students.map((s) => s.class))].sort(
+    (a, b) => classOrder(a) - classOrder(b),
+  );
+
+  const filteredStudents = selectedClass
+    ? students.filter((s) => s.class === selectedClass)
+    : students;
+
+  /* ================= UPDATE STUDENT ================= */
   const updateStudent = async () => {
     const pendingFees =
       Number(editStudent.totalFees) - Number(editStudent.paidFees);
 
-    const feeStatus = pendingFees === 0 ? "Completed" : "Pending";
+    const isCompleted = pendingFees === 0;
 
-    await updateDoc(doc(db, "students", editStudent.email), {
+    await updateDoc(doc(db, "students", editStudent.id), {
       name: editStudent.name,
       class: editStudent.class,
       totalFees: Number(editStudent.totalFees),
       paidFees: Number(editStudent.paidFees),
       pendingFees,
-      feeStatus,
-      month: editStudent.month,
-      updatedAt: Timestamp.now(),
+      feeStatus: isCompleted ? "Completed" : "Pending",
+      feesDate: editStudent.feesDate || "",
+      approvedAt: isCompleted ? Timestamp.now() : null,
     });
 
-    alert("✅ Student details updated successfully");
+    alert("✅ Student updated successfully");
     setEditStudent(null);
+    loadStudents();
+  };
+
+  /* ================= DELETE STUDENT ================= */
+  const confirmDelete = async () => {
+    await deleteDoc(doc(db, "students", deleteStudent.id));
+    setDeleteStudent(null);
     loadStudents();
   };
 
@@ -49,134 +361,109 @@ function StudentList() {
     <div className="container-fluid p-0">
       <h4 className="mb-3">📋 Students Details</h4>
 
-      {/* ================================================= */}
-      {/* ================= DESKTOP TABLE ================= */}
-      {/* ================================================= */}
-      <div className="d-none d-md-block">
-        <div className="table-responsive">
-          <table className="table table-bordered table-striped align-middle">
-            <thead className="table-dark">
-              <tr>
-                <th>Email</th>
-                <th>Name</th>
-                <th>Class</th>
-                <th>Total Fees</th>
-                <th>Paid Fees</th>
-                <th>Pending Fees</th>
-                <th>Status</th>
-                <th>Month</th>
-                <th>Edit</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {students.map((s, index) => (
-                <tr key={index}>
-                  <td className="text-break">{s.email}</td>
-                  <td>{s.name}</td>
-                  <td>{s.class}</td>
-                  <td>₹{s.totalFees}</td>
-                  <td>₹{s.paidFees}</td>
-                  <td>₹{s.pendingFees}</td>
-                  <td>
-                    <span
-                      className={`badge ${
-                        s.feeStatus === "Completed" ? "bg-success" : "bg-danger"
-                      }`}
-                    >
-                      {s.feeStatus}
-                    </span>
-                  </td>
-                  <td>{s.month}</td>
-                  <td>
-                    <button
-                      className="btn btn-sm btn-warning"
-                      onClick={() => setEditStudent({ ...s })}
-                    >
-                      Edit
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* ================================================= */}
-      {/* ================= MOBILE CARDS ================= */}
-      {/* ================================================= */}
-      <div className="d-block d-md-none">
-        {students.map((s, index) => (
-          <div className="card shadow-sm mb-3" key={index}>
-            <div className="card-body">
-              <p className="mb-1">
-                <b>Email:</b> <span className="text-break">{s.email}</span>
-              </p>
-              <p className="mb-1">
-                <b>Name:</b> {s.name}
-              </p>
-              <p className="mb-1">
-                <b>Class:</b> {s.class}
-              </p>
-              <p className="mb-1">
-                <b>Total Fees:</b> ₹{s.totalFees}
-              </p>
-              <p className="mb-1">
-                <b>Paid Fees:</b>{" "}
-                <span className="text-success">₹{s.paidFees}</span>
-              </p>
-              <p className="mb-1">
-                <b>Pending Fees:</b>{" "}
-                <span className="text-danger">₹{s.pendingFees}</span>
-              </p>
-              <p className="mb-2">
-                <b>Status:</b>{" "}
-                <span
-                  className={`badge ${
-                    s.feeStatus === "Completed" ? "bg-success" : "bg-danger"
-                  }`}
-                >
-                  {s.feeStatus}
-                </span>
-              </p>
-              <p className="mb-2">
-                <b>Month:</b> {s.month}
-              </p>
-
-              <button
-                className="btn btn-warning btn-sm w-100"
-                onClick={() => setEditStudent({ ...s })}
-              >
-                ✏️ Edit Student
-              </button>
+      {/* ================= CLASS BLOCKS ================= */}
+      <div className="row mb-4">
+        {classes.map((cls) => (
+          <div key={cls} className="col-6 col-sm-4 col-md-3 col-lg-2 mb-3">
+            <div
+              className={`card text-center p-3 shadow-sm ${
+                selectedClass === cls ? "border-primary" : ""
+              }`}
+              style={{ cursor: "pointer" }}
+              onClick={() => setSelectedClass(cls)}
+            >
+              <h6 className="mb-1">Class {cls}</h6>
+              <small className="text-muted">
+                {students.filter((s) => s.class === cls).length} students
+              </small>
             </div>
           </div>
         ))}
       </div>
 
-      {/* ================================================= */}
+      {selectedClass && (
+        <button
+          className="btn btn-secondary btn-sm mb-3"
+          onClick={() => setSelectedClass(null)}
+        >
+          ⬅ Back to all classes
+        </button>
+      )}
+
+      {/* ================= TABLE ================= */}
+      <div className="table-responsive">
+        <table className="table table-bordered align-middle">
+          <thead className="table-dark">
+            <tr>
+              <th>#</th>
+              <th>Email</th>
+              <th>Name</th>
+              <th>Class</th>
+              <th>Pending Fees</th>
+              <th>Status</th>
+              <th>Fees Date</th>
+              <th>Approved On</th>
+              <th>Edit</th>
+              <th>Delete</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {filteredStudents.map((s, i) => (
+              <tr key={s.id}>
+                <td>{i + 1}</td>
+                <td>{s.email || "—"}</td>
+                <td>{s.name}</td>
+                <td>{s.class}</td>
+                <td>₹{s.pendingFees}</td>
+                <td>
+                  <span
+                    className={`badge ${
+                      s.feeStatus === "Completed" ? "bg-success" : "bg-danger"
+                    }`}
+                  >
+                    {s.feeStatus}
+                  </span>
+                </td>
+                <td>{s.feesDate || "—"}</td>
+                <td>
+                  {s.approvedAt
+                    ? s.approvedAt.toDate().toLocaleDateString()
+                    : "—"}
+                </td>
+                <td>
+                  <button
+                    className="btn btn-warning btn-sm"
+                    onClick={() => setEditStudent(s)}
+                  >
+                    Edit
+                  </button>
+                </td>
+                <td>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => setDeleteStudent(s)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
       {/* ================= EDIT FORM ================= */}
-      {/* ================================================= */}
       {editStudent && (
         <div className="card shadow mt-4">
           <div className="card-header bg-primary text-white">
-            <h5 className="mb-0">✏️ Edit Student Details</h5>
+            ✏️ Edit Student
           </div>
 
           <div className="card-body">
             <div className="row g-3">
-              <div className="col-12 col-md-6">
-                <label className="form-label">Email</label>
-                <input
-                  className="form-control"
-                  value={editStudent.email}
-                  disabled
-                />
-              </div>
-
-              <div className="col-12 col-md-6">
-                <label className="form-label">Name</label>
+              <div className="col-md-6">
+                <label>Name</label>
                 <input
                   className="form-control"
                   value={editStudent.name}
@@ -186,8 +473,8 @@ function StudentList() {
                 />
               </div>
 
-              <div className="col-12 col-md-6">
-                <label className="form-label">Class</label>
+              <div className="col-md-6">
+                <label>Class</label>
                 <input
                   className="form-control"
                   value={editStudent.class}
@@ -197,19 +484,8 @@ function StudentList() {
                 />
               </div>
 
-              <div className="col-12 col-md-6">
-                <label className="form-label">Month</label>
-                <input
-                  className="form-control"
-                  value={editStudent.month}
-                  onChange={(e) =>
-                    setEditStudent({ ...editStudent, month: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="col-12 col-md-4">
-                <label className="form-label">Total Fees</label>
+              <div className="col-md-4">
+                <label>Total Fees</label>
                 <input
                   type="number"
                   className="form-control"
@@ -223,39 +499,73 @@ function StudentList() {
                 />
               </div>
 
-              <div className="col-12 col-md-4">
-                <label className="form-label">Paid Fees</label>
+              <div className="col-md-4">
+                <label>Paid Fees</label>
                 <input
                   type="number"
                   className="form-control"
                   value={editStudent.paidFees}
                   onChange={(e) =>
-                    setEditStudent({ ...editStudent, paidFees: e.target.value })
+                    setEditStudent({
+                      ...editStudent,
+                      paidFees: e.target.value,
+                    })
                   }
                 />
               </div>
 
-              <div className="col-12 col-md-4">
-                <label className="form-label">Pending Fees</label>
+              <div className="col-md-4">
+                <label>Fees Date</label>
                 <input
+                  type="date"
                   className="form-control"
-                  disabled
-                  value={
-                    Number(editStudent.totalFees) - Number(editStudent.paidFees)
+                  value={editStudent.feesDate || ""}
+                  onChange={(e) =>
+                    setEditStudent({
+                      ...editStudent,
+                      feesDate: e.target.value,
+                    })
                   }
                 />
               </div>
             </div>
 
-            <div className="d-flex flex-column flex-sm-row justify-content-end gap-2 mt-4">
+            <div className="d-flex justify-content-end gap-2 mt-4">
               <button className="btn btn-success" onClick={updateStudent}>
                 💾 Update
               </button>
               <button
-                className="btn btn-outline-secondary"
+                className="btn btn-secondary"
                 onClick={() => setEditStudent(null)}
               >
-                ❌ Cancel
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= DELETE MODAL ================= */}
+      {deleteStudent && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+          style={{ background: "rgba(0,0,0,0.5)", zIndex: 9999 }}
+        >
+          <div className="bg-white p-4 rounded shadow" style={{ width: 400 }}>
+            <h5 className="text-danger">⚠️ Confirm Delete</h5>
+            <p>
+              Are you sure you want to delete <b>{deleteStudent.name}</b>?
+            </p>
+
+            <div className="d-flex justify-content-end gap-2">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setDeleteStudent(null)}
+              >
+                No
+              </button>
+              <button className="btn btn-danger" onClick={confirmDelete}>
+                Yes, Delete
               </button>
             </div>
           </div>
