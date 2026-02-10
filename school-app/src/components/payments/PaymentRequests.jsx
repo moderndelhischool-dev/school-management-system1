@@ -1,3 +1,294 @@
+// import { useEffect, useState } from "react";
+// import { db } from "../../firebase/firebase";
+// import {
+//   collection,
+//   getDocs,
+//   doc,
+//   updateDoc,
+//   deleteDoc,
+//   getDoc,
+//   Timestamp,
+// } from "firebase/firestore";
+
+// function PaymentRequests() {
+//   const [payments, setPayments] = useState([]);
+//   const [selectedClass, setSelectedClass] = useState(null);
+//   const [loading, setLoading] = useState(true);
+//   const [deleteTarget, setDeleteTarget] = useState(null);
+
+//   /* ================= LOAD PAYMENTS ================= */
+//   const loadPayments = async () => {
+//     setLoading(true);
+//     const snap = await getDocs(collection(db, "payments"));
+
+//     let raw = snap.docs.map((d) => ({
+//       id: d.id,
+//       ...d.data(),
+//     }));
+
+//     /* =================================================
+//        🔒 REMOVE DUPLICATE PENDING REQUESTS (SAME EMAIL)
+//        ================================================= */
+//     const unique = [];
+//     const pendingEmails = new Set();
+
+//     for (let p of raw) {
+//       if (p.status === "pending") {
+//         if (pendingEmails.has(p.studentEmail)) continue;
+//         pendingEmails.add(p.studentEmail);
+//       }
+//       unique.push(p);
+//     }
+
+//     /* 🔥 pending → approved → rejected */
+//     const order = { pending: 1, approved: 2, rejected: 3 };
+//     unique.sort((a, b) => order[a.status] - order[b.status]);
+
+//     setPayments(unique);
+//     setLoading(false);
+//   };
+
+//   useEffect(() => {
+//     loadPayments();
+//   }, []);
+
+//   /* ================= CLASS FILTER ================= */
+//   const classOrder = (cls) => {
+//     if (cls === "+1") return 11;
+//     if (cls === "+2") return 12;
+//     return parseInt(cls);
+//   };
+
+//   const classes = [...new Set(payments.map((p) => p.class))].sort(
+//     (a, b) => classOrder(a) - classOrder(b),
+//   );
+
+//   const filteredPayments = selectedClass
+//     ? payments.filter((p) => p.class === selectedClass)
+//     : payments;
+
+//   /* ================= APPROVE PAYMENT ================= */
+//   const approvePayment = async (p) => {
+//     try {
+//       // 1️⃣ approve payment request
+//       await updateDoc(doc(db, "payments", p.id), {
+//         status: "approved",
+//         approvedAt: Timestamp.now(),
+//       });
+
+//       // 2️⃣ student document (email = id)
+//       const studentRef = doc(db, "students", p.studentEmail);
+//       const studentSnap = await getDoc(studentRef);
+
+//       if (!studentSnap.exists()) {
+//         alert("❌ Student not found");
+//         return;
+//       }
+
+//       const student = studentSnap.data();
+
+//       const oldPending = Number(student.pendingFees || 0);
+//       const paidNow = Number(p.paidAmount || 0);
+
+//       const newPending = Math.max(oldPending - paidNow, 0);
+//       const newPaid = Number(student.paidFees || 0) + paidNow;
+
+//       // 3️⃣ update student (🔥 MAIN LOGIC)
+//       await updateDoc(studentRef, {
+//         paidFees: newPaid,
+//         pendingFees: newPending,
+//         feeStatus: newPending === 0 ? "Completed" : "Pending",
+//         month: p.month || student.month || "",
+//         updatedAt: Timestamp.now(),
+//       });
+
+//       alert("✅ Payment approved & student updated");
+//       loadPayments();
+//     } catch (err) {
+//       console.error(err);
+//       alert("❌ Approval failed");
+//     }
+//   };
+
+//   /* ================= REJECT ================= */
+//   const rejectPayment = async (p) => {
+//     await updateDoc(doc(db, "payments", p.id), {
+//       status: "rejected",
+//       rejectedAt: Timestamp.now(),
+//     });
+//     loadPayments();
+//   };
+
+//   /* ================= DELETE ================= */
+//   const confirmDelete = async () => {
+//     if (!deleteTarget) return;
+//     await deleteDoc(doc(db, "payments", deleteTarget.id));
+//     setDeleteTarget(null);
+//     loadPayments();
+//   };
+
+//   if (loading) return <p>Loading payment requests...</p>;
+
+//   return (
+//     <div className="container-fluid p-0">
+//       <h4 className="mb-3">💰 Payment Requests</h4>
+
+//       {/* ================= CLASS BOXES ================= */}
+//       <div className="row mb-4">
+//         {classes.map((cls) => (
+//           <div key={cls} className="col-6 col-md-3 mb-3">
+//             <div
+//               className={`card text-center p-3 shadow-sm ${
+//                 selectedClass === cls ? "border-primary" : ""
+//               }`}
+//               style={{ cursor: "pointer" }}
+//               onClick={() => setSelectedClass(cls)}
+//             >
+//               <h6>Class {cls}</h6>
+//               <small>
+//                 {payments.filter((p) => p.class === cls).length} requests
+//               </small>
+//             </div>
+//           </div>
+//         ))}
+//       </div>
+
+//       {selectedClass && (
+//         <button
+//           type="button"
+//           className="btn btn-secondary btn-sm mb-3"
+//           onClick={() => setSelectedClass(null)}
+//         >
+//           ⬅ Back
+//         </button>
+//       )}
+
+//       {/* ================= TABLE ================= */}
+//       <div className="table-responsive">
+//         <table className="table table-bordered align-middle">
+//           <thead className="table-dark">
+//             <tr>
+//               <th>#</th>
+//               <th>Name</th>
+//               <th>Email</th>
+//               <th>Class</th>
+//               <th>Paid</th>
+//               <th>Remaining</th>
+//               <th>Month</th>
+//               <th>Status</th>
+//               <th>Action</th>
+//             </tr>
+//           </thead>
+
+//           <tbody>
+//             {filteredPayments.map((p, i) => (
+//               <tr key={p.id}>
+//                 <td>{i + 1}</td>
+//                 <td>{p.studentName}</td>
+//                 <td>{p.studentEmail}</td>
+//                 <td>{p.class}</td>
+
+//                 <td className="text-success fw-semibold">
+//                   ₹ {p.paidAmount || 0}
+//                 </td>
+
+//                 <td
+//                   className={
+//                     p.remainingFees === 0
+//                       ? "text-success fw-semibold"
+//                       : "text-danger fw-semibold"
+//                   }
+//                 >
+//                   ₹ {p.remainingFees ?? "—"}
+//                 </td>
+
+//                 <td>{p.month || "—"}</td>
+
+//                 <td>
+//                   <span
+//                     className={`badge ${
+//                       p.status === "approved"
+//                         ? "bg-success"
+//                         : p.status === "rejected"
+//                           ? "bg-danger"
+//                           : "bg-warning text-dark"
+//                     }`}
+//                   >
+//                     {p.status}
+//                   </span>
+//                 </td>
+
+//                 <td>
+//                   {p.status === "pending" ? (
+//                     <div className="d-flex gap-2">
+//                       <button
+//                         type="button"
+//                         className="btn btn-success btn-sm"
+//                         onClick={() => approvePayment(p)}
+//                       >
+//                         Approve
+//                       </button>
+//                       <button
+//                         type="button"
+//                         className="btn btn-danger btn-sm"
+//                         onClick={() => rejectPayment(p)}
+//                       >
+//                         Reject
+//                       </button>
+//                     </div>
+//                   ) : (
+//                     <button
+//                       type="button"
+//                       className="btn btn-outline-danger btn-sm"
+//                       onClick={() => setDeleteTarget(p)}
+//                     >
+//                       Delete
+//                     </button>
+//                   )}
+//                 </td>
+//               </tr>
+//             ))}
+//           </tbody>
+//         </table>
+//       </div>
+
+//       {/* ================= DELETE MODAL ================= */}
+//       {deleteTarget && (
+//         <div
+//           className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+//           style={{ background: "rgba(0,0,0,0.4)", zIndex: 9999 }}
+//         >
+//           <div className="bg-white p-4 rounded shadow" style={{ width: 350 }}>
+//             <h6 className="text-danger">Confirm Delete</h6>
+//             <p>
+//               Delete payment of <b>{deleteTarget.studentName}</b>?
+//             </p>
+
+//             <div className="d-flex justify-content-end gap-2">
+//               <button
+//                 type="button"
+//                 className="btn btn-secondary btn-sm"
+//                 onClick={() => setDeleteTarget(null)}
+//               >
+//                 Cancel
+//               </button>
+//               <button
+//                 type="button"
+//                 className="btn btn-danger btn-sm"
+//                 onClick={confirmDelete}
+//               >
+//                 Delete
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
+
+// export default PaymentRequests;
+
 import { useEffect, useState } from "react";
 import { db } from "../../firebase/firebase";
 import {
@@ -5,6 +296,8 @@ import {
   getDocs,
   doc,
   updateDoc,
+  deleteDoc,
+  getDoc,
   Timestamp,
 } from "firebase/firestore";
 
@@ -12,22 +305,48 @@ function PaymentRequests() {
   const [payments, setPayments] = useState([]);
   const [selectedClass, setSelectedClass] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   /* ================= LOAD PAYMENTS ================= */
   const loadPayments = async () => {
     setLoading(true);
 
     const snap = await getDocs(collection(db, "payments"));
-    let data = snap.docs.map((d) => ({
-      id: d.id,
-      ...d.data(),
-    }));
+    const raw = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-    /* 🔥 PENDING FIRST, THEN APPROVED, THEN REJECTED */
+    /* =====================================================
+       🔒 ONE EMAIL = ONE ROW
+       priority: pending > latest approved > latest rejected
+       ===================================================== */
+    const map = {};
+
+    for (let p of raw) {
+      const email = p.studentEmail;
+      if (!email) continue;
+
+      if (!map[email]) {
+        map[email] = p;
+      } else {
+        // pending always wins
+        if (map[email].status !== "pending" && p.status === "pending") {
+          map[email] = p;
+        }
+        // if both same status → latest one
+        else if (map[email].status === p.status) {
+          if (p.createdAt?.seconds > map[email].createdAt?.seconds) {
+            map[email] = p;
+          }
+        }
+      }
+    }
+
+    let uniquePayments = Object.values(map);
+
+    // pending first
     const order = { pending: 1, approved: 2, rejected: 3 };
-    data.sort((a, b) => order[a.status] - order[b.status]);
+    uniquePayments.sort((a, b) => order[a.status] - order[b.status]);
 
-    setPayments(data);
+    setPayments(uniquePayments);
     setLoading(false);
   };
 
@@ -35,7 +354,7 @@ function PaymentRequests() {
     loadPayments();
   }, []);
 
-  /* ================= CLASS SORT ================= */
+  /* ================= CLASS FILTER ================= */
   const classOrder = (cls) => {
     if (cls === "+1") return 11;
     if (cls === "+2") return 12;
@@ -52,20 +371,40 @@ function PaymentRequests() {
 
   /* ================= APPROVE ================= */
   const approvePayment = async (p) => {
-    await updateDoc(doc(db, "payments", p.id), {
-      status: "approved",
-      approvedAt: Timestamp.now(),
-    });
+    try {
+      // update payment
+      await updateDoc(doc(db, "payments", p.id), {
+        status: "approved",
+        approvedAt: Timestamp.now(),
+      });
 
-    await updateDoc(doc(db, "students", p.studentEmail), {
-      paidFees: p.amount,
-      pendingFees: 0,
-      feeStatus: "Completed",
-      approvedAt: Timestamp.now(),
-    });
+      // update student
+      const studentRef = doc(db, "students", p.studentEmail);
+      const studentSnap = await getDoc(studentRef);
 
-    alert("✅ Payment approved");
-    loadPayments();
+      if (!studentSnap.exists()) {
+        alert("Student not found");
+        return;
+      }
+
+      const s = studentSnap.data();
+      const paidNow = Number(p.paidAmount || 0);
+      const newPending = Math.max(Number(s.pendingFees || 0) - paidNow, 0);
+
+      await updateDoc(studentRef, {
+        paidFees: Number(s.paidFees || 0) + paidNow,
+        pendingFees: newPending,
+        feeStatus: newPending === 0 ? "Completed" : "Pending",
+        month: p.month || s.month || "",
+        updatedAt: Timestamp.now(),
+      });
+
+      alert("✅ Payment approved");
+      loadPayments();
+    } catch (e) {
+      console.error(e);
+      alert("❌ Approval failed");
+    }
   };
 
   /* ================= REJECT ================= */
@@ -74,30 +413,36 @@ function PaymentRequests() {
       status: "rejected",
       rejectedAt: Timestamp.now(),
     });
-
-    alert("❌ Payment rejected");
     loadPayments();
   };
 
-  if (loading) return <p>Loading payment requests...</p>;
+  /* ================= DELETE ================= */
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteDoc(doc(db, "payments", deleteTarget.id));
+    setDeleteTarget(null);
+    loadPayments();
+  };
+
+  if (loading) return <p>Loading...</p>;
 
   return (
     <div className="container-fluid p-0">
       <h4 className="mb-3">💰 Payment Requests</h4>
 
-      {/* ================= CLASS BLOCKS ================= */}
+      {/* CLASS BOXES */}
       <div className="row mb-4">
         {classes.map((cls) => (
-          <div key={cls} className="col-6 col-sm-4 col-md-3 col-lg-2 mb-3">
+          <div key={cls} className="col-6 col-md-3 mb-3">
             <div
               className={`card text-center p-3 shadow-sm ${
                 selectedClass === cls ? "border-primary" : ""
               }`}
-              style={{ cursor: "pointer" }}
               onClick={() => setSelectedClass(cls)}
+              style={{ cursor: "pointer" }}
             >
-              <h6 className="mb-1">Class {cls}</h6>
-              <small className="text-muted">
+              <h6>Class {cls}</h6>
+              <small>
                 {payments.filter((p) => p.class === cls).length} requests
               </small>
             </div>
@@ -110,11 +455,11 @@ function PaymentRequests() {
           className="btn btn-secondary btn-sm mb-3"
           onClick={() => setSelectedClass(null)}
         >
-          ⬅ Back to all classes
+          ⬅ Back
         </button>
       )}
 
-      {/* ================= TABLE ================= */}
+      {/* TABLE */}
       <div className="table-responsive">
         <table className="table table-bordered align-middle">
           <thead className="table-dark">
@@ -123,7 +468,8 @@ function PaymentRequests() {
               <th>Name</th>
               <th>Email</th>
               <th>Class</th>
-              <th>Amount</th>
+              <th>Paid</th>
+              <th>Remaining</th>
               <th>Month</th>
               <th>Status</th>
               <th>Action</th>
@@ -137,8 +483,13 @@ function PaymentRequests() {
                 <td>{p.studentName}</td>
                 <td>{p.studentEmail}</td>
                 <td>{p.class}</td>
-                <td>₹ {p.amount}</td>
-                <td>{p.month}</td>
+                <td className="text-success fw-semibold">
+                  ₹ {p.paidAmount || 0}
+                </td>
+                <td className="text-danger fw-semibold">
+                  ₹ {p.remainingFees ?? "—"}
+                </td>
+                <td>{p.month || "—"}</td>
                 <td>
                   <span
                     className={`badge ${
@@ -154,9 +505,9 @@ function PaymentRequests() {
                 </td>
                 <td>
                   {p.status === "pending" ? (
-                    <div className="d-flex gap-2">
+                    <>
                       <button
-                        className="btn btn-success btn-sm"
+                        className="btn btn-success btn-sm me-2"
                         onClick={() => approvePayment(p)}
                       >
                         Approve
@@ -167,9 +518,14 @@ function PaymentRequests() {
                       >
                         Reject
                       </button>
-                    </div>
+                    </>
                   ) : (
-                    <small className="text-muted">No action</small>
+                    <button
+                      className="btn btn-outline-danger btn-sm"
+                      onClick={() => setDeleteTarget(p)}
+                    >
+                      Delete
+                    </button>
                   )}
                 </td>
               </tr>
@@ -177,6 +533,32 @@ function PaymentRequests() {
           </tbody>
         </table>
       </div>
+
+      {/* DELETE MODAL */}
+      {deleteTarget && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+          style={{ background: "rgba(0,0,0,0.4)", zIndex: 9999 }}
+        >
+          <div className="bg-white p-4 rounded shadow" style={{ width: 350 }}>
+            <h6 className="text-danger">Confirm Delete</h6>
+            <p>
+              Delete payment of <b>{deleteTarget.studentName}</b>?
+            </p>
+            <div className="d-flex justify-content-end gap-2">
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => setDeleteTarget(null)}
+              >
+                Cancel
+              </button>
+              <button className="btn btn-danger btn-sm" onClick={confirmDelete}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

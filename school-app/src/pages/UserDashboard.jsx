@@ -1,14 +1,128 @@
 // import { useEffect, useState } from "react";
 // import { auth, db } from "../firebase/firebase";
-// import { doc, getDoc } from "firebase/firestore";
-// import { onAuthStateChanged, signOut } from "firebase/auth";
+// import {
+//   doc,
+//   getDoc,
+//   collection,
+//   query,
+//   where,
+//   getDocs,
+// } from "firebase/firestore";
+// import { onAuthStateChanged } from "firebase/auth";
+
+// import UserLayout from "./user/UserLayout";
+// import UserHome from "./user/UserHome";
+// import UserProfile from "./user/UserProfile";
+// import UserFees from "./user/UserFees";
 // import ChangePassword from "../components/ChangePassword";
+
+// /* 🔥 NEW: PAYMENT HISTORY COMPONENT (INLINE) */
+// function PaymentHistory({ email }) {
+//   const [payments, setPayments] = useState([]);
+//   const [loading, setLoading] = useState(true);
+
+//   useEffect(() => {
+//     const loadPayments = async () => {
+//       const q = query(
+//         collection(db, "payments"),
+//         where("studentEmail", "==", email),
+//       );
+
+//       const snap = await getDocs(q);
+//       const data = snap.docs.map((d) => ({
+//         id: d.id,
+//         ...d.data(),
+//       }));
+
+//       // 🔥 latest first
+//       data.sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds);
+
+//       setPayments(data);
+//       setLoading(false);
+//     };
+
+//     loadPayments();
+//   }, [email]);
+
+//   if (loading) return <p>Loading payment history...</p>;
+
+//   if (payments.length === 0)
+//     return <p className="text-muted">No payment history found.</p>;
+
+//   return (
+//     <div className="card shadow-sm p-3">
+//       <h5 className="mb-3">🧾 Payment History</h5>
+
+//       <div className="table-responsive">
+//         <table className="table table-bordered align-middle">
+//           <thead className="table-dark">
+//             <tr>
+//               <th>#</th>
+//               <th>Paid Amount</th>
+//               <th>Remaining</th>
+//               <th>Month</th>
+//               <th>Status</th>
+//               <th>Date</th>
+//             </tr>
+//           </thead>
+
+//           <tbody>
+//             {payments.map((p, i) => (
+//               <tr key={p.id}>
+//                 <td>{i + 1}</td>
+
+//                 <td className="text-success fw-semibold">
+//                   ₹ {p.paidAmount || 0}
+//                 </td>
+
+//                 <td
+//                   className={
+//                     p.remainingFees === 0
+//                       ? "text-success fw-semibold"
+//                       : "text-danger fw-semibold"
+//                   }
+//                 >
+//                   ₹ {p.remainingFees ?? "—"}
+//                 </td>
+
+//                 <td>{p.month || "—"}</td>
+
+//                 <td>
+//                   <span
+//                     className={`badge ${
+//                       p.status === "approved"
+//                         ? "bg-success"
+//                         : p.status === "rejected"
+//                           ? "bg-danger"
+//                           : "bg-warning text-dark"
+//                     }`}
+//                   >
+//                     {p.status}
+//                   </span>
+//                 </td>
+
+//                 <td>
+//                   {p.createdAt
+//                     ? new Date(p.createdAt.seconds * 1000).toLocaleDateString(
+//                         "en-IN",
+//                       )
+//                     : "—"}
+//                 </td>
+//               </tr>
+//             ))}
+//           </tbody>
+//         </table>
+//       </div>
+//     </div>
+//   );
+// }
 
 // function UserDashboard() {
 //   const [student, setStudent] = useState(null);
 //   const [loading, setLoading] = useState(true);
 //   const [showChangePassword, setShowChangePassword] = useState(false);
 
+//   /* ================= LOAD STUDENT ================= */
 //   useEffect(() => {
 //     const unsub = onAuthStateChanged(auth, async (user) => {
 //       if (user) {
@@ -22,11 +136,6 @@
 
 //     return () => unsub();
 //   }, []);
-
-//   const logout = async () => {
-//     await signOut(auth);
-//     window.location.href = "/";
-//   };
 
 //   /* ================= LOADING ================= */
 //   if (loading) {
@@ -49,107 +158,24 @@
 
 //   return (
 //     <>
-//       <div className="container-fluid bg-light min-vh-100 px-3 px-md-4 py-4">
-//         {/* ================= HEADER ================= */}
-//         <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
-//           <div>
-//             <h4 className="mb-0">👤 Student Dashboard</h4>
-//             <small className="text-muted">
-//               Welcome, <b>{student.name}</b>
-//             </small>
-//           </div>
+//       <UserLayout onChangePassword={() => setShowChangePassword(true)}>
+//         {(activePage) => (
+//           <>
+//             {activePage === "home" && <UserHome student={student} />}
 
-//           <div className="d-flex gap-2">
-//             <button
-//               className="btn btn-outline-primary btn-sm"
-//               onClick={() => setShowChangePassword(true)}
-//             >
-//               Change Password
-//             </button>
+//             {activePage === "profile" && <UserProfile student={student} />}
 
-//             <button className="btn btn-outline-danger btn-sm" onClick={logout}>
-//               Logout
-//             </button>
-//           </div>
-//         </div>
+//             {activePage === "fees" && <UserFees student={student} />}
 
-//         {/* ================= PROFILE ================= */}
-//         <div className="card shadow-sm p-3 p-md-4 mb-4">
-//           <h5 className="mb-3">👤 My Profile</h5>
+//             {/* 🔥 NEW PAGE */}
+//             {activePage === "history" && (
+//               <PaymentHistory email={student.email} />
+//             )}
+//           </>
+//         )}
+//       </UserLayout>
 
-//           <div className="row g-3">
-//             <div className="col-12 col-md-4">
-//               <small className="text-muted">Name</small>
-//               <h6 className="fw-semibold mb-0">{student.name}</h6>
-//             </div>
-
-//             <div className="col-12 col-md-4">
-//               <small className="text-muted">Class</small>
-//               <h6 className="fw-semibold mb-0">{student.class}</h6>
-//             </div>
-
-//             <div className="col-12 col-md-4">
-//               <small className="text-muted">Fee Status</small>
-//               <h6
-//                 className={`fw-semibold mb-0 ${
-//                   student.feeStatus === "Completed"
-//                     ? "text-success"
-//                     : "text-danger"
-//                 }`}
-//               >
-//                 {student.feeStatus}
-//               </h6>
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* ================= FEES SUMMARY ================= */}
-//         <div className="row g-3 mb-4">
-//           <div className="col-12 col-sm-6 col-md-4">
-//             <div className="card shadow-sm p-3 h-100">
-//               <small className="text-muted">Total Fees</small>
-//               <h5 className="mb-0">₹ {student.totalFees}</h5>
-//             </div>
-//           </div>
-
-//           <div className="col-12 col-sm-6 col-md-4">
-//             <div className="card shadow-sm p-3 h-100">
-//               <small className="text-muted">Paid Fees</small>
-//               <h5 className="text-success mb-0">₹ {student.paidFees}</h5>
-//             </div>
-//           </div>
-
-//           <div className="col-12 col-md-4">
-//             <div className="card shadow-sm p-3 h-100">
-//               <small className="text-muted">Pending Fees</small>
-//               <h5 className="text-danger mb-0">₹ {student.pendingFees}</h5>
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* ================= PAYMENT ================= */}
-//         <div className="card shadow-sm p-3 p-md-4">
-//           <h5 className="mb-2">💳 Online Fee Payment</h5>
-
-//           {student.pendingFees > 0 ? (
-//             <>
-//               <p className="text-muted">
-//                 You have pending fees. Please proceed with online payment.
-//               </p>
-
-//               <button className="btn btn-success">
-//                 Pay Now (Integration Coming Soon)
-//               </button>
-//             </>
-//           ) : (
-//             <p className="text-success fw-semibold mb-0">
-//               ✅ All fees are paid. No action required.
-//             </p>
-//           )}
-//         </div>
-//       </div>
-
-//       {/* ================= CHANGE PASSWORD MODAL ================= */}
+//       {/* ================= CHANGE PASSWORD ================= */}
 //       {showChangePassword && (
 //         <ChangePassword onClose={() => setShowChangePassword(false)} />
 //       )}
@@ -160,7 +186,14 @@
 // export default UserDashboard;
 import { useEffect, useState } from "react";
 import { auth, db } from "../firebase/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 import UserLayout from "./user/UserLayout";
@@ -169,18 +202,125 @@ import UserProfile from "./user/UserProfile";
 import UserFees from "./user/UserFees";
 import ChangePassword from "../components/ChangePassword";
 
+/* ================= PAYMENT HISTORY ================= */
+function PaymentHistory({ email }) {
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!email) return;
+
+    const loadPayments = async () => {
+      const q = query(
+        collection(db, "payments"),
+        where("studentEmail", "==", email),
+      );
+
+      const snap = await getDocs(q);
+
+      const data = snap.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }));
+
+      // 🔥 latest first (safe)
+      data.sort(
+        (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0),
+      );
+
+      setPayments(data);
+      setLoading(false);
+    };
+
+    loadPayments();
+  }, [email]);
+
+  if (loading) return <p>Loading payment history...</p>;
+
+  if (payments.length === 0) {
+    return <p className="text-muted">No payment history found.</p>;
+  }
+
+  return (
+    <div className="card shadow-sm p-3">
+      <h5 className="mb-3">🧾 Payment History</h5>
+
+      <div className="table-responsive">
+        <table className="table table-bordered align-middle">
+          <thead className="table-dark">
+            <tr>
+              <th>#</th>
+              <th>Paid Amount</th>
+              <th>Remaining</th>
+              <th>Month</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {payments.map((p, i) => (
+              <tr key={p.id}>
+                <td>{i + 1}</td>
+
+                <td className="text-success fw-semibold">
+                  ₹ {p.paidAmount || 0}
+                </td>
+
+                <td
+                  className={
+                    p.remainingFees === 0
+                      ? "text-success fw-semibold"
+                      : "text-danger fw-semibold"
+                  }
+                >
+                  ₹ {p.remainingFees ?? "—"}
+                </td>
+
+                <td>{p.month || "—"}</td>
+
+                <td>
+                  <span
+                    className={`badge ${
+                      p.status === "approved"
+                        ? "bg-success"
+                        : p.status === "rejected"
+                          ? "bg-danger"
+                          : "bg-warning text-dark"
+                    }`}
+                  >
+                    {p.status}
+                  </span>
+                </td>
+
+                <td>
+                  {p.createdAt
+                    ? new Date(p.createdAt.seconds * 1000).toLocaleDateString(
+                        "en-IN",
+                      )
+                    : "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ================= USER DASHBOARD ================= */
 function UserDashboard() {
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showChangePassword, setShowChangePassword] = useState(false);
 
-  /* ================= LOAD STUDENT ================= */
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
         const snap = await getDoc(doc(db, "students", user.email));
         if (snap.exists()) {
-          setStudent(snap.data());
+          setStudent({ email: user.email, ...snap.data() });
         }
       }
       setLoading(false);
@@ -189,7 +329,6 @@ function UserDashboard() {
     return () => unsub();
   }, []);
 
-  /* ================= LOADING ================= */
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-100">
@@ -198,7 +337,6 @@ function UserDashboard() {
     );
   }
 
-  /* ================= NO DATA ================= */
   if (!student) {
     return (
       <div className="container mt-5 text-center">
@@ -218,11 +356,14 @@ function UserDashboard() {
             {activePage === "profile" && <UserProfile student={student} />}
 
             {activePage === "fees" && <UserFees student={student} />}
+
+            {activePage === "history" && (
+              <PaymentHistory email={student.email} />
+            )}
           </>
         )}
       </UserLayout>
 
-      {/* ================= CHANGE PASSWORD ================= */}
       {showChangePassword && (
         <ChangePassword onClose={() => setShowChangePassword(false)} />
       )}

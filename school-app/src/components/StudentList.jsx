@@ -19,7 +19,7 @@
 //   const loadStudents = async () => {
 //     const snap = await getDocs(collection(db, "students"));
 //     const data = snap.docs.map((d) => ({
-//       id: d.id, // 🔥 REAL FIRESTORE DOC ID
+//       id: d.id,
 //       ...d.data(),
 //     }));
 //     setStudents(data);
@@ -29,7 +29,7 @@
 //     loadStudents();
 //   }, []);
 
-//   /* ================= CLASS SORT LOGIC ================= */
+//   /* ================= CLASS SORT ================= */
 //   const classOrder = (cls) => {
 //     if (cls === "+1") return 11;
 //     if (cls === "+2") return 12;
@@ -49,6 +49,14 @@
 //     const pendingFees =
 //       Number(editStudent.totalFees) - Number(editStudent.paidFees);
 
+//     let monthLabel = editStudent.feeDate
+//       ? new Date(editStudent.feeDate).toLocaleDateString("en-IN", {
+//           day: "numeric",
+//           month: "long",
+//           year: "numeric",
+//         })
+//       : "";
+
 //     await updateDoc(doc(db, "students", editStudent.id), {
 //       name: editStudent.name,
 //       class: editStudent.class,
@@ -56,7 +64,10 @@
 //       paidFees: Number(editStudent.paidFees),
 //       pendingFees,
 //       feeStatus: pendingFees === 0 ? "Completed" : "Pending",
-//       month: editStudent.month,
+//       feeDate: editStudent.feeDate
+//         ? Timestamp.fromDate(new Date(editStudent.feeDate))
+//         : null,
+//       month: monthLabel,
 //       updatedAt: Timestamp.now(),
 //     });
 
@@ -65,7 +76,7 @@
 //     loadStudents();
 //   };
 
-//   /* ================= DELETE STUDENT ================= */
+//   /* ================= DELETE ================= */
 //   const confirmDelete = async () => {
 //     await deleteDoc(doc(db, "students", deleteStudent.id));
 //     setDeleteStudent(null);
@@ -79,7 +90,7 @@
 //       {/* ================= CLASS BOXES ================= */}
 //       <div className="row mb-4">
 //         {classes.map((cls) => (
-//           <div key={cls} className="col-6 col-sm-4 col-md-3 col-lg-2 mb-3">
+//           <div key={cls} className="col-6 col-md-3 mb-3">
 //             <div
 //               className={`card text-center p-3 shadow-sm ${
 //                 selectedClass === cls ? "border-primary" : ""
@@ -87,8 +98,8 @@
 //               style={{ cursor: "pointer" }}
 //               onClick={() => setSelectedClass(cls)}
 //             >
-//               <h6 className="mb-1">Class {cls}</h6>
-//               <small className="text-muted">
+//               <h6>Class {cls}</h6>
+//               <small>
 //                 {students.filter((s) => s.class === cls).length} students
 //               </small>
 //             </div>
@@ -98,10 +109,11 @@
 
 //       {selectedClass && (
 //         <button
+//           type="button"
 //           className="btn btn-secondary btn-sm mb-3"
 //           onClick={() => setSelectedClass(null)}
 //         >
-//           ⬅ Back to all classes
+//           ⬅ Back
 //         </button>
 //       )}
 
@@ -116,7 +128,7 @@
 //               <th>Class</th>
 //               <th>Pending Fees</th>
 //               <th>Status</th>
-//               <th>Month</th>
+//               <th>Month / Date</th>
 //               <th>Edit</th>
 //               <th>Delete</th>
 //             </tr>
@@ -126,10 +138,10 @@
 //             {filteredStudents.map((s, i) => (
 //               <tr key={s.id}>
 //                 <td>{i + 1}</td>
-//                 <td>{s.email || "—"}</td>
+//                 <td>{s.email}</td>
 //                 <td>{s.name}</td>
 //                 <td>{s.class}</td>
-//                 <td>₹{s.pendingFees}</td>
+//                 <td className="text-danger fw-semibold">₹ {s.pendingFees}</td>
 //                 <td>
 //                   <span
 //                     className={`badge ${
@@ -139,17 +151,26 @@
 //                     {s.feeStatus}
 //                   </span>
 //                 </td>
-//                 <td>{s.month}</td>
+//                 <td>{s.month || "—"}</td>
 //                 <td>
 //                   <button
+//                     type="button"
 //                     className="btn btn-warning btn-sm"
-//                     onClick={() => setEditStudent(s)}
+//                     onClick={() =>
+//                       setEditStudent({
+//                         ...s,
+//                         feeDate: s.feeDate
+//                           ? s.feeDate.toDate().toISOString().split("T")[0]
+//                           : "",
+//                       })
+//                     }
 //                   >
 //                     Edit
 //                   </button>
 //                 </td>
 //                 <td>
 //                   <button
+//                     type="button"
 //                     className="btn btn-danger btn-sm"
 //                     onClick={() => setDeleteStudent(s)}
 //                   >
@@ -172,7 +193,7 @@
 //           <div className="card-body">
 //             <div className="row g-3">
 //               <div className="col-md-6">
-//                 <label className="form-label">Name</label>
+//                 <label>Name</label>
 //                 <input
 //                   className="form-control"
 //                   value={editStudent.name}
@@ -183,7 +204,7 @@
 //               </div>
 
 //               <div className="col-md-6">
-//                 <label className="form-label">Class</label>
+//                 <label>Class</label>
 //                 <input
 //                   className="form-control"
 //                   value={editStudent.class}
@@ -194,7 +215,7 @@
 //               </div>
 
 //               <div className="col-md-4">
-//                 <label className="form-label">Total Fees</label>
+//                 <label>Total Fees</label>
 //                 <input
 //                   type="number"
 //                   className="form-control"
@@ -209,7 +230,7 @@
 //               </div>
 
 //               <div className="col-md-4">
-//                 <label className="form-label">Paid Fees</label>
+//                 <label>Paid Fees</label>
 //                 <input
 //                   type="number"
 //                   className="form-control"
@@ -224,22 +245,31 @@
 //               </div>
 
 //               <div className="col-md-4">
-//                 <label className="form-label">Month</label>
+//                 <label>Fees Date</label>
 //                 <input
+//                   type="date"
 //                   className="form-control"
-//                   value={editStudent.month}
+//                   value={editStudent.feeDate || ""}
 //                   onChange={(e) =>
-//                     setEditStudent({ ...editStudent, month: e.target.value })
+//                     setEditStudent({
+//                       ...editStudent,
+//                       feeDate: e.target.value,
+//                     })
 //                   }
 //                 />
 //               </div>
 //             </div>
 
-//             <div className="d-flex gap-2 justify-content-end mt-4">
-//               <button className="btn btn-success" onClick={updateStudent}>
+//             <div className="d-flex justify-content-end gap-2 mt-4">
+//               <button
+//                 type="button"
+//                 className="btn btn-success"
+//                 onClick={updateStudent}
+//               >
 //                 💾 Update
 //               </button>
 //               <button
+//                 type="button"
 //                 className="btn btn-secondary"
 //                 onClick={() => setEditStudent(null)}
 //               >
@@ -256,21 +286,25 @@
 //           className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
 //           style={{ background: "rgba(0,0,0,0.5)", zIndex: 9999 }}
 //         >
-//           <div className="bg-white p-4 rounded shadow" style={{ width: 400 }}>
-//             <h5 className="text-danger">⚠️ Confirm Delete</h5>
+//           <div className="bg-white p-4 rounded shadow" style={{ width: 350 }}>
+//             <h6 className="text-danger">Confirm Delete</h6>
 //             <p>
-//               Are you sure you want to delete <b>{deleteStudent.name}</b>?
+//               Delete <b>{deleteStudent.name}</b>?
 //             </p>
-
 //             <div className="d-flex justify-content-end gap-2">
 //               <button
+//                 type="button"
 //                 className="btn btn-secondary"
 //                 onClick={() => setDeleteStudent(null)}
 //               >
-//                 No
+//                 Cancel
 //               </button>
-//               <button className="btn btn-danger" onClick={confirmDelete}>
-//                 Yes, Delete
+//               <button
+//                 type="button"
+//                 className="btn btn-danger"
+//                 onClick={confirmDelete}
+//               >
+//                 Delete
 //               </button>
 //             </div>
 //           </div>
@@ -327,12 +361,30 @@ function StudentList() {
     ? students.filter((s) => s.class === selectedClass)
     : students;
 
+  /* ================= VALIDATION ================= */
+  const isEditFormValid =
+    editStudent &&
+    editStudent.name &&
+    editStudent.class &&
+    editStudent.totalFees !== "" &&
+    editStudent.paidFees !== "" &&
+    editStudent.feeDate;
+
   /* ================= UPDATE STUDENT ================= */
   const updateStudent = async () => {
+    if (!isEditFormValid) return;
+
     const pendingFees =
       Number(editStudent.totalFees) - Number(editStudent.paidFees);
 
-    const isCompleted = pendingFees === 0;
+    const monthLabel = new Date(editStudent.feeDate).toLocaleDateString(
+      "en-IN",
+      {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      },
+    );
 
     await updateDoc(doc(db, "students", editStudent.id), {
       name: editStudent.name,
@@ -340,17 +392,18 @@ function StudentList() {
       totalFees: Number(editStudent.totalFees),
       paidFees: Number(editStudent.paidFees),
       pendingFees,
-      feeStatus: isCompleted ? "Completed" : "Pending",
-      feesDate: editStudent.feesDate || "",
-      approvedAt: isCompleted ? Timestamp.now() : null,
+      feeStatus: pendingFees === 0 ? "Completed" : "Pending",
+      feeDate: Timestamp.fromDate(new Date(editStudent.feeDate)),
+      month: monthLabel,
+      updatedAt: Timestamp.now(),
     });
 
-    alert("✅ Student updated successfully");
+    alert("✅ Student details updated");
     setEditStudent(null);
     loadStudents();
   };
 
-  /* ================= DELETE STUDENT ================= */
+  /* ================= DELETE ================= */
   const confirmDelete = async () => {
     await deleteDoc(doc(db, "students", deleteStudent.id));
     setDeleteStudent(null);
@@ -361,10 +414,10 @@ function StudentList() {
     <div className="container-fluid p-0">
       <h4 className="mb-3">📋 Students Details</h4>
 
-      {/* ================= CLASS BLOCKS ================= */}
+      {/* ================= CLASS BOXES ================= */}
       <div className="row mb-4">
         {classes.map((cls) => (
-          <div key={cls} className="col-6 col-sm-4 col-md-3 col-lg-2 mb-3">
+          <div key={cls} className="col-6 col-md-3 mb-3">
             <div
               className={`card text-center p-3 shadow-sm ${
                 selectedClass === cls ? "border-primary" : ""
@@ -372,8 +425,8 @@ function StudentList() {
               style={{ cursor: "pointer" }}
               onClick={() => setSelectedClass(cls)}
             >
-              <h6 className="mb-1">Class {cls}</h6>
-              <small className="text-muted">
+              <h6>Class {cls}</h6>
+              <small>
                 {students.filter((s) => s.class === cls).length} students
               </small>
             </div>
@@ -383,10 +436,11 @@ function StudentList() {
 
       {selectedClass && (
         <button
+          type="button"
           className="btn btn-secondary btn-sm mb-3"
           onClick={() => setSelectedClass(null)}
         >
-          ⬅ Back to all classes
+          ⬅ Back
         </button>
       )}
 
@@ -401,8 +455,7 @@ function StudentList() {
               <th>Class</th>
               <th>Pending Fees</th>
               <th>Status</th>
-              <th>Fees Date</th>
-              <th>Approved On</th>
+              <th>Month / Date</th>
               <th>Edit</th>
               <th>Delete</th>
             </tr>
@@ -412,10 +465,10 @@ function StudentList() {
             {filteredStudents.map((s, i) => (
               <tr key={s.id}>
                 <td>{i + 1}</td>
-                <td>{s.email || "—"}</td>
+                <td>{s.email}</td>
                 <td>{s.name}</td>
                 <td>{s.class}</td>
-                <td>₹{s.pendingFees}</td>
+                <td className="text-danger fw-semibold">₹ {s.pendingFees}</td>
                 <td>
                   <span
                     className={`badge ${
@@ -425,22 +478,26 @@ function StudentList() {
                     {s.feeStatus}
                   </span>
                 </td>
-                <td>{s.feesDate || "—"}</td>
-                <td>
-                  {s.approvedAt
-                    ? s.approvedAt.toDate().toLocaleDateString()
-                    : "—"}
-                </td>
+                <td>{s.month || "—"}</td>
                 <td>
                   <button
+                    type="button"
                     className="btn btn-warning btn-sm"
-                    onClick={() => setEditStudent(s)}
+                    onClick={() =>
+                      setEditStudent({
+                        ...s,
+                        feeDate: s.feeDate
+                          ? s.feeDate.toDate().toISOString().split("T")[0]
+                          : "",
+                      })
+                    }
                   >
                     Edit
                   </button>
                 </td>
                 <td>
                   <button
+                    type="button"
                     className="btn btn-danger btn-sm"
                     onClick={() => setDeleteStudent(s)}
                   >
@@ -519,11 +576,11 @@ function StudentList() {
                 <input
                   type="date"
                   className="form-control"
-                  value={editStudent.feesDate || ""}
+                  value={editStudent.feeDate || ""}
                   onChange={(e) =>
                     setEditStudent({
                       ...editStudent,
-                      feesDate: e.target.value,
+                      feeDate: e.target.value,
                     })
                   }
                 />
@@ -531,16 +588,28 @@ function StudentList() {
             </div>
 
             <div className="d-flex justify-content-end gap-2 mt-4">
-              <button className="btn btn-success" onClick={updateStudent}>
+              <button
+                type="button"
+                className="btn btn-success"
+                disabled={!isEditFormValid}
+                onClick={updateStudent}
+              >
                 💾 Update
               </button>
               <button
+                type="button"
                 className="btn btn-secondary"
                 onClick={() => setEditStudent(null)}
               >
                 Cancel
               </button>
             </div>
+
+            {!isEditFormValid && (
+              <small className="text-danger d-block mt-2">
+                ⚠️ Please fill all fields before updating
+              </small>
+            )}
           </div>
         </div>
       )}
@@ -551,21 +620,25 @@ function StudentList() {
           className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
           style={{ background: "rgba(0,0,0,0.5)", zIndex: 9999 }}
         >
-          <div className="bg-white p-4 rounded shadow" style={{ width: 400 }}>
-            <h5 className="text-danger">⚠️ Confirm Delete</h5>
+          <div className="bg-white p-4 rounded shadow" style={{ width: 350 }}>
+            <h6 className="text-danger">Confirm Delete</h6>
             <p>
-              Are you sure you want to delete <b>{deleteStudent.name}</b>?
+              Delete <b>{deleteStudent.name}</b>?
             </p>
-
             <div className="d-flex justify-content-end gap-2">
               <button
+                type="button"
                 className="btn btn-secondary"
                 onClick={() => setDeleteStudent(null)}
               >
-                No
+                Cancel
               </button>
-              <button className="btn btn-danger" onClick={confirmDelete}>
-                Yes, Delete
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={confirmDelete}
+              >
+                Delete
               </button>
             </div>
           </div>
