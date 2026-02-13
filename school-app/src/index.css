@@ -14,6 +14,8 @@ html {
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background-color: #ffffff;
+  color: #212529;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Fixed navbar offset for scroll */
@@ -52,7 +54,6 @@ section {
   width: 100%;
 }
 
-/* remove underline for buttons */
 .navbar-nav .btn::after {
   display: none;
 }
@@ -90,3 +91,89 @@ section {
     width: 100%;
   }
 }
+
+/* ========================================================= */
+/* ======================= DARK MODE ======================== */
+/* ========================================================= */
+
+body.dark-mode {
+  background-color: #121212;
+  color: #ffffff;
+}
+
+/* Sections */
+body.dark-mode section {
+  background-color: #121212 !important;
+}
+
+/* Navbar */
+body.dark-mode .custom-navbar {
+  background-color: #121212 !important;
+}
+
+body.dark-mode .navbar .nav-link,
+body.dark-mode .navbar .navbar-brand {
+  color: white !important;
+}
+
+body.dark-mode .navbar .nav-link:hover {
+  color: #0d6efd !important;
+}
+
+/* Navbar toggler */
+body.dark-mode .navbar-toggler {
+  border-color: white;
+}
+
+body.dark-mode .navbar-toggler-icon {
+  filter: invert(1);
+}
+
+/* Cards */
+body.dark-mode .card {
+  background-color: #1e1e1e !important;
+  border: 1px solid #333 !important;
+  color: white !important;
+}
+
+/* Buttons */
+body.dark-mode .btn-outline-primary,
+body.dark-mode .btn-outline-dark {
+  border-color: white !important;
+  color: white !important;
+}
+
+body.dark-mode .btn-outline-primary:hover,
+body.dark-mode .btn-outline-dark:hover {
+  background-color: white !important;
+  color: black !important;
+}
+
+/* Muted text */
+body.dark-mode .text-muted {
+  color: #cccccc !important;
+}
+
+/* ================= TABLE FIX (IMPORTANT) ================= */
+
+body.dark-mode .table {
+  background-color: #1e1e1e !important;
+  color: white !important;
+}
+
+body.dark-mode .table th,
+body.dark-mode .table td {
+  background-color: #1e1e1e !important;
+  color: white !important;
+  border-color: #444 !important;
+}
+
+body.dark-mode .table thead {
+  background-color: #2a2a2a !important;
+}
+
+body.dark-mode .table tr:hover {
+  background-color: #2a2a2a !important;
+}
+
+/* ========================================================= */

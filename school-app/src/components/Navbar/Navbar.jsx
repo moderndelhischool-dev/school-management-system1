@@ -1,16 +1,35 @@
-// import { Link, useNavigate } from "react-router-dom";
+// import { Link, useNavigate, useLocation } from "react-router-dom";
 
 // function Navbar() {
 //   const navigate = useNavigate();
+//   const location = useLocation();
+
+//   const closeMobileMenu = () => {
+//     const nav = document.getElementById("schoolNavbar");
+//     if (nav && nav.classList.contains("show")) {
+//       nav.classList.remove("show");
+//     }
+//   };
 
 //   const goToSection = (id) => {
-//     navigate("/");
-//     setTimeout(() => {
+//     // agar already home pe ho
+//     if (location.pathname === "/") {
 //       const el = document.getElementById(id);
 //       if (el) {
 //         el.scrollIntoView({ behavior: "smooth" });
 //       }
-//     }, 100);
+//       closeMobileMenu();
+//     } else {
+//       // agar kisi aur page se aa rahe ho
+//       navigate("/");
+//       setTimeout(() => {
+//         const el = document.getElementById(id);
+//         if (el) {
+//           el.scrollIntoView({ behavior: "smooth" });
+//         }
+//         closeMobileMenu();
+//       }, 150);
+//     }
 //   };
 
 //   return (
@@ -62,13 +81,21 @@
 //             </li>
 
 //             <li className="nav-item ms-lg-3">
-//               <Link className="btn btn-outline-primary px-4" to="/login">
+//               <Link
+//                 className="btn btn-outline-primary px-4"
+//                 to="/login"
+//                 onClick={closeMobileMenu}
+//               >
 //                 Login
 //               </Link>
 //             </li>
 
 //             <li className="nav-item mt-2 mt-lg-0">
-//               <Link className="btn btn-primary px-4" to="/register">
+//               <Link
+//                 className="btn btn-primary px-4"
+//                 to="/register"
+//                 onClick={closeMobileMenu}
+//               >
 //                 Signup
 //               </Link>
 //             </li>
@@ -81,10 +108,34 @@
 
 // export default Navbar;
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [darkMode, setDarkMode] = useState(false);
+
+  // Load saved theme
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark") {
+      document.body.classList.add("dark-mode");
+      setDarkMode(true);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+
+    if (newMode) {
+      document.body.classList.add("dark-mode");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.body.classList.remove("dark-mode");
+      localStorage.setItem("theme", "light");
+    }
+  };
 
   const closeMobileMenu = () => {
     const nav = document.getElementById("schoolNavbar");
@@ -94,31 +145,29 @@ function Navbar() {
   };
 
   const goToSection = (id) => {
-    // agar already home pe ho
     if (location.pathname === "/") {
       const el = document.getElementById(id);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth" });
-      }
+      if (el) el.scrollIntoView({ behavior: "smooth" });
       closeMobileMenu();
     } else {
-      // agar kisi aur page se aa rahe ho
       navigate("/");
       setTimeout(() => {
         const el = document.getElementById(id);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth" });
-        }
+        if (el) el.scrollIntoView({ behavior: "smooth" });
         closeMobileMenu();
       }, 150);
     }
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
+    <nav
+      className={`navbar navbar-expand-lg shadow-sm fixed-top ${
+        darkMode ? "navbar-dark bg-dark" : "navbar-light bg-white"
+      }`}
+    >
       <div className="container">
         {/* LEFT */}
-        <Link className="navbar-brand fw-bold text-primary" to="/">
+        <Link className="navbar-brand fw-bold" to="/">
           🏫 School Management
         </Link>
 
@@ -162,9 +211,12 @@ function Navbar() {
               </button>
             </li>
 
+            {/* LOGIN */}
             <li className="nav-item ms-lg-3">
               <Link
-                className="btn btn-outline-primary px-4"
+                className={`btn ${
+                  darkMode ? "btn-outline-light" : "btn-outline-primary"
+                } px-4`}
                 to="/login"
                 onClick={closeMobileMenu}
               >
@@ -172,7 +224,8 @@ function Navbar() {
               </Link>
             </li>
 
-            <li className="nav-item mt-2 mt-lg-0">
+            {/* SIGNUP */}
+            <li className="nav-item">
               <Link
                 className="btn btn-primary px-4"
                 to="/register"
@@ -180,6 +233,18 @@ function Navbar() {
               >
                 Signup
               </Link>
+            </li>
+
+            {/* 🌙 DARK MODE BUTTON LAST */}
+            <li className="nav-item">
+              <button
+                className={`btn ${
+                  darkMode ? "btn-outline-light" : "btn-outline-dark"
+                }`}
+                onClick={toggleTheme}
+              >
+                {darkMode ? "☀ Light" : "🌙 Dark"}
+              </button>
             </li>
           </ul>
         </div>
