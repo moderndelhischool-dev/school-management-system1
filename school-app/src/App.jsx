@@ -80,7 +80,6 @@ function ScrollToTop() {
   return null;
 }
 
-/* Layout Controller */
 function Layout() {
   const location = useLocation();
 
@@ -97,7 +96,7 @@ function Layout() {
         <Suspense
           fallback={
             <div style={{ padding: "100px", textAlign: "center" }}>
-              Loading...
+              Loading..
             </div>
           }
         >
