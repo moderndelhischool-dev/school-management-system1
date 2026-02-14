@@ -1,8 +1,32 @@
 // import { Link, useNavigate, useLocation } from "react-router-dom";
+// import { useEffect, useState } from "react";
 
 // function Navbar() {
 //   const navigate = useNavigate();
 //   const location = useLocation();
+//   const [darkMode, setDarkMode] = useState(false);
+
+//   // Load saved theme
+//   useEffect(() => {
+//     const savedTheme = localStorage.getItem("theme");
+//     if (savedTheme === "dark") {
+//       document.body.classList.add("dark-mode");
+//       setDarkMode(true);
+//     }
+//   }, []);
+
+//   const toggleTheme = () => {
+//     const newMode = !darkMode;
+//     setDarkMode(newMode);
+
+//     if (newMode) {
+//       document.body.classList.add("dark-mode");
+//       localStorage.setItem("theme", "dark");
+//     } else {
+//       document.body.classList.remove("dark-mode");
+//       localStorage.setItem("theme", "light");
+//     }
+//   };
 
 //   const closeMobileMenu = () => {
 //     const nav = document.getElementById("schoolNavbar");
@@ -12,31 +36,29 @@
 //   };
 
 //   const goToSection = (id) => {
-//     // agar already home pe ho
 //     if (location.pathname === "/") {
 //       const el = document.getElementById(id);
-//       if (el) {
-//         el.scrollIntoView({ behavior: "smooth" });
-//       }
+//       if (el) el.scrollIntoView({ behavior: "smooth" });
 //       closeMobileMenu();
 //     } else {
-//       // agar kisi aur page se aa rahe ho
 //       navigate("/");
 //       setTimeout(() => {
 //         const el = document.getElementById(id);
-//         if (el) {
-//           el.scrollIntoView({ behavior: "smooth" });
-//         }
+//         if (el) el.scrollIntoView({ behavior: "smooth" });
 //         closeMobileMenu();
 //       }, 150);
 //     }
 //   };
 
 //   return (
-//     <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
+//     <nav
+//       className={`navbar navbar-expand-lg shadow-sm fixed-top ${
+//         darkMode ? "navbar-dark bg-dark" : "navbar-light bg-white"
+//       }`}
+//     >
 //       <div className="container">
 //         {/* LEFT */}
-//         <Link className="navbar-brand fw-bold text-primary" to="/">
+//         <Link className="navbar-brand fw-bold" to="/">
 //           🏫 School Management
 //         </Link>
 
@@ -80,9 +102,12 @@
 //               </button>
 //             </li>
 
+//             {/* LOGIN */}
 //             <li className="nav-item ms-lg-3">
 //               <Link
-//                 className="btn btn-outline-primary px-4"
+//                 className={`btn ${
+//                   darkMode ? "btn-outline-light" : "btn-outline-primary"
+//                 } px-4`}
 //                 to="/login"
 //                 onClick={closeMobileMenu}
 //               >
@@ -90,7 +115,8 @@
 //               </Link>
 //             </li>
 
-//             <li className="nav-item mt-2 mt-lg-0">
+//             {/* SIGNUP */}
+//             <li className="nav-item">
 //               <Link
 //                 className="btn btn-primary px-4"
 //                 to="/register"
@@ -98,6 +124,18 @@
 //               >
 //                 Signup
 //               </Link>
+//             </li>
+
+//             {/* 🌙 DARK MODE BUTTON LAST */}
+//             <li className="nav-item">
+//               <button
+//                 className={`btn ${
+//                   darkMode ? "btn-outline-light" : "btn-outline-dark"
+//                 }`}
+//                 onClick={toggleTheme}
+//               >
+//                 {darkMode ? "☀ Light" : "🌙 Dark"}
+//               </button>
 //             </li>
 //           </ul>
 //         </div>
@@ -114,6 +152,8 @@ function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [darkMode, setDarkMode] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false); // NEW
 
   // Load saved theme
   useEffect(() => {
@@ -122,6 +162,13 @@ function Navbar() {
       document.body.classList.add("dark-mode");
       setDarkMode(true);
     }
+
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const toggleTheme = () => {
@@ -142,48 +189,53 @@ function Navbar() {
     if (nav && nav.classList.contains("show")) {
       nav.classList.remove("show");
     }
+    setMenuOpen(false); // RESET ICON
   };
 
   const goToSection = (id) => {
-    if (location.pathname === "/") {
-      const el = document.getElementById(id);
-      if (el) el.scrollIntoView({ behavior: "smooth" });
-      closeMobileMenu();
-    } else {
+    if (location.pathname !== "/") {
       navigate("/");
       setTimeout(() => {
-        const el = document.getElementById(id);
-        if (el) el.scrollIntoView({ behavior: "smooth" });
-        closeMobileMenu();
-      }, 150);
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+      }, 200);
+    } else {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
     }
+    closeMobileMenu();
   };
 
   return (
     <nav
-      className={`navbar navbar-expand-lg shadow-sm fixed-top ${
-        darkMode ? "navbar-dark bg-dark" : "navbar-light bg-white"
+      className={`navbar navbar-expand-lg fixed-top transition-all ${
+        scrolled
+          ? darkMode
+            ? "navbar-dark bg-dark shadow"
+            : "navbar-light bg-white shadow"
+          : "navbar-dark bg-transparent"
       }`}
     >
       <div className="container">
-        {/* LEFT */}
-        <Link className="navbar-brand fw-bold" to="/">
-          🏫 School Management
+        <Link className="navbar-brand fw-bold text-info" to="/">
+          🏫 Smart School
         </Link>
 
-        {/* MOBILE */}
+        {/* TOGGLER */}
         <button
           className="navbar-toggler"
           type="button"
           data-bs-toggle="collapse"
           data-bs-target="#schoolNavbar"
+          onClick={() => setMenuOpen(!menuOpen)}
         >
-          <span className="navbar-toggler-icon"></span>
+          {menuOpen ? (
+            <span style={{ fontSize: "24px", color: "inherit" }}>✖</span>
+          ) : (
+            <span className="navbar-toggler-icon"></span>
+          )}
         </button>
 
-        {/* RIGHT */}
         <div className="collapse navbar-collapse" id="schoolNavbar">
-          <ul className="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+          <ul className="navbar-nav ms-auto align-items-lg-center gap-lg-3">
             <li className="nav-item">
               <button
                 className="nav-link btn btn-link"
@@ -211,12 +263,9 @@ function Navbar() {
               </button>
             </li>
 
-            {/* LOGIN */}
-            <li className="nav-item ms-lg-3">
+            <li className="nav-item">
               <Link
-                className={`btn ${
-                  darkMode ? "btn-outline-light" : "btn-outline-primary"
-                } px-4`}
+                className="btn btn-outline-info px-4"
                 to="/login"
                 onClick={closeMobileMenu}
               >
@@ -224,10 +273,9 @@ function Navbar() {
               </Link>
             </li>
 
-            {/* SIGNUP */}
             <li className="nav-item">
               <Link
-                className="btn btn-primary px-4"
+                className="btn btn-info px-4"
                 to="/register"
                 onClick={closeMobileMenu}
               >
@@ -235,16 +283,17 @@ function Navbar() {
               </Link>
             </li>
 
-            {/* 🌙 DARK MODE BUTTON LAST */}
             <li className="nav-item">
-              <button
-                className={`btn ${
-                  darkMode ? "btn-outline-light" : "btn-outline-dark"
-                }`}
-                onClick={toggleTheme}
-              >
-                {darkMode ? "☀ Light" : "🌙 Dark"}
-              </button>
+              <div className="theme-toggle-wrapper">
+                <button
+                  className={`theme-toggle ${darkMode ? "active" : ""}`}
+                  onClick={toggleTheme}
+                >
+                  <span className="icon sun">☀</span>
+                  <span className="icon moon">🌙</span>
+                  <span className="toggle-circle"></span>
+                </button>
+              </div>
             </li>
           </ul>
         </div>

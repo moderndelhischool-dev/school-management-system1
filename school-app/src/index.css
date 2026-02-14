@@ -1,4 +1,7 @@
-/* ================= ROOT ================= */
+/* ========================================================= */
+/* ======================= ROOT ============================= */
+/* ========================================================= */
+
 html,
 body,
 #root {
@@ -6,7 +9,6 @@ body,
   margin: 0;
 }
 
-/* ================= GLOBAL ================= */
 html {
   scroll-behavior: smooth;
 }
@@ -18,12 +20,25 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Fixed navbar offset for scroll */
+/* Prevent horizontal scroll */
+body {
+  overflow-x: hidden;
+}
+
+/* Navbar offset for smooth scroll */
 section {
   scroll-margin-top: 90px;
 }
 
-/* ================= NAVBAR LINKS ================= */
+/* ========================================================= */
+/* ======================= NAVBAR =========================== */
+/* ========================================================= */
+
+.navbar {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Nav links */
 .navbar-nav .nav-link {
   position: relative;
   font-weight: 500;
@@ -38,7 +53,7 @@ section {
   color: #0d6efd !important;
 }
 
-/* underline effect */
+/* Animated underline */
 .navbar-nav .nav-link::after {
   content: "";
   position: absolute;
@@ -54,20 +69,38 @@ section {
   width: 100%;
 }
 
+/* Remove underline from buttons */
 .navbar-nav .btn::after {
   display: none;
 }
 
-/* ================= BUTTONS ================= */
+/* Buttons */
 .btn {
-  transition: background-color 0.25s ease, box-shadow 0.25s ease;
+  transition: background-color 0.25s ease, box-shadow 0.25s ease,
+    transform 0.25s ease;
 }
 
 .btn:hover {
   box-shadow: 0 4px 12px rgba(13, 110, 253, 0.25);
+  transform: translateY(-2px);
 }
 
-/* ================= MOBILE FIXES ================= */
+/* ========================================================= */
+/* ======================= MOBILE =========================== */
+/* ========================================================= */
+
+@media (max-width: 992px) {
+  .navbar-collapse {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+  }
+
+  body.dark-mode .navbar-collapse {
+    background: #1e1e1e;
+  }
+}
+
 @media (max-width: 576px) {
   h1 {
     font-size: 1.8rem;
@@ -83,13 +116,35 @@ section {
   }
 
   .navbar-nav {
-    gap: 6px;
+    gap: 8px;
     text-align: center;
   }
 
   .navbar-nav .btn {
     width: 100%;
   }
+}
+
+/* ========================================================= */
+/* ======================= CARDS ============================ */
+/* ========================================================= */
+
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* ========================================================= */
+/* ======================= TABLE ============================ */
+/* ========================================================= */
+
+.table {
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 /* ========================================================= */
@@ -107,7 +162,7 @@ body.dark-mode section {
 }
 
 /* Navbar */
-body.dark-mode .custom-navbar {
+body.dark-mode .navbar {
   background-color: #121212 !important;
 }
 
@@ -154,8 +209,7 @@ body.dark-mode .text-muted {
   color: #cccccc !important;
 }
 
-/* ================= TABLE FIX (IMPORTANT) ================= */
-
+/* Table Dark Mode */
 body.dark-mode .table {
   background-color: #1e1e1e !important;
   color: white !important;
@@ -177,3 +231,79 @@ body.dark-mode .table tr:hover {
 }
 
 /* ========================================================= */
+/* =================== THEME TOGGLE ========================= */
+/* ========================================================= */
+
+.theme-toggle-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-toggle {
+  position: relative;
+  width: 70px;
+  height: 35px;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  transition: all 0.4s ease;
+  overflow: hidden;
+}
+
+.theme-toggle .icon {
+  font-size: 14px;
+  z-index: 2;
+  transition: opacity 0.3s ease;
+}
+
+.theme-toggle .sun {
+  color: #ffc107;
+}
+
+.theme-toggle .moon {
+  color: #ffffff;
+}
+
+.toggle-circle {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  background: white;
+  border-radius: 50%;
+  top: 3.5px;
+  left: 4px;
+  transition: all 0.4s ease;
+  z-index: 1;
+}
+
+/* Dark Active */
+.theme-toggle.active {
+  background: linear-gradient(135deg, #232526, #414345);
+}
+
+.theme-toggle.active .toggle-circle {
+  left: 38px;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.05);
+}
+
+/* ========================================================= */
+/* ================= FOOTER FIX ============================= */
+/* ========================================================= */
+
+footer {
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+body.dark-mode footer {
+  background-color: #121212 !important;
+  color: white !important;
+}
