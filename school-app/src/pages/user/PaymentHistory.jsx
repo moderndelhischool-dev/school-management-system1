@@ -13,17 +13,20 @@
 //   const [payments, setPayments] = useState([]);
 //   const [loading, setLoading] = useState(true);
 //   const [totalFees, setTotalFees] = useState(0);
+//   const [darkMode, setDarkMode] = useState(false);
 
-//   /* ================= LOAD DATA ================= */
 //   useEffect(() => {
+//     const savedTheme = localStorage.getItem("theme");
+//     if (savedTheme === "dark") {
+//       setDarkMode(true);
+//     }
+
 //     const load = async () => {
-//       // student total fees
 //       const studentSnap = await getDoc(doc(db, "students", email));
 //       if (studentSnap.exists()) {
 //         setTotalFees(Number(studentSnap.data().totalFees || 0));
 //       }
 
-//       // approved payments
 //       const q = query(
 //         collection(db, "payments"),
 //         where("studentEmail", "==", email),
@@ -36,7 +39,6 @@
 //         ...d.data(),
 //       }));
 
-//       // oldest first
 //       data.sort((a, b) => a.createdAt.seconds - b.createdAt.seconds);
 
 //       setPayments(data);
@@ -46,20 +48,34 @@
 //     load();
 //   }, [email]);
 
-//   if (loading) return <p>Loading payment history...</p>;
+//   if (loading)
+//     return (
+//       <p className={darkMode ? "text-light" : ""}>Loading payment history...</p>
+//     );
+
 //   if (payments.length === 0)
-//     return <p className="text-muted">No payment history found.</p>;
+//     return (
+//       <p className={darkMode ? "text-light" : "text-muted"}>
+//         No payment history found.
+//       </p>
+//     );
 
 //   let cumulativePaid = 0;
 
 //   return (
-//     <div className="card shadow-sm p-3">
+//     <div
+//       className={`card shadow-sm p-3 ${darkMode ? "bg-dark text-light" : ""}`}
+//     >
 //       <h5 className="mb-3">🧾 Payment History</h5>
 
-//       {/* ================= DESKTOP TABLE ================= */}
+//       {/* DESKTOP TABLE */}
 //       <div className="table-responsive d-none d-md-block">
-//         <table className="table table-bordered align-middle">
-//           <thead className="table-dark">
+//         <table
+//           className={`table table-bordered align-middle ${
+//             darkMode ? "table-dark" : ""
+//           }`}
+//         >
+//           <thead>
 //             <tr>
 //               <th>#</th>
 //               <th>Paid</th>
@@ -78,7 +94,9 @@
 //               return (
 //                 <tr key={p.id}>
 //                   <td>{i + 1}</td>
+
 //                   <td className="text-success fw-semibold">₹ {p.paidAmount}</td>
+
 //                   <td
 //                     className={
 //                       remaining === 0
@@ -88,10 +106,13 @@
 //                   >
 //                     ₹ {remaining}
 //                   </td>
+
 //                   <td>{p.month || "—"}</td>
+
 //                   <td>
 //                     <span className="badge bg-success">approved</span>
 //                   </td>
+
 //                   <td>
 //                     {new Date(p.createdAt.seconds * 1000).toLocaleDateString(
 //                       "en-IN",
@@ -104,14 +125,19 @@
 //         </table>
 //       </div>
 
-//       {/* ================= MOBILE CARDS ================= */}
+//       {/* MOBILE CARDS */}
 //       <div className="d-md-none">
 //         {payments.map((p, i) => {
 //           cumulativePaid += Number(p.paidAmount || 0);
 //           const remaining = Math.max(totalFees - cumulativePaid, 0);
 
 //           return (
-//             <div key={p.id} className="border rounded p-3 mb-2">
+//             <div
+//               key={p.id}
+//               className={`border rounded p-3 mb-2 ${
+//                 darkMode ? "bg-dark text-light border-secondary" : ""
+//               }`}
+//             >
 //               <div className="d-flex justify-content-between mb-1">
 //                 <strong>Payment #{i + 1}</strong>
 //                 <span className="badge bg-success">approved</span>
@@ -221,15 +247,29 @@ function PaymentHistory({ email }) {
 
   return (
     <div
-      className={`card shadow-sm p-3 ${darkMode ? "bg-dark text-light" : ""}`}
+      className={`card shadow-sm p-4 payment-card ${
+        darkMode ? "bg-dark text-light border-secondary" : ""
+      }`}
     >
-      <h5 className="mb-3">🧾 Payment History</h5>
+      <h5 className="mb-4 fw-bold">🧾 Payment History</h5>
+
+      {/* SUMMARY */}
+      <div className="mb-4 p-3 rounded summary-box">
+        <div className="d-flex justify-content-between">
+          <span>Total Fees</span>
+          <strong>₹ {totalFees}</strong>
+        </div>
+        <div className="d-flex justify-content-between">
+          <span>Total Payments</span>
+          <strong>{payments.length}</strong>
+        </div>
+      </div>
 
       {/* DESKTOP TABLE */}
       <div className="table-responsive d-none d-md-block">
         <table
-          className={`table table-bordered align-middle ${
-            darkMode ? "table-dark" : ""
+          className={`table align-middle ${
+            darkMode ? "table-dark" : "table-bordered"
           }`}
         >
           <thead>
@@ -291,16 +331,16 @@ function PaymentHistory({ email }) {
           return (
             <div
               key={p.id}
-              className={`border rounded p-3 mb-2 ${
+              className={`mobile-card p-3 mb-3 ${
                 darkMode ? "bg-dark text-light border-secondary" : ""
               }`}
             >
-              <div className="d-flex justify-content-between mb-1">
+              <div className="d-flex justify-content-between mb-2">
                 <strong>Payment #{i + 1}</strong>
                 <span className="badge bg-success">approved</span>
               </div>
 
-              <div className="small text-muted mb-1">
+              <div className="small text-muted mb-2">
                 {new Date(p.createdAt.seconds * 1000).toLocaleDateString(
                   "en-IN",
                 )}
@@ -333,6 +373,38 @@ function PaymentHistory({ email }) {
           );
         })}
       </div>
+
+      {/* CUSTOM STYLE */}
+      <style>{`
+        .payment-card {
+          border-radius: 16px;
+          transition: 0.3s ease;
+        }
+
+        .payment-card:hover {
+          box-shadow: 0 12px 35px rgba(0,0,0,0.1);
+        }
+
+        .summary-box {
+          background: linear-gradient(135deg,#ecfdf5,#d1fae5);
+          font-weight: 500;
+        }
+
+        body.dark-mode .summary-box {
+          background: linear-gradient(135deg,#1e293b,#0f172a);
+        }
+
+        .mobile-card {
+          border-radius: 12px;
+          border: 1px solid #e5e7eb;
+          transition: 0.3s ease;
+        }
+
+        .mobile-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+      `}</style>
     </div>
   );
 }

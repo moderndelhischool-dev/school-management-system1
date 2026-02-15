@@ -1,14 +1,43 @@
+// import { useEffect, useState } from "react";
+
 // function UserSidebar({ activePage, setActivePage, onChangePassword }) {
+//   const [darkMode, setDarkMode] = useState(false);
+
+//   useEffect(() => {
+//     const savedTheme = localStorage.getItem("theme");
+//     if (savedTheme === "dark") {
+//       setDarkMode(true);
+//       document.body.classList.add("dark-mode");
+//     }
+//   }, []);
+
+//   const toggleTheme = () => {
+//     const newMode = !darkMode;
+//     setDarkMode(newMode);
+
+//     if (newMode) {
+//       document.body.classList.add("dark-mode");
+//       localStorage.setItem("theme", "dark");
+//     } else {
+//       document.body.classList.remove("dark-mode");
+//       localStorage.setItem("theme", "light");
+//     }
+//   };
+
 //   const btnClass = (page) =>
-//     `btn w-100 text-start mb-2 ${
-//       activePage === page ? "btn-primary text-white" : "btn-light"
+//     `sidebar-btn btn w-100 text-start mb-2 ${
+//       activePage === page
+//         ? "active-btn"
+//         : darkMode
+//           ? "btn-dark text-white"
+//           : "btn-light"
 //     }`;
 
 //   return (
-//     <div className="bg-white h-100 border-end p-3 d-flex flex-column">
-//       <h5 className="mb-4">👤 Student</h5>
+//     <div className="user-sidebar h-100 p-4 d-flex flex-column">
+//       <h5 className="mb-4 fw-bold sidebar-title">👤 Student Panel</h5>
 
-//       {/* DASHBOARD */}
+//       {/* MENU ITEMS */}
 //       <button
 //         className={btnClass("home")}
 //         onClick={() => setActivePage("home")}
@@ -16,7 +45,6 @@
 //         📊 Dashboard
 //       </button>
 
-//       {/* PROFILE */}
 //       <button
 //         className={btnClass("profile")}
 //         onClick={() => setActivePage("profile")}
@@ -24,7 +52,6 @@
 //         🙍 My Profile
 //       </button>
 
-//       {/* FEES */}
 //       <button
 //         className={btnClass("fees")}
 //         onClick={() => setActivePage("fees")}
@@ -32,7 +59,6 @@
 //         💳 Fees & Payment
 //       </button>
 
-//       {/* PAYMENT HISTORY ✅ */}
 //       <button
 //         className={btnClass("history")}
 //         onClick={() => setActivePage("history")}
@@ -40,15 +66,90 @@
 //         🧾 Payment History
 //       </button>
 
-//       {/* CHANGE PASSWORD – DESKTOP ONLY */}
-//       <div className="mt-auto d-none d-md-block pt-3 border-top">
+//       {/* ✅ NEW CONTACT BUTTON */}
+//       <button
+//         className={btnClass("contact")}
+//         onClick={() => setActivePage("contact")}
+//       >
+//         📞 Contact
+//       </button>
+
+//       {/* DARK MODE BUTTON */}
+//       <div className="mt-3">
 //         <button
-//           className="btn btn-outline-secondary w-100 text-start"
+//           className={`btn w-100 ${
+//             darkMode ? "btn-outline-light" : "btn-outline-dark"
+//           }`}
+//           onClick={toggleTheme}
+//         >
+//           {darkMode ? "☀ Light Mode" : "🌙 Dark Mode"}
+//         </button>
+//       </div>
+
+//       {/* CHANGE PASSWORD */}
+//       <div className="mt-auto pt-4 border-top sidebar-bottom">
+//         <button
+//           className={`btn w-100 text-start ${
+//             darkMode ? "btn-outline-light" : "btn-outline-secondary"
+//           }`}
 //           onClick={onChangePassword}
 //         >
 //           🔐 Change Password
 //         </button>
 //       </div>
+
+//       {/* ================= STYLES ================= */}
+//       <style>{`
+
+//         .user-sidebar {
+//           background: linear-gradient(180deg, #16a34a, #22c55e);
+//           color: white;
+//           transition: all 0.3s ease;
+//         }
+
+//         body.dark-mode .user-sidebar {
+//           background: linear-gradient(180deg, #0f172a, #020617) !important;
+//           border-right: 1px solid #1e293b;
+//         }
+
+//         .sidebar-title {
+//           letter-spacing: 0.5px;
+//         }
+
+//         .sidebar-btn {
+//           border-radius: 12px;
+//           transition: all 0.3s ease;
+//           font-weight: 500;
+//           padding: 10px 14px;
+//         }
+
+//         .sidebar-btn:hover {
+//           transform: translateX(6px);
+//           box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+//         }
+
+//         .active-btn {
+//           background: linear-gradient(90deg, #ffffff, #e2e8f0) !important;
+//           color: #16a34a !important;
+//           border: none !important;
+//           transform: translateX(6px);
+//           box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+//         }
+
+//         body.dark-mode .active-btn {
+//           background: linear-gradient(90deg, #3b82f6, #2563eb) !important;
+//           color: white !important;
+//         }
+
+//         body.dark-mode .sidebar-btn:hover {
+//           box-shadow: 0 6px 18px rgba(59,130,246,0.35);
+//         }
+
+//         .sidebar-bottom {
+//           border-color: rgba(255,255,255,0.2);
+//         }
+
+//       `}</style>
 //     </div>
 //   );
 // }
@@ -63,6 +164,7 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme === "dark") {
       setDarkMode(true);
+      document.body.classList.add("dark-mode");
     }
   }, []);
 
@@ -80,19 +182,19 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
   };
 
   const btnClass = (page) =>
-    `btn w-100 text-start mb-2 ${
+    `sidebar-btn btn w-100 text-start mb-2 ${
       activePage === page
-        ? "btn-primary text-white"
+        ? "active-btn"
         : darkMode
           ? "btn-dark text-white"
           : "btn-light"
     }`;
 
   return (
-    <div className="user-sidebar h-100 border-end p-3 d-flex flex-column">
-      <h5 className="mb-4">👤 Student</h5>
+    <div className="user-sidebar h-100 p-4 d-flex flex-column">
+      <h5 className="mb-4 fw-bold sidebar-title">👤 Student Panel</h5>
 
-      {/* DASHBOARD */}
+      {/* MENU ITEMS */}
       <button
         className={btnClass("home")}
         onClick={() => setActivePage("home")}
@@ -100,7 +202,6 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         📊 Dashboard
       </button>
 
-      {/* PROFILE */}
       <button
         className={btnClass("profile")}
         onClick={() => setActivePage("profile")}
@@ -108,7 +209,6 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         🙍 My Profile
       </button>
 
-      {/* FEES */}
       <button
         className={btnClass("fees")}
         onClick={() => setActivePage("fees")}
@@ -116,7 +216,6 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         💳 Fees & Payment
       </button>
 
-      {/* PAYMENT HISTORY */}
       <button
         className={btnClass("history")}
         onClick={() => setActivePage("history")}
@@ -124,7 +223,7 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         🧾 Payment History
       </button>
 
-      {/* DARK MODE TOGGLE */}
+      {/* DARK MODE BUTTON */}
       <div className="mt-3">
         <button
           className={`btn w-100 ${
@@ -136,8 +235,9 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         </button>
       </div>
 
-      {/* CHANGE PASSWORD – DESKTOP ONLY */}
-      <div className="mt-auto d-none d-md-block pt-3 border-top">
+      {/* 🔥 BOTTOM SECTION */}
+      <div className="mt-auto pt-4 border-top sidebar-bottom text-center">
+        {/* CHANGE PASSWORD */}
         <button
           className={`btn w-100 text-start ${
             darkMode ? "btn-outline-light" : "btn-outline-secondary"
@@ -148,22 +248,49 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         </button>
       </div>
 
-      {/* DARK MODE STYLE */}
+      {/* ================= STYLES ================= */}
       <style>{`
+
         .user-sidebar {
-          background-color: white;
-          transition: background-color 0.3s ease;
+          background: linear-gradient(180deg, #16a34a, #22c55e);
+          color: white;
+          transition: all 0.3s ease;
         }
 
         body.dark-mode .user-sidebar {
-          background-color: #1e1e1e !important;
-          color: white !important;
-          border-color: #333 !important;
+          background: linear-gradient(180deg, #0f172a, #020617) !important;
+          border-right: 1px solid #1e293b;
         }
 
-        body.dark-mode .user-sidebar h5 {
+        .sidebar-btn {
+          border-radius: 12px;
+          transition: all 0.3s ease;
+          font-weight: 500;
+          padding: 10px 14px;
+        }
+
+        .sidebar-btn:hover {
+          transform: translateX(6px);
+          box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+        }
+
+        .active-btn {
+          background: linear-gradient(90deg, #ffffff, #e2e8f0) !important;
+          color: #16a34a !important;
+          border: none !important;
+          transform: translateX(6px);
+          box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+        }
+
+        body.dark-mode .active-btn {
+          background: linear-gradient(90deg, #3b82f6, #2563eb) !important;
           color: white !important;
         }
+
+        .sidebar-bottom {
+          border-color: rgba(255,255,255,0.2);
+        }
+
       `}</style>
     </div>
   );

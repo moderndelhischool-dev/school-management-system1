@@ -1,38 +1,103 @@
-// function Sidebar({ setPage }) {
-//   return (
-//     <div
-//       style={{ width: "230px", minHeight: "100vh" }}
-//       className="border-end p-3 bg-white d-flex flex-column"
-//     >
-//       <h5 className="mb-4">👨‍💼 Admin</h5>
+// import { useState } from "react";
 
-//       {/* ===== MENU BUTTONS ===== */}
-//       <div className="d-grid gap-2">
+// function Sidebar({ setPage, darkMode }) {
+//   const [active, setActive] = useState("dashboard");
+
+//   const sidebarStyle = {
+//     width: "230px",
+//     minHeight: "100vh",
+//     background: darkMode
+//       ? "linear-gradient(180deg,#0f172a,#020617)"
+//       : "linear-gradient(180deg,#16a34a,#22c55e)",
+//     color: "#ffffff",
+//     transition: "all 0.3s ease",
+//     boxShadow: darkMode
+//       ? "4px 0 25px rgba(0,0,0,0.6)"
+//       : "4px 0 25px rgba(34,197,94,0.25)",
+//   };
+
+//   const buttonStyle = (page) => ({
+//     background:
+//       active === page
+//         ? "linear-gradient(90deg,#22c55e,#16a34a)"
+//         : "transparent",
+//     color: "#ffffff",
+//     border: "none",
+//     borderRadius: "12px",
+//     padding: "12px 14px",
+//     textAlign: "left",
+//     fontWeight: active === page ? "600" : "500",
+//     transition: "all 0.3s ease",
+//     transform: active === page ? "translateX(6px)" : "translateX(0)",
+//   });
+
+//   const handleClick = (page) => {
+//     setActive(page);
+//     setPage(page);
+//   };
+
+//   return (
+//     <div className="p-4 d-flex flex-column" style={sidebarStyle}>
+//       <h5 className="mb-4 fw-bold">👨‍💼 Admin Panel</h5>
+
+//       {/* ===== MENU ===== */}
+//       <div className="d-grid gap-3">
 //         <button
-//           className="btn btn-light text-start"
-//           onClick={() => setPage("dashboard")}
+//           style={buttonStyle("dashboard")}
+//           onClick={() => handleClick("dashboard")}
+//           onMouseEnter={(e) =>
+//             active !== "dashboard" &&
+//             (e.currentTarget.style.transform = "translateX(6px)")
+//           }
+//           onMouseLeave={(e) =>
+//             active !== "dashboard" &&
+//             (e.currentTarget.style.transform = "translateX(0)")
+//           }
 //         >
 //           📊 Dashboard
 //         </button>
 
 //         <button
-//           className="btn btn-light text-start"
-//           onClick={() => setPage("add")}
+//           style={buttonStyle("add")}
+//           onClick={() => handleClick("add")}
+//           onMouseEnter={(e) =>
+//             active !== "add" &&
+//             (e.currentTarget.style.transform = "translateX(6px)")
+//           }
+//           onMouseLeave={(e) =>
+//             active !== "add" &&
+//             (e.currentTarget.style.transform = "translateX(0)")
+//           }
 //         >
 //           ➕ Add Student
 //         </button>
 
 //         <button
-//           className="btn btn-light text-start"
-//           onClick={() => setPage("view")}
+//           style={buttonStyle("view")}
+//           onClick={() => handleClick("view")}
+//           onMouseEnter={(e) =>
+//             active !== "view" &&
+//             (e.currentTarget.style.transform = "translateX(6px)")
+//           }
+//           onMouseLeave={(e) =>
+//             active !== "view" &&
+//             (e.currentTarget.style.transform = "translateX(0)")
+//           }
 //         >
 //           📋 View Students
 //         </button>
 
-//         {/* ✅ NEW : PAYMENT REQUESTS */}
 //         <button
-//           className="btn btn-light text-start"
-//           onClick={() => setPage("payments")}
+//           style={buttonStyle("payments")}
+//           onClick={() => handleClick("payments")}
+//           onMouseEnter={(e) =>
+//             active !== "payments" &&
+//             (e.currentTarget.style.transform = "translateX(6px)")
+//           }
+//           onMouseLeave={(e) =>
+//             active !== "payments" &&
+//             (e.currentTarget.style.transform = "translateX(0)")
+//           }
 //         >
 //           💰 Payment Requests
 //         </button>
@@ -40,7 +105,15 @@
 
 //       {/* ===== FOOTER ===== */}
 //       <div className="mt-auto pt-4">
-//         <small className="text-muted">Logged in as Admin</small>
+//         <small
+//           style={{
+//             color: "#bbf7d0",
+//             fontSize: "13px",
+//             opacity: "0.8",
+//           }}
+//         >
+//           Logged in as Admin
+//         </small>
 //       </div>
 //     </div>
 //   );
@@ -55,30 +128,30 @@ function Sidebar({ setPage, darkMode }) {
   const sidebarStyle = {
     width: "230px",
     minHeight: "100vh",
-    backgroundColor: darkMode ? "#111827" : "#ffffff",
-    color: darkMode ? "#ffffff" : "#000000",
+    height: "100%",
+    background: darkMode
+      ? "linear-gradient(180deg,#0f172a,#020617)"
+      : "linear-gradient(180deg,#16a34a,#22c55e)",
+    color: "#ffffff",
     transition: "all 0.3s ease",
     boxShadow: darkMode
-      ? "2px 0 10px rgba(0,0,0,0.5)"
-      : "2px 0 10px rgba(0,0,0,0.05)",
+      ? "4px 0 25px rgba(0,0,0,0.6)"
+      : "4px 0 25px rgba(34,197,94,0.25)",
   };
 
   const buttonStyle = (page) => ({
-    backgroundColor:
+    background:
       active === page
-        ? darkMode
-          ? "#2563eb"
-          : "#0d6efd"
-        : darkMode
-          ? "#1f2937"
-          : "#f8f9fa",
-    color: active === page ? "#ffffff" : darkMode ? "#e5e7eb" : "#000000",
+        ? "linear-gradient(90deg,#22c55e,#16a34a)"
+        : "transparent",
+    color: "#ffffff",
     border: "none",
-    borderRadius: "8px",
-    padding: "10px 12px",
+    borderRadius: "12px",
+    padding: "12px 14px",
     textAlign: "left",
+    fontWeight: active === page ? "600" : "500",
     transition: "all 0.3s ease",
-    transform: active === page ? "scale(1.02)" : "scale(1)",
+    transform: active === page ? "translateX(6px)" : "translateX(0)",
   });
 
   const handleClick = (page) => {
@@ -87,79 +160,71 @@ function Sidebar({ setPage, darkMode }) {
   };
 
   return (
-    <div className="p-3 d-flex flex-column" style={sidebarStyle}>
-      <h5 className="mb-4">👨‍💼 Admin Panel</h5>
+    <div
+      className="d-flex flex-column p-4 sidebar-wrapper"
+      style={sidebarStyle}
+    >
+      <h5 className="mb-4 fw-bold">👨‍💼 Admin Panel</h5>
 
-      {/* ===== MENU ===== */}
-      <div className="d-grid gap-2">
+      <div className="d-grid gap-3">
         <button
           style={buttonStyle("dashboard")}
           onClick={() => handleClick("dashboard")}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.transform = "translateX(5px)")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.transform =
-              active === "dashboard" ? "scale(1.02)" : "scale(1)")
-          }
         >
           📊 Dashboard
         </button>
 
-        <button
-          style={buttonStyle("add")}
-          onClick={() => handleClick("add")}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.transform = "translateX(5px)")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.transform =
-              active === "add" ? "scale(1.02)" : "scale(1)")
-          }
-        >
+        <button style={buttonStyle("add")} onClick={() => handleClick("add")}>
           ➕ Add Student
         </button>
 
-        <button
-          style={buttonStyle("view")}
-          onClick={() => handleClick("view")}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.transform = "translateX(5px)")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.transform =
-              active === "view" ? "scale(1.02)" : "scale(1)")
-          }
-        >
+        <button style={buttonStyle("view")} onClick={() => handleClick("view")}>
           📋 View Students
         </button>
 
         <button
           style={buttonStyle("payments")}
           onClick={() => handleClick("payments")}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.transform = "translateX(5px)")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.transform =
-              active === "payments" ? "scale(1.02)" : "scale(1)")
-          }
         >
           💰 Payment Requests
         </button>
       </div>
 
-      {/* ===== FOOTER ===== */}
       <div className="mt-auto pt-4">
         <small
           style={{
-            color: darkMode ? "#9ca3af" : "#6c757d",
-            transition: "all 0.3s ease",
+            color: "#bbf7d0",
+            fontSize: "13px",
+            opacity: "0.8",
           }}
         >
           Logged in as Admin
         </small>
       </div>
+
+      <style>{`
+        /* 👇 FIX FOR LEFT WHITE LINE */
+        .sidebar-wrapper {
+          position: sticky;
+          top: 0;
+          align-self: stretch;   /* Important */
+          margin: 0;
+        }
+
+        /* Remove unwanted bootstrap gutter space */
+        @media (min-width: 768px) {
+          .sidebar-wrapper {
+            margin-left: 0 !important;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .sidebar-wrapper {
+            position: relative;
+            height: auto;
+          }
+        }
+      `}</style>
     </div>
   );
 }

@@ -187,148 +187,144 @@
 // }
 
 // export default Home;
-import { useEffect, useState } from "react";
-
-const sliderImages = [
-  "/img1.jpg",
-  "/img2.jpg",
-  "/img3.jpg",
-  "/img4.jpg",
-  "/img5.jpg",
-];
+import { useNavigate } from "react-router-dom";
 
 function Home() {
-  const [index, setIndex] = useState(0);
+  const navigate = useNavigate();
 
-  const nextSlide = () => {
-    setIndex((prev) => (prev + 1) % sliderImages.length);
+  const handleApply = () => {
+    navigate("/register");
   };
 
-  useEffect(() => {
-    const interval = setInterval(nextSlide, 4000);
-    return () => clearInterval(interval);
-  }, []);
+  const handleContact = () => {
+    const section = document.getElementById("contact");
+    if (section) {
+      section.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   return (
-    <section
-      id="home"
-      style={{
-        minHeight: "80vh", // 🔥 Reduced section height
-        background: "#ffffff",
-        paddingTop: "40px", // 🔥 Reduced top space
-        paddingBottom: "40px", // 🔥 Reduced bottom space
-      }}
-    >
-      <div className="container text-center">
-        {/* HEADING */}
-        <h1 className="main-heading">
-          This is your <span>learning,</span>
-        </h1>
+    <section className="hero-section" id="home">
+      <div className="hero-overlay">
+        <div className="hero-content text-center">
+          <p className="hero-subtitle">The Best School of The State</p>
 
-        <div className="row justify-content-center align-items-center mt-4">
-          {/* LEFT CORNER */}
-          <div className="col-md-2">
-            <img src="/side1.jpg" className="corner-img img-hover" alt="" />
-          </div>
+          <h1 className="hero-title">
+            Transformative <br /> Education
+          </h1>
 
-          {/* LEFT SIDE */}
-          <div className="col-md-2 left-side d-flex flex-column gap-4">
-            <img src="/side2.jpg" className="side-img img-hover" alt="" />
-            <img src="/side3.jpg" className="side-img img-hover" alt="" />
-          </div>
+          <p className="hero-description">
+            Modern New Delhi Public High School is committed to academic
+            excellence, character development, and building future leaders.
+          </p>
 
-          {/* CENTER SLIDER */}
-          <div className="col-md-4 center-column">
-            <div className="center-wrapper">
-              <img
-                src={sliderImages[index]}
-                alt=""
-                className="center-img img-hover"
-              />
-            </div>
-          </div>
+          <div className="hero-buttons">
+            <button
+              className="btn btn-success hero-btn-green"
+              onClick={handleApply}
+            >
+              Apply Now
+            </button>
 
-          {/* RIGHT SIDE */}
-          <div className="col-md-2 right-side d-flex flex-column gap-4">
-            <img src="/side4.jpg" className="side-img img-hover" alt="" />
-            <img src="/side5.jpg" className="side-img img-hover" alt="" />
-          </div>
-
-          {/* RIGHT CORNER */}
-          <div className="col-md-2">
-            <img src="/side6.jpg" className="corner-img img-hover" alt="" />
+            <button
+              className="btn btn-light hero-btn-white"
+              onClick={handleContact}
+            >
+              Contact Us
+            </button>
           </div>
         </div>
       </div>
 
-      {/* ================= STYLES ================= */}
       <style>{`
-        .main-heading {
-          font-size: 3rem;
-          font-weight: 700;
-          color: #2f7d32;
+        .hero-section {
+          position: relative;
+          height: 100vh;
+          width: 100%;
+          background: url("/img0.jpg") center center / cover no-repeat;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .hero-overlay {
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.45);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .hero-content {
+          max-width: 900px;
+          padding: 20px;
+          color: white;
+        }
+
+        .hero-subtitle {
+          color: #22c55e;
+          font-weight: 600;
+          letter-spacing: 1px;
+          margin-bottom: 15px;
+        }
+
+        .hero-title {
+          font-size: 4rem;
+          font-weight: 800;
+          line-height: 1.2;
           margin-bottom: 20px;
         }
 
-        .main-heading span {
-          font-style: italic;
-          font-weight: 500;
+        .hero-description {
+          font-size: 1.1rem;
+          color: #e5e5e5;
+          margin-bottom: 30px;
         }
 
-        .corner-img {
-          width: 100%;
-          height: 200px;
-          object-fit: cover;
-          border-radius: 20px;
+        .hero-buttons {
+          display: flex;
+          gap: 20px;
+          justify-content: center;
+          flex-wrap: wrap;
         }
 
-        .side-img {
-          width: 100%;
-          height: 160px;
-          object-fit: cover;
-          border-radius: 18px;
+        .hero-btn-green {
+          padding: 12px 30px;
+          font-weight: 600;
+          border-radius: 50px;
+          background-color: #22c55e;
+          border: none;
         }
 
-        .center-wrapper {
-          overflow: hidden;
-          border-radius: 30px;
+        .hero-btn-green:hover {
+          background-color: #16a34a;
         }
 
-        .center-img {
-          width: 100%;
-          height: 380px;
-          object-fit: cover;
-          border-radius: 30px;
+        .hero-btn-white {
+          padding: 12px 30px;
+          font-weight: 600;
+          border-radius: 50px;
         }
 
-        /* Hover Effect */
-        .img-hover {
-          transition: transform 0.4s ease, box-shadow 0.4s ease;
-          cursor: pointer;
+        .hero-btn-white:hover {
+          background-color: #f1f1f1;
         }
 
-        .img-hover:hover {
-          transform: scale(1.05);
-          box-shadow: 0 12px 30px rgba(0,0,0,0.2);
-        }
-
-        /* Spacing */
-        .left-side {
-          padding-right: 25px;
-        }
-
-        .right-side {
-          padding-left: 25px;
-        }
-
-        .center-column {
-          padding-left: 15px;
-          padding-right: 15px;
+        @media (max-width: 992px) {
+          .hero-title {
+            font-size: 3rem;
+          }
         }
 
         @media (max-width: 768px) {
-          .main-heading { font-size: 2rem; }
-          .center-img { height: 260px; }
+          .hero-title {
+            font-size: 2.3rem;
+          }
+
+          .hero-description {
+            font-size: 1rem;
+          }
         }
       `}</style>
     </section>

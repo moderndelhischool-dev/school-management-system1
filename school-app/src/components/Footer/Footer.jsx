@@ -117,7 +117,6 @@ function Footer() {
               for students in Hoshiarpur.
             </p>
 
-            {/* Social Icons */}
             <div className="d-flex gap-3 mt-3 justify-content-center justify-content-md-start">
               <i className="bi bi-facebook social-icon"></i>
               <i className="bi bi-instagram social-icon"></i>
@@ -164,26 +163,25 @@ function Footer() {
         </div>
       </div>
 
-      {/* ===== Styling ===== */}
       <style>{`
         .footer-section {
-          background: linear-gradient(135deg, #f1f3f5, #e9ecef);
-          color: #212529;
+          background: linear-gradient(135deg, #16a34a, #15803d);
+          color: white;
           transition: 0.3s ease;
         }
 
         .school-name {
-          color: #2f7d32;
+          color: #ffffff;
         }
 
         .footer-link {
-          color: #6c757d;
+          color: #e5e7eb;
           text-decoration: none;
           transition: 0.3s ease;
         }
 
         .footer-link:hover {
-          color: #2f7d32;
+          color: #ffffff;
           padding-left: 6px;
         }
 
@@ -191,29 +189,20 @@ function Footer() {
           font-size: 20px;
           cursor: pointer;
           transition: 0.3s ease;
+          color: #e5e7eb;
         }
 
         .social-icon:hover {
-          color: #2f7d32;
+          color: white;
           transform: translateY(-3px);
         }
 
         hr {
-          border-color: #ccc;
+          border-color: rgba(255,255,255,0.3);
         }
 
-        /* Dark Mode Support */
         body.dark-mode .footer-section {
           background: #121212 !important;
-          color: white !important;
-        }
-
-        body.dark-mode .footer-link {
-          color: #bbb !important;
-        }
-
-        body.dark-mode hr {
-          border-color: #333 !important;
         }
       `}</style>
     </motion.footer>

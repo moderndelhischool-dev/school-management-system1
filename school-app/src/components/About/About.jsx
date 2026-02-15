@@ -45,11 +45,11 @@ function About() {
     <section id="about" className="about-section py-5">
       <div className="container">
         {/* Heading */}
-        <h2 className="fw-bold text-center mb-3">
+        <h2 className="fw-bold text-center mb-3 about-heading">
           About Modern New Delhi Public High School
         </h2>
 
-        <p className="text-center text-muted mb-5 about-intro">
+        <p className="text-center mb-5 about-intro">
           Modern New Delhi Public High School, Hoshiarpur, is dedicated to
           providing quality education in a disciplined and nurturing
           environment. Our school believes in academic excellence, moral values,
@@ -117,41 +117,49 @@ function About() {
 
       {/* Styling */}
       <style>{`
+
   .about-section {
-    background: #f8f9fa;
-    transition: background 0.3s ease;
+    background: linear-gradient(180deg, #f0fdf4, #ffffff);
+    transition: background 0.4s ease;
+  }
+
+  .about-heading {
+    color: #16a34a;
   }
 
   .about-intro {
     font-size: 1.05rem;
     line-height: 1.7;
+    color: #555;
   }
 
   .about-card {
     background: white;
-    padding: 25px;
-    border-radius: 15px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-    transition: 0.3s ease;
+    padding: 30px;
+    border-radius: 18px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    transition: all 0.35s ease;
+    border: 1px solid #f0f0f0;
   }
 
   .about-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
   }
 
   .feature-card {
     background: white;
-    padding: 25px;
-    border-radius: 15px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-    transition: 0.3s ease;
+    padding: 30px;
+    border-radius: 18px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    transition: all 0.35s ease;
     height: 100%;
+    border: 1px solid #f0f0f0;
   }
 
   .feature-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
   }
 
   /* ================= DARK MODE ================= */
@@ -160,10 +168,8 @@ function About() {
     background: #121212 !important;
   }
 
-  body.dark-mode .about-section h2,
-  body.dark-mode .about-section h5,
-  body.dark-mode .about-section p {
-    color: #ffffff !important;
+  body.dark-mode .about-heading {
+    color: #22c55e !important;
   }
 
   body.dark-mode .about-intro {
@@ -180,14 +186,21 @@ function About() {
 
   body.dark-mode .about-card:hover,
   body.dark-mode .feature-card:hover {
-    box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+    box-shadow: 0 20px 45px rgba(0,0,0,0.6);
   }
 
+  /* MOBILE */
   @media (max-width: 768px) {
     .about-intro {
       font-size: 1rem;
     }
+
+    .about-card,
+    .feature-card {
+      padding: 22px;
+    }
   }
+
 `}</style>
     </section>
   );

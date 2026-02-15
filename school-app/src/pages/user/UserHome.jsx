@@ -21,7 +21,6 @@
 
 //   if (!student) return null;
 
-//   // 🔹 Month readable format
 //   const feesMonth = student.feesDate
 //     ? new Date(student.feesDate).toLocaleString("en-IN", {
 //         month: "long",
@@ -30,21 +29,21 @@
 //     : null;
 
 //   return (
-//     <>
+//     <div className="userhome-wrapper">
 //       <h5 className="mb-3">📊 Dashboard Overview</h5>
 
 //       <div className="row g-3">
-//         {/* ================= CLASS ================= */}
+//         {/* CLASS */}
 //         <div className="col-12 col-md-4">
-//           <div className="card shadow-sm p-3 h-100">
+//           <div className="card shadow-sm p-3 h-100 userhome-card">
 //             <small className="text-muted">Class</small>
 //             <h5 className="fw-semibold mb-0">{student.class}</h5>
 //           </div>
 //         </div>
 
-//         {/* ================= FEES STATUS + MONTH ================= */}
+//         {/* FEES STATUS */}
 //         <div className="col-12 col-md-4">
-//           <div className="card shadow-sm p-3 h-100">
+//           <div className="card shadow-sm p-3 h-100 userhome-card">
 //             <small className="text-muted">Fees Status</small>
 
 //             <h5
@@ -66,7 +65,6 @@
 //               </small>
 //             )}
 
-//             {/* Approved Date (only if completed) */}
 //             {student.feeStatus === "Completed" && student.approvedAt && (
 //               <div className="mt-1">
 //                 <small className="text-muted">
@@ -78,9 +76,9 @@
 //           </div>
 //         </div>
 
-//         {/* ================= PENDING FEES ================= */}
+//         {/* PENDING FEES */}
 //         <div className="col-12 col-md-4">
-//           <div className="card shadow-sm p-3 h-100">
+//           <div className="card shadow-sm p-3 h-100 userhome-card">
 //             <small className="text-muted">Pending Fees</small>
 
 //             <h5
@@ -95,11 +93,35 @@
 //           </div>
 //         </div>
 //       </div>
-//     </>
+
+//       {/* DARK MODE STYLE */}
+//       <style>{`
+//         /* Dark Mode Only */
+//         body.dark-mode .userhome-wrapper {
+//           background-color: #121212;
+//           color: white;
+//         }
+
+//         body.dark-mode .userhome-card {
+//           background-color: #1e1e1e !important;
+//           border: 1px solid #333;
+//         }
+
+//         body.dark-mode .userhome-card h5,
+//         body.dark-mode .userhome-card small {
+//           color: white !important;
+//         }
+
+//         body.dark-mode .userhome-card .text-muted {
+//           color: #bbb !important;
+//         }
+//       `}</style>
+//     </div>
 //   );
 // }
 
 // export default UserHome;
+
 import { useEffect, useState } from "react";
 import { auth, db } from "../../firebase/firebase";
 import { doc, getDoc } from "firebase/firestore";

@@ -5,7 +5,7 @@
 //   const [activePage, setActivePage] = useState("home");
 
 //   return (
-//     <div className="container-fluid bg-light min-vh-100">
+//     <div className="container-fluid userlayout-wrapper min-vh-100">
 //       <div className="row min-vh-100">
 //         {/* ================= SIDEBAR ================= */}
 //         <div className="col-12 col-md-3 col-lg-2 p-0">
@@ -17,10 +17,29 @@
 //         </div>
 
 //         {/* ================= MAIN CONTENT ================= */}
-//         <div className="col-12 col-md-9 col-lg-10 p-3 p-md-4">
+//         <div className="col-12 col-md-9 col-lg-10 p-3 p-md-4 userlayout-content">
 //           {typeof children === "function" ? children(activePage) : children}
 //         </div>
 //       </div>
+
+//       {/* DARK MODE STYLE */}
+//       <style>{`
+//         /* Light mode default */
+//         .userlayout-wrapper {
+//           background-color: #f8f9fa;
+//           transition: background-color 0.3s ease;
+//         }
+
+//         /* Dark Mode */
+//         body.dark-mode .userlayout-wrapper {
+//           background-color: #121212 !important;
+//           color: white !important;
+//         }
+
+//         body.dark-mode .userlayout-content {
+//           color: white !important;
+//         }
+//       `}</style>
 //     </div>
 //   );
 // }
@@ -31,12 +50,13 @@ import UserSidebar from "../../components/UserSidebar";
 
 function UserLayout({ children, onChangePassword }) {
   const [activePage, setActivePage] = useState("home");
+  const [showSidebar, setShowSidebar] = useState(false);
 
   return (
-    <div className="container-fluid userlayout-wrapper min-vh-100">
-      <div className="row min-vh-100">
-        {/* ================= SIDEBAR ================= */}
-        <div className="col-12 col-md-3 col-lg-2 p-0">
+    <div className="container-fluid userlayout-wrapper min-vh-100 p-0">
+      <div className="row min-vh-100 g-0 m-0">
+        {/* ================= DESKTOP SIDEBAR ================= */}
+        <div className="col-md-3 col-lg-2 d-none d-md-block p-0 sidebar-col">
           <UserSidebar
             activePage={activePage}
             setActivePage={setActivePage}
@@ -44,21 +64,72 @@ function UserLayout({ children, onChangePassword }) {
           />
         </div>
 
+        {/* ================= MOBILE SIDEBAR ================= */}
+        <div className={`mobile-user-sidebar ${showSidebar ? "open" : ""}`}>
+          <div className="mobile-user-content">
+            <div className="text-end mb-3">
+              <button
+                className="btn btn-sm btn-light"
+                onClick={() => setShowSidebar(false)}
+              >
+                ✖
+              </button>
+            </div>
+
+            <UserSidebar
+              activePage={activePage}
+              setActivePage={(page) => {
+                setActivePage(page);
+                setShowSidebar(false);
+              }}
+              onChangePassword={onChangePassword}
+            />
+          </div>
+        </div>
+
+        {/* Overlay */}
+        {showSidebar && (
+          <div
+            className="mobile-overlay"
+            onClick={() => setShowSidebar(false)}
+          />
+        )}
+
         {/* ================= MAIN CONTENT ================= */}
         <div className="col-12 col-md-9 col-lg-10 p-3 p-md-4 userlayout-content">
+          {/* Mobile menu button */}
+          <div className="d-md-none mb-3">
+            <button
+              className="btn btn-success btn-sm"
+              onClick={() => setShowSidebar(true)}
+            >
+              ☰ Menu
+            </button>
+          </div>
+
           {typeof children === "function" ? children(activePage) : children}
         </div>
       </div>
 
-      {/* DARK MODE STYLE */}
+      {/* ================= STYLES ================= */}
       <style>{`
-        /* Light mode default */
+        /* 🔥 REMOVE BODY DEFAULT WHITE GAP */
+        body {
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow-x: hidden;
+        }
+
         .userlayout-wrapper {
           background-color: #f8f9fa;
           transition: background-color 0.3s ease;
+          overflow-x: hidden;
         }
 
-        /* Dark Mode */
+        .sidebar-col {
+          height: 100vh;
+        }
+
         body.dark-mode .userlayout-wrapper {
           background-color: #121212 !important;
           color: white !important;
@@ -66,6 +137,51 @@ function UserLayout({ children, onChangePassword }) {
 
         body.dark-mode .userlayout-content {
           color: white !important;
+        }
+
+        /* ===== MOBILE SIDEBAR ===== */
+        .mobile-user-sidebar {
+          position: fixed;
+          top: 0;
+          left: 0;
+          height: 100%;
+          width: 260px;
+          background: inherit; /* 🔥 FIX */
+          transform: translateX(-100%);
+          transition: transform 0.35s ease;
+          z-index: 1050;
+          box-shadow: 4px 0 20px rgba(0,0,0,0.2);
+        }
+
+        body.dark-mode .mobile-user-sidebar {
+          background: #121212;
+        }
+
+        .mobile-user-sidebar.open {
+          transform: translateX(0);
+        }
+
+        .mobile-user-content {
+          height: 100%;
+          padding: 20px;
+          overflow-y: auto;
+        }
+
+        .mobile-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0,0,0,0.4);
+          z-index: 1040;
+        }
+
+        @media (min-width: 768px) {
+          .mobile-user-sidebar,
+          .mobile-overlay {
+            display: none;
+          }
         }
       `}</style>
     </div>
