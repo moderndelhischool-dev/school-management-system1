@@ -219,7 +219,7 @@ function Navbar() {
       >
         <div className="container">
           <Link className="navbar-brand fw-bold brand-green" to="/">
-            🏫 Smart School
+            🏫 Modern Delhi PH
           </Link>
 
           {/* TOGGLER */}

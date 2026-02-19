@@ -32,7 +32,7 @@ import About from "../components/About/About";
 import Contact from "../components/Contact/Contact";
 import Footer from "../components/Footer/Footer";
 import ScrollReveal from "../components/ScrollReveal";
-
+import Testimonial from "../components/Testimonial/Testimonial";
 function Landing() {
   return (
     <>
@@ -47,7 +47,9 @@ function Landing() {
       <ScrollReveal>
         <Contact />
       </ScrollReveal>
-
+      <ScrollReveal>
+        <Testimonial />
+      </ScrollReveal>
       <ScrollReveal>
         <Footer />
       </ScrollReveal>
