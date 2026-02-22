@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { db } from "../firebase/firebase";
 import { collection, getDocs } from "firebase/firestore";
+import StudentList from "./StudentList";
 
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
@@ -30,40 +31,26 @@ function DashboardHome({ darkMode }) {
 
   const labels = Object.keys(classMap);
 
-  /* ================= PURPLE COLORS ================= */
-
-  const colors = [
-    "#7c3aed",
-    "#8b5cf6",
-    "#a855f7",
-    "#c084fc",
-    "#6d28d9",
-    "#9333ea",
-    "#4c1d95",
-  ];
-
   const chartData = {
     labels,
     datasets: [
       {
         data: labels.map((cls) => classMap[cls]),
-        backgroundColor: labels.map((_, i) => colors[i % colors.length]),
+        backgroundColor: ["#7c3aed", "#8b5cf6", "#a855f7", "#c084fc"],
         borderWidth: 2,
         borderColor: darkMode ? "#0f172a" : "#ffffff",
-        hoverOffset: 12,
       },
     ],
   };
 
   const chartOptions = {
     responsive: true,
-    cutout: "60%",
+    cutout: "70%",
     plugins: {
       legend: {
         position: "bottom",
         labels: {
           color: darkMode ? "#ffffff" : "#111827",
-          font: { weight: "600" },
         },
       },
     },
@@ -73,54 +60,51 @@ function DashboardHome({ darkMode }) {
     backgroundColor: darkMode ? "#0f172a" : "#ffffff",
     color: darkMode ? "#ffffff" : "#111827",
     borderRadius: "18px",
+    padding: "20px",
     border: darkMode ? "1px solid rgba(255,255,255,0.08)" : "1px solid #e5e7eb",
     boxShadow: darkMode
       ? "0 10px 30px rgba(0,0,0,0.6)"
       : "0 8px 25px rgba(0,0,0,0.08)",
-    transition: "all 0.3s ease",
-  };
-
-  const hoverEffect = (e, enter) => {
-    if (enter) {
-      e.currentTarget.style.transform = "translateY(-6px)";
-      e.currentTarget.style.boxShadow = darkMode
-        ? "0 12px 35px rgba(124,58,237,0.6)"
-        : "0 12px 35px rgba(124,58,237,0.3)";
-    } else {
-      e.currentTarget.style.transform = "translateY(0px)";
-      e.currentTarget.style.boxShadow = darkMode
-        ? "0 10px 30px rgba(0,0,0,0.6)"
-        : "0 8px 25px rgba(0,0,0,0.08)";
-    }
   };
 
   return (
     <>
-      {/* ================= TOP CARDS ================= */}
-      <div className="row mb-4">
-        {[
-          { title: "Student Strength", value: total },
-          { title: "No of Girls", value: girls },
-          { title: "No of Boys", value: boys },
-        ].map((item, i) => (
-          <div className="col-md-4 mb-3" key={i}>
-            <div
-              className="p-4"
-              style={cardStyle}
-              onMouseEnter={(e) => hoverEffect(e, true)}
-              onMouseLeave={(e) => hoverEffect(e, false)}
-            >
-              <small style={{ opacity: 0.7 }}>{item.title}</small>
-              <h2 className="mt-2 fw-bold text-purple">{item.value}</h2>
-            </div>
-          </div>
-        ))}
+      {/* 1️⃣ Total Students */}
+      <div className="mb-4" style={cardStyle}>
+        <h6>Total Students</h6>
+        <h2 className="fw-bold text-purple">{total}</h2>
       </div>
 
-      {/* ================= CLASS LIST ================= */}
-      <div className="p-4 mb-4" style={cardStyle}>
-        <h6 className="mb-3 fw-semibold">📚 Class-wise student distribution</h6>
+      {/* 2️⃣ Girls & Boys */}
+      <div className="row mb-4">
+        <div className="col-md-6 mb-3">
+          <div style={cardStyle}>
+            <h6>No of Girls</h6>
+            <h3 className="text-purple">{girls}</h3>
+          </div>
+        </div>
 
+        <div className="col-md-6 mb-3">
+          <div style={cardStyle}>
+            <h6>No of Boys</h6>
+            <h3 className="text-purple">{boys}</h3>
+          </div>
+        </div>
+      </div>
+
+      {/* 3️⃣ Small Chart */}
+      <div className="mb-4 text-center" style={cardStyle}>
+        <div style={{ width: "260px", margin: "0 auto" }}>
+          {labels.length > 0 ? (
+            <Doughnut data={chartData} options={chartOptions} />
+          ) : (
+            <p>No data available</p>
+          )}
+        </div>
+      </div>
+
+      {/* 4️⃣ Class Boxes */}
+      {/* <div className="mb-4" style={cardStyle}>
         {labels.map((cls) => (
           <div
             key={cls}
@@ -135,22 +119,13 @@ function DashboardHome({ darkMode }) {
             <span className="fw-semibold text-purple">{classMap[cls]}</span>
           </div>
         ))}
+      </div> */}
+
+      {/* 5️⃣ Student Details Table */}
+      <div className="mt-4">
+        <StudentList darkMode={darkMode} />
       </div>
 
-      {/* ================= DOUGHNUT CHART ================= */}
-      <div className="p-4 text-center" style={cardStyle}>
-        <h6 className="mb-4 fw-semibold">📊 Class-wise Student Chart</h6>
-
-        {labels.length > 0 ? (
-          <div style={{ maxWidth: "400px", margin: "0 auto" }}>
-            <Doughnut data={chartData} options={chartOptions} />
-          </div>
-        ) : (
-          <p style={{ opacity: 0.7 }}>No data available</p>
-        )}
-      </div>
-
-      {/* ================= PURPLE STYLE ================= */}
       <style>{`
         .text-purple {
           color: #7c3aed !important;

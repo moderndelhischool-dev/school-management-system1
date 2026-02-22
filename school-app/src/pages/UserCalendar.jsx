@@ -146,7 +146,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 
-function UserCalendar({ darkMode }) {
+function UserCalendar() {
   const [events, setEvents] = useState([]);
 
   useEffect(() => {
@@ -157,20 +157,19 @@ function UserCalendar({ darkMode }) {
       }));
       setEvents(data);
     });
-
     return () => unsubscribe();
   }, []);
 
   const getEventColor = (type) => {
     switch (type) {
       case "Exam":
-        return "#dc2626";
+        return "#ef4444";
       case "Holiday":
-        return "#7c3aed";
+        return "#a855f7";
       case "Function":
-        return "#6d28d9";
-      case "Meeting":
         return "#9333ea";
+      case "Meeting":
+        return "#c084fc";
       default:
         return "#64748b";
     }
@@ -179,19 +178,16 @@ function UserCalendar({ darkMode }) {
   return (
     <div
       style={{
-        background: darkMode
-          ? "#1e1b4b"
-          : "linear-gradient(135deg, #f5f3ff, #ede9fe)",
-        padding: "22px",
-        borderRadius: "18px",
-        boxShadow: darkMode
-          ? "0 8px 25px rgba(0,0,0,0.5)"
-          : "0 8px 25px rgba(124,58,237,0.18)",
-        color: darkMode ? "#f3f4f6" : "#4c1d95",
-        transition: "all 0.3s ease",
+        background: "linear-gradient(180deg,#4c1d95,#7c3aed)", // 👈 SAME AS SIDEBAR
+        borderRadius: "20px",
+        padding: "12px",
+        boxShadow: "0 10px 35px rgba(0,0,0,0.4)",
+        transition: "0.3s ease",
       }}
     >
-      <h6 className="mb-3 fw-semibold">📅 School Calendar</h6>
+      <h6 className="fw-semibold mb-3" style={{ color: "#ffffff" }}>
+        📅 School Calendar
+      </h6>
 
       <FullCalendar
         plugins={[dayGridPlugin]}
@@ -201,7 +197,7 @@ function UserCalendar({ darkMode }) {
           center: "title",
           right: "",
         }}
-        height={280}
+        height={390}
         fixedWeekCount={false}
         dayMaxEvents={1}
         events={events.map((e) => ({
@@ -210,14 +206,6 @@ function UserCalendar({ darkMode }) {
           borderColor: "transparent",
           textColor: "#ffffff",
         }))}
-        eventContent={(arg) => (
-          <div style={{ fontSize: "11px", padding: "3px" }}>
-            <div style={{ fontWeight: "600" }}>{arg.event.title}</div>
-            <div style={{ fontSize: "10px", opacity: 0.9 }}>
-              {arg.event.extendedProps.type}
-            </div>
-          </div>
-        )}
       />
 
       <style>{`
@@ -227,48 +215,50 @@ function UserCalendar({ darkMode }) {
 
         .fc-theme-standard td,
         .fc-theme-standard th {
-          border-color: ${darkMode ? "#312e81" : "#ddd6fe"} !important;
+          border-color: rgba(255,255,255,0.15) !important;
         }
 
         .fc .fc-daygrid-day {
-          background: ${
-            darkMode ? "#1e1b4b" : "rgba(255,255,255,0.7)"
-          } !important;
-          backdrop-filter: blur(6px);
+          background: rgba(0,0,0,0.15) !important;
           transition: 0.25s ease;
+          border-radius: 8px;
+        }
+
+        .fc .fc-daygrid-day:hover {
+          background: rgba(0,0,0,0.25) !important;
+          transform: translateY(-3px);
         }
 
         .fc .fc-daygrid-day-number {
-          color: ${darkMode ? "#f3f4f6" : "#4c1d95"} !important;
-          font-weight: 500;
+          color: #ffffff !important;
+          font-weight: 600;
+          text-decoration: none !important;
         }
 
         .fc .fc-toolbar-title {
-          color: ${darkMode ? "#f3f4f6" : "#4c1d95"};
-          font-weight: 600;
+          color: #ffffff;
+          font-weight: 700;
         }
 
         .fc .fc-day-today {
-          background: ${
-            darkMode ? "#312e81" : "rgba(124,58,237,0.15)"
-          } !important;
-        }
-
-        .fc-daygrid-day:hover {
-          background: ${
-            darkMode ? "#3730a3" : "rgba(124,58,237,0.2)"
-          } !important;
-          transform: translateY(-2px);
+          background: rgba(255,255,255,0.15) !important;
+          border-radius: 8px;
         }
 
         .fc-event {
-          border-radius: 6px;
+          border-radius: 8px !important;
+          font-size: 11px !important;
+          padding: 3px 6px !important;
           transition: 0.2s ease !important;
         }
 
         .fc-event:hover {
           transform: scale(1.05);
-          box-shadow: 0 6px 15px rgba(124,58,237,0.4);
+          box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+        }
+
+        .fc .fc-daygrid-day-frame {
+          min-height: 70px !important;
         }
       `}</style>
     </div>

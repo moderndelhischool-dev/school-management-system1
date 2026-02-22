@@ -521,7 +521,7 @@ function StudentList({ darkMode }) {
 
   return (
     <div className="container-fluid p-0">
-      {/* ================= CALENDAR ================= */}
+      {/* ================= CALENDAR =================
 
       <div className="mb-5">
         <div className="d-flex justify-content-between align-items-center mb-3">
@@ -578,7 +578,7 @@ function StudentList({ darkMode }) {
             );
           })}
         </div>
-      </div>
+      </div> */}
 
       {/* ================= TABLE ================= */}
 
