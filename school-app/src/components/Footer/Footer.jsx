@@ -1,15 +1,32 @@
+// import { motion } from "framer-motion";
+
 // function Footer() {
 //   return (
-//     <footer className="footer-section pt-5 pb-3">
+//     <motion.footer
+//       initial={{ opacity: 0, y: 60 }}
+//       whileInView={{ opacity: 1, y: 0 }}
+//       transition={{ duration: 0.8 }}
+//       viewport={{ once: true }}
+//       className="footer-section pt-5 pb-3"
+//     >
 //       <div className="container">
 //         <div className="row text-center text-md-start">
-//           {/* BRAND */}
+//           {/* SCHOOL INFO */}
 //           <div className="col-md-4 mb-4">
-//             <h5 className="fw-bold mb-3">🏫 School Management</h5>
+//             <h5 className="fw-bold mb-3 school-name">
+//               Modern New Delhi Public High School
+//             </h5>
 //             <p>
-//               A smart and secure platform to manage students, parents, teachers
-//               and school administration efficiently.
+//               Committed to academic excellence and holistic development, our
+//               school provides a disciplined and nurturing learning environment
+//               for students in Hoshiarpur.
 //             </p>
+
+//             <div className="d-flex gap-3 mt-3 justify-content-center justify-content-md-start">
+//               <i className="bi bi-facebook social-icon"></i>
+//               <i className="bi bi-instagram social-icon"></i>
+//               <i className="bi bi-youtube social-icon"></i>
+//             </div>
 //           </div>
 
 //           {/* QUICK LINKS */}
@@ -34,61 +51,66 @@
 //             </ul>
 //           </div>
 
-//           {/* CONTACT */}
+//           {/* CONTACT DETAILS */}
 //           <div className="col-md-4 mb-4">
-//             <h6 className="fw-bold mb-3">Contact Info</h6>
-//             <p className="mb-1">📧 school@gmail.com</p>
-//             <p className="mb-1">📞 +91 98765 43210</p>
-//             <p className="mb-0">📍 India</p>
+//             <h6 className="fw-bold mb-3">Contact Information</h6>
+//             <p className="mb-1">📍 Kakon, Ajjowal, Hoshiarpur, Punjab</p>
+//             <p className="mb-1">📞 +91 98554 40343</p>
+//             <p className="mb-0">📧 info@modernndpschool.com</p>
 //           </div>
 //         </div>
 
 //         <hr />
 
 //         <div className="text-center small">
-//           © {new Date().getFullYear()} School Management System. All rights
-//           reserved.
+//           © {new Date().getFullYear()} Modern New Delhi Public High School. All
+//           Rights Reserved.
 //         </div>
 //       </div>
 
-//       {/* Footer Styling */}
 //       <style>{`
-//         /* Light Mode */
 //         .footer-section {
-//           background-color: #f8f9fa;
-//           color: #212529;
-//           transition: background-color 0.3s ease, color 0.3s ease;
+//           background: linear-gradient(135deg, #16a34a, #15803d);
+//           color: white;
+//           transition: 0.3s ease;
+//         }
+
+//         .school-name {
+//           color: #ffffff;
 //         }
 
 //         .footer-link {
-//           color: #6c757d;
+//           color: #e5e7eb;
 //           text-decoration: none;
-//           transition: color 0.3s ease;
+//           transition: 0.3s ease;
 //         }
 
 //         .footer-link:hover {
-//           color: #0d6efd;
+//           color: #ffffff;
+//           padding-left: 6px;
 //         }
 
-//         /* Dark Mode */
+//         .social-icon {
+//           font-size: 20px;
+//           cursor: pointer;
+//           transition: 0.3s ease;
+//           color: #e5e7eb;
+//         }
+
+//         .social-icon:hover {
+//           color: white;
+//           transform: translateY(-3px);
+//         }
+
+//         hr {
+//           border-color: rgba(255,255,255,0.3);
+//         }
+
 //         body.dark-mode .footer-section {
-//           background-color: #121212 !important;
-//           color: white !important;
-//         }
-
-//         body.dark-mode .footer-section * {
-//           color: white !important;
-//         }
-
-//         body.dark-mode .footer-link:hover {
-//           color: #0d6efd !important;
-//         }
-
-//         body.dark-mode hr {
-//           border-color: #333 !important;
+//           background: #121212 !important;
 //         }
 //       `}</style>
-//     </footer>
+//     </motion.footer>
 //   );
 // }
 
@@ -109,12 +131,13 @@ function Footer() {
           {/* SCHOOL INFO */}
           <div className="col-md-4 mb-4">
             <h5 className="fw-bold mb-3 school-name">
-              Modern New Delhi Public High School
+              Modern New Delhi Public School
             </h5>
             <p>
-              Committed to academic excellence and holistic development, our
-              school provides a disciplined and nurturing learning environment
-              for students in Hoshiarpur.
+              Modern New Delhi Public School is dedicated to academic excellence
+              and character development. We provide a disciplined, nurturing,
+              and future-focused learning environment for students in
+              Hoshiarpur.
             </p>
 
             <div className="d-flex gap-3 mt-3 justify-content-center justify-content-md-start">
@@ -150,15 +173,17 @@ function Footer() {
           <div className="col-md-4 mb-4">
             <h6 className="fw-bold mb-3">Contact Information</h6>
             <p className="mb-1">📍 Kakon, Ajjowal, Hoshiarpur, Punjab</p>
-            <p className="mb-1">📞 +91 98554 40343</p>
-            <p className="mb-0">📧 info@modernndpschool.com</p>
+            <p className="mb-1">☎ Office: 01882-298792</p>
+            <p className="mb-1">👨‍🏫 Principal: 9855106665</p>
+            <p className="mb-1">🏫 President: 9855440343</p>
+            <p className="mb-0">📧 mndps.hsp@gmail.com</p>
           </div>
         </div>
 
         <hr />
 
         <div className="text-center small">
-          © {new Date().getFullYear()} Modern New Delhi Public High School. All
+          © {new Date().getFullYear()} Modern New Delhi Public School. All
           Rights Reserved.
         </div>
       </div>
@@ -201,8 +226,17 @@ function Footer() {
           border-color: rgba(255,255,255,0.3);
         }
 
+        /* DARK MODE */
         body.dark-mode .footer-section {
-          background: #121212 !important;
+          background: #0f172a !important;
+        }
+
+        body.dark-mode .footer-link {
+          color: #cbd5e1;
+        }
+
+        body.dark-mode .footer-link:hover {
+          color: #ffffff;
         }
       `}</style>
     </motion.footer>
