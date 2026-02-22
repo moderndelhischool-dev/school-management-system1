@@ -123,15 +123,15 @@ function ClassBlocks({ darkMode }) {
       : "0 6px 20px rgba(0,0,0,0.08)",
     transition: "all 0.3s ease",
     cursor: "pointer",
-    height: "100%", // 🔥 Equal height
+    height: "100%",
   };
 
   const hoverEffect = (e, enter) => {
     if (enter) {
       e.currentTarget.style.transform = "translateY(-8px)";
       e.currentTarget.style.boxShadow = darkMode
-        ? "0 15px 40px rgba(34,197,94,0.4)"
-        : "0 15px 35px rgba(34,197,94,0.25)";
+        ? "0 15px 40px rgba(124,58,237,0.4)"
+        : "0 15px 35px rgba(124,58,237,0.25)";
     } else {
       e.currentTarget.style.transform = "translateY(0px)";
       e.currentTarget.style.boxShadow = darkMode
@@ -148,9 +148,9 @@ function ClassBlocks({ darkMode }) {
           className="p-4 text-center"
           style={{
             borderRadius: "20px",
-            background: "linear-gradient(135deg,#22c55e,#16a34a)",
+            background: "linear-gradient(135deg,#7c3aed,#4c1d95)",
             color: "#ffffff",
-            boxShadow: "0 12px 35px rgba(0,0,0,0.2)",
+            boxShadow: "0 12px 35px rgba(124,58,237,0.35)",
           }}
         >
           <h5 className="mb-1 fw-semibold">🎓 Total Students</h5>
@@ -160,8 +160,6 @@ function ClassBlocks({ darkMode }) {
 
       {/* ===== CLASS BLOCKS ===== */}
       <div className="row g-4">
-        {" "}
-        {/* 🔥 Proper spacing added here */}
         {Object.keys(classCount)
           .sort((a, b) => {
             const convert = (cls) => {
@@ -179,9 +177,19 @@ function ClassBlocks({ darkMode }) {
                 onMouseEnter={(e) => hoverEffect(e, true)}
                 onMouseLeave={(e) => hoverEffect(e, false)}
               >
-                <h6 style={{ opacity: 0.7, fontWeight: "500" }}>Class {cls}</h6>
+                <h6
+                  style={{
+                    opacity: 0.7,
+                    fontWeight: "500",
+                    color: darkMode ? "#c4b5fd" : "#6d28d9",
+                  }}
+                >
+                  Class {cls}
+                </h6>
 
-                <h3 className="fw-bold mt-3 mb-1">{classCount[cls]}</h3>
+                <h3 className="fw-bold mt-3 mb-1" style={{ color: "#7c3aed" }}>
+                  {classCount[cls]}
+                </h3>
 
                 <small style={{ opacity: 0.7 }}>Students</small>
               </div>

@@ -12,7 +12,7 @@ function ChangePassword({ onClose }) {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const [msg, setMsg] = useState("");
-  const [msgType, setMsgType] = useState(""); // success | error
+  const [msgType, setMsgType] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleChangePassword = async () => {
@@ -46,15 +46,12 @@ function ChangePassword({ onClose }) {
         return;
       }
 
-      // 🔐 re-authenticate user
       const credential = EmailAuthProvider.credential(
         user.email,
         currentPassword,
       );
 
       await reauthenticateWithCredential(user, credential);
-
-      // 🔄 update password
       await updatePassword(user, newPassword);
 
       setMsgType("success");
@@ -86,10 +83,15 @@ function ChangePassword({ onClose }) {
       className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
       style={{ background: "rgba(0,0,0,0.55)", zIndex: 1050 }}
     >
-      <div className="card shadow p-4" style={{ width: "380px" }}>
-        <h5 className="mb-3 text-center">🔐 Change Password</h5>
+      <div
+        className="card shadow p-4"
+        style={{
+          width: "380px",
+          borderRadius: "18px",
+        }}
+      >
+        <h5 className="mb-3 text-center text-purple">🔐 Change Password</h5>
 
-        {/* MESSAGE */}
         {msg && (
           <div
             className={`alert ${
@@ -102,7 +104,7 @@ function ChangePassword({ onClose }) {
 
         <input
           type="password"
-          className="form-control mb-3"
+          className="form-control mb-3 custom-input"
           placeholder="Current Password"
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
@@ -110,7 +112,7 @@ function ChangePassword({ onClose }) {
 
         <input
           type="password"
-          className="form-control mb-3"
+          className="form-control mb-3 custom-input"
           placeholder="New Password"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
@@ -118,7 +120,7 @@ function ChangePassword({ onClose }) {
 
         <input
           type="password"
-          className="form-control mb-3"
+          className="form-control mb-3 custom-input"
           placeholder="Confirm New Password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
@@ -133,7 +135,7 @@ function ChangePassword({ onClose }) {
           </button>
 
           <button
-            className="btn btn-primary btn-sm"
+            className="btn btn-purple btn-sm"
             onClick={handleChangePassword}
             disabled={loading}
           >
@@ -141,6 +143,30 @@ function ChangePassword({ onClose }) {
           </button>
         </div>
       </div>
+
+      {/* ================= PURPLE STYLES ================= */}
+
+      <style>{`
+        .text-purple {
+          color: #7c3aed !important;
+        }
+
+        .btn-purple {
+          background: linear-gradient(135deg,#7c3aed,#4c1d95);
+          color: white;
+          border: none;
+        }
+
+        .btn-purple:hover {
+          background: #6d28d9;
+          box-shadow: 0 6px 18px rgba(124,58,237,0.4);
+        }
+
+        .custom-input:focus {
+          border-color: #7c3aed !important;
+          box-shadow: 0 0 10px rgba(124,58,237,0.4);
+        }
+      `}</style>
     </div>
   );
 }

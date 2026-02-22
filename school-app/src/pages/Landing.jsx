@@ -1,9 +1,9 @@
-// import Home from "../components/home/Home";
-// import About from "../components/about/About";
-// import Contact from "../components/contact/Contact";
-// import Footer from "../components/footer/Footer";
+// import Home from "../components/Home/Home";
+// import About from "../components/About/About";
+// import Contact from "../components/Contact/Contact";
+// import Footer from "../components/Footer/Footer";
 // import ScrollReveal from "../components/ScrollReveal";
-
+// import Testimonial from "../components/Testimonial/Testimonial";
 // function Landing() {
 //   return (
 //     <>
@@ -18,7 +18,9 @@
 //       <ScrollReveal>
 //         <Contact />
 //       </ScrollReveal>
-
+//       <ScrollReveal>
+//         <Testimonial />
+//       </ScrollReveal>
 //       <ScrollReveal>
 //         <Footer />
 //       </ScrollReveal>
@@ -33,23 +35,32 @@ import Contact from "../components/Contact/Contact";
 import Footer from "../components/Footer/Footer";
 import ScrollReveal from "../components/ScrollReveal";
 import Testimonial from "../components/Testimonial/Testimonial";
+
 function Landing() {
   return (
     <>
-      <ScrollReveal>
-        <Home />
-      </ScrollReveal>
+      <div id="home">
+        <ScrollReveal>
+          <Home />
+        </ScrollReveal>
+      </div>
 
-      <ScrollReveal>
-        <About />
-      </ScrollReveal>
+      <div id="about">
+        <ScrollReveal>
+          <About />
+        </ScrollReveal>
+      </div>
 
-      <ScrollReveal>
-        <Contact />
-      </ScrollReveal>
+      <div id="contact">
+        <ScrollReveal>
+          <Contact />
+        </ScrollReveal>
+      </div>
+
       <ScrollReveal>
         <Testimonial />
       </ScrollReveal>
+
       <ScrollReveal>
         <Footer />
       </ScrollReveal>

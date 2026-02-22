@@ -37,7 +37,7 @@
 //     <div className="user-sidebar h-100 p-4 d-flex flex-column">
 //       <h5 className="mb-4 fw-bold sidebar-title">👤 Student Panel</h5>
 
-//       {/* MENU ITEMS */}
+//       {/* DASHBOARD */}
 //       <button
 //         className={btnClass("home")}
 //         onClick={() => setActivePage("home")}
@@ -45,6 +45,7 @@
 //         📊 Dashboard
 //       </button>
 
+//       {/* PROFILE */}
 //       <button
 //         className={btnClass("profile")}
 //         onClick={() => setActivePage("profile")}
@@ -52,6 +53,7 @@
 //         🙍 My Profile
 //       </button>
 
+//       {/* FEES */}
 //       <button
 //         className={btnClass("fees")}
 //         onClick={() => setActivePage("fees")}
@@ -59,11 +61,28 @@
 //         💳 Fees & Payment
 //       </button>
 
+//       {/* PAYMENT HISTORY */}
 //       <button
 //         className={btnClass("history")}
 //         onClick={() => setActivePage("history")}
 //       >
 //         🧾 Payment History
+//       </button>
+
+//       {/* ✅ NEW UNIFORM BUTTON */}
+//       <button
+//         className={btnClass("uniform")}
+//         onClick={() => setActivePage("uniform")}
+//       >
+//         👔 Uniform Request
+//       </button>
+
+//       {/* ✅ NEW CERTIFICATE BUTTON */}
+//       <button
+//         className={btnClass("certificate")}
+//         onClick={() => setActivePage("certificate")}
+//       >
+//         📜 Certificate Request
 //       </button>
 
 //       {/* DARK MODE BUTTON */}
@@ -80,7 +99,6 @@
 
 //       {/* 🔥 BOTTOM SECTION */}
 //       <div className="mt-auto pt-4 border-top sidebar-bottom text-center">
-//         {/* CHANGE PASSWORD */}
 //         <button
 //           className={`btn w-100 text-start ${
 //             darkMode ? "btn-outline-light" : "btn-outline-secondary"
@@ -179,7 +197,6 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
     <div className="user-sidebar h-100 p-4 d-flex flex-column">
       <h5 className="mb-4 fw-bold sidebar-title">👤 Student Panel</h5>
 
-      {/* DASHBOARD */}
       <button
         className={btnClass("home")}
         onClick={() => setActivePage("home")}
@@ -187,7 +204,6 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         📊 Dashboard
       </button>
 
-      {/* PROFILE */}
       <button
         className={btnClass("profile")}
         onClick={() => setActivePage("profile")}
@@ -195,7 +211,6 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         🙍 My Profile
       </button>
 
-      {/* FEES */}
       <button
         className={btnClass("fees")}
         onClick={() => setActivePage("fees")}
@@ -203,7 +218,6 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         💳 Fees & Payment
       </button>
 
-      {/* PAYMENT HISTORY */}
       <button
         className={btnClass("history")}
         onClick={() => setActivePage("history")}
@@ -211,7 +225,6 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         🧾 Payment History
       </button>
 
-      {/* ✅ NEW UNIFORM BUTTON */}
       <button
         className={btnClass("uniform")}
         onClick={() => setActivePage("uniform")}
@@ -219,7 +232,6 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         👔 Uniform Request
       </button>
 
-      {/* ✅ NEW CERTIFICATE BUTTON */}
       <button
         className={btnClass("certificate")}
         onClick={() => setActivePage("certificate")}
@@ -239,7 +251,7 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         </button>
       </div>
 
-      {/* 🔥 BOTTOM SECTION */}
+      {/* BOTTOM */}
       <div className="mt-auto pt-4 border-top sidebar-bottom text-center">
         <button
           className={`btn w-100 text-start ${
@@ -251,20 +263,21 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         </button>
       </div>
 
-      {/* ================= STYLES ================= */}
       <style>{`
 
+        /* ===== SIDEBAR BACKGROUND ===== */
         .user-sidebar {
-          background: linear-gradient(180deg, #16a34a, #22c55e);
+          background: linear-gradient(180deg, #4c1d95, #7c3aed);
           color: white;
           transition: all 0.3s ease;
         }
 
         body.dark-mode .user-sidebar {
-          background: linear-gradient(180deg, #0f172a, #020617) !important;
-          border-right: 1px solid #1e293b;
+          background: linear-gradient(180deg, #0f172a, #1e1b4b) !important;
+          border-right: 1px solid #312e81;
         }
 
+        /* ===== BUTTON BASE ===== */
         .sidebar-btn {
           border-radius: 12px;
           transition: all 0.3s ease;
@@ -272,21 +285,23 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
           padding: 10px 14px;
         }
 
+        /* Hover Effect */
         .sidebar-btn:hover {
           transform: translateX(6px);
-          box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+          box-shadow: 0 6px 18px rgba(124,58,237,0.35);
         }
 
+        /* ===== ACTIVE BUTTON ===== */
         .active-btn {
-          background: linear-gradient(90deg, #ffffff, #e2e8f0) !important;
-          color: #16a34a !important;
+          background: linear-gradient(90deg, #ffffff, #ede9fe) !important;
+          color: #4c1d95 !important;
           border: none !important;
           transform: translateX(6px);
           box-shadow: 0 6px 18px rgba(0,0,0,0.25);
         }
 
         body.dark-mode .active-btn {
-          background: linear-gradient(90deg, #3b82f6, #2563eb) !important;
+          background: linear-gradient(90deg, #7c3aed, #4c1d95) !important;
           color: white !important;
         }
 

@@ -243,7 +243,6 @@ function AdminUniform({ darkMode }) {
   const [deletingId, setDeletingId] = useState(null);
   const [message, setMessage] = useState("");
 
-  /* ================= FETCH ================= */
   const fetchUniforms = async () => {
     const snap = await getDocs(collection(db, "uniforms"));
     const data = snap.docs.map((d) => ({
@@ -262,7 +261,6 @@ function AdminUniform({ darkMode }) {
     fetchUniforms();
   }, []);
 
-  /* ================= COMPRESS ================= */
   const compressImage = (file) => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -291,7 +289,6 @@ function AdminUniform({ darkMode }) {
     });
   };
 
-  /* ================= FILE SELECT ================= */
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -308,7 +305,6 @@ function AdminUniform({ darkMode }) {
     setUploading(false);
   };
 
-  /* ================= UPLOAD ================= */
   const handleUpload = async () => {
     if (!imageData) {
       setMessage("Please select image first.");
@@ -334,7 +330,6 @@ function AdminUniform({ darkMode }) {
     setUploading(false);
   };
 
-  /* ================= DELETE ================= */
   const handleDelete = async (id) => {
     try {
       setDeletingId(id);
@@ -354,11 +349,10 @@ function AdminUniform({ darkMode }) {
         transition: "all 0.3s ease",
       }}
     >
-      <h4 className="mb-3">👔 Upload Uniform</h4>
+      <h4 className="mb-3 text-purple">👔 Upload Uniform</h4>
 
-      {message && <div className="alert alert-info py-2">{message}</div>}
+      {message && <div className="alert alert-purple py-2">{message}</div>}
 
-      {/* Upload Card */}
       <div
         className="card p-3 shadow-sm mb-4"
         style={{
@@ -369,7 +363,7 @@ function AdminUniform({ darkMode }) {
         <input
           type="file"
           accept="image/*"
-          className="form-control mb-3"
+          className="form-control mb-3 custom-input"
           onChange={handleFileChange}
         />
 
@@ -380,7 +374,7 @@ function AdminUniform({ darkMode }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background: darkMode ? "#334155" : "#f1f5f9",
+              background: darkMode ? "#334155" : "#f3f4f6",
               borderRadius: "12px",
               marginBottom: "15px",
             }}
@@ -398,7 +392,7 @@ function AdminUniform({ darkMode }) {
         )}
 
         <button
-          className="btn btn-success"
+          className="btn upload-btn"
           onClick={handleUpload}
           disabled={uploading}
         >
@@ -482,6 +476,37 @@ function AdminUniform({ darkMode }) {
           </div>
         ))}
       </div>
+
+      {/* ================= PURPLE STYLES ================= */}
+
+      <style>{`
+        .text-purple {
+          color: #7c3aed !important;
+        }
+
+        .alert-purple {
+          background: #ede9fe;
+          color: #4c1d95;
+          border: 1px solid #c4b5fd;
+        }
+
+        .upload-btn {
+          background: linear-gradient(135deg,#7c3aed,#4c1d95);
+          color: white;
+          border: none;
+          transition: 0.3s;
+        }
+
+        .upload-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(124,58,237,0.4);
+        }
+
+        .custom-input:focus {
+          border-color: #7c3aed !important;
+          box-shadow: 0 0 12px rgba(124,58,237,0.4);
+        }
+      `}</style>
     </div>
   );
 }

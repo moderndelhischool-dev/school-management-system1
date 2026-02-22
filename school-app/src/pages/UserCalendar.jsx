@@ -149,7 +149,6 @@ import { db } from "../firebase/firebase";
 function UserCalendar({ darkMode }) {
   const [events, setEvents] = useState([]);
 
-  /* 🔥 Realtime events from Firebase */
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "events"), (snapshot) => {
       const data = snapshot.docs.map((doc) => ({
@@ -167,11 +166,11 @@ function UserCalendar({ darkMode }) {
       case "Exam":
         return "#dc2626";
       case "Holiday":
-        return "#16a34a";
+        return "#7c3aed";
       case "Function":
-        return "#2563eb";
+        return "#6d28d9";
       case "Meeting":
-        return "#d97706";
+        return "#9333ea";
       default:
         return "#64748b";
     }
@@ -181,14 +180,14 @@ function UserCalendar({ darkMode }) {
     <div
       style={{
         background: darkMode
-          ? "#1f2937"
-          : "linear-gradient(135deg, #ecfdf5, #d1fae5)",
+          ? "#1e1b4b"
+          : "linear-gradient(135deg, #f5f3ff, #ede9fe)",
         padding: "22px",
         borderRadius: "18px",
         boxShadow: darkMode
           ? "0 8px 25px rgba(0,0,0,0.5)"
-          : "0 8px 25px rgba(16,185,129,0.15)",
-        color: darkMode ? "#f3f4f6" : "#065f46",
+          : "0 8px 25px rgba(124,58,237,0.18)",
+        color: darkMode ? "#f3f4f6" : "#4c1d95",
         transition: "all 0.3s ease",
       }}
     >
@@ -226,49 +225,42 @@ function UserCalendar({ darkMode }) {
           font-size: 12px;
         }
 
-        /* Border color */
         .fc-theme-standard td,
         .fc-theme-standard th {
-          border-color: ${darkMode ? "#374151" : "#bbf7d0"} !important;
+          border-color: ${darkMode ? "#312e81" : "#ddd6fe"} !important;
         }
 
-        /* Calendar cells */
         .fc .fc-daygrid-day {
           background: ${
-            darkMode ? "#1f2937" : "rgba(255,255,255,0.6)"
+            darkMode ? "#1e1b4b" : "rgba(255,255,255,0.7)"
           } !important;
           backdrop-filter: blur(6px);
           transition: 0.25s ease;
         }
 
-        /* Date numbers */
         .fc .fc-daygrid-day-number {
-          color: ${darkMode ? "#f3f4f6" : "#065f46"} !important;
+          color: ${darkMode ? "#f3f4f6" : "#4c1d95"} !important;
           font-weight: 500;
         }
 
-        /* Month title */
         .fc .fc-toolbar-title {
-          color: ${darkMode ? "#f3f4f6" : "#065f46"};
+          color: ${darkMode ? "#f3f4f6" : "#4c1d95"};
           font-weight: 600;
         }
 
-        /* Today highlight */
         .fc .fc-day-today {
           background: ${
-            darkMode ? "#374151" : "rgba(16,185,129,0.15)"
+            darkMode ? "#312e81" : "rgba(124,58,237,0.15)"
           } !important;
         }
 
-        /* Hover effect */
         .fc-daygrid-day:hover {
           background: ${
-            darkMode ? "#374151" : "rgba(16,185,129,0.2)"
+            darkMode ? "#3730a3" : "rgba(124,58,237,0.2)"
           } !important;
           transform: translateY(-2px);
         }
 
-        /* Event styling */
         .fc-event {
           border-radius: 6px;
           transition: 0.2s ease !important;
@@ -276,7 +268,7 @@ function UserCalendar({ darkMode }) {
 
         .fc-event:hover {
           transform: scale(1.05);
-          box-shadow: 0 6px 15px rgba(0,0,0,0.35);
+          box-shadow: 0 6px 15px rgba(124,58,237,0.4);
         }
       `}</style>
     </div>

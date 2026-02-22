@@ -237,8 +237,11 @@ function Contact() {
         <div className="row g-5 align-items-start">
           {/* LEFT FORM */}
           <div className="col-lg-7">
-            <h4 className="fw-bold mb-3">We’d Love To Hear From You</h4>
-            <p className="text-muted mb-4">
+            <h4 className="fw-bold mb-3 section-heading">
+              We’d Love To Hear From You
+            </h4>
+
+            <p className="section-text mb-4">
               For admissions, academic details, or general queries, please fill
               out the form below and our team will contact you shortly.
             </p>
@@ -296,7 +299,7 @@ function Contact() {
             </motion.div>
           </div>
 
-          {/* RIGHT INFO + MAP */}
+          {/* RIGHT SIDE INFO */}
           <div className="col-lg-5">
             <motion.div
               className="contact-info-box"
@@ -304,7 +307,6 @@ function Contact() {
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
             >
-              {/* MAP */}
               <div className="map-container mb-4">
                 <iframe
                   title="School Location"
@@ -317,7 +319,6 @@ function Contact() {
                 ></iframe>
               </div>
 
-              {/* CONTACT DETAILS */}
               <div className="contact-details">
                 <p>
                   <strong>📍 Location:</strong> Hoshiarpur, Punjab
@@ -340,16 +341,18 @@ function Contact() {
         </div>
       </div>
 
-      {/* STYLES */}
       <style>{`
+
+        /* SECTION BACKGROUND */
         .contact-section {
-          background: #f8f9fa;
+          background: #f3f0ff;
           transition: 0.3s ease;
         }
 
+        /* HERO */
         .contact-hero {
           height: 220px;
-          background: linear-gradient(135deg, #22c55e, #16a34a);
+          background: linear-gradient(135deg, #4c1d95, #5b21b6);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -364,19 +367,30 @@ function Contact() {
           backdrop-filter: blur(10px);
         }
 
+        .section-heading {
+          color: #4c1d95;
+        }
+
+        .section-text {
+          color: #6b7280;
+        }
+
+        /* INPUTS */
         .custom-input {
           border-radius: 10px;
           padding: 12px;
+          border: 1px solid #ddd6fe;
           transition: 0.3s ease;
         }
 
         .custom-input:focus {
-          border-color: #22c55e;
-          box-shadow: 0 0 8px rgba(34,197,94,0.4);
+          border-color: #7c3aed;
+          box-shadow: 0 0 8px rgba(124,58,237,0.4);
         }
 
+        /* BUTTON */
         .submit-btn {
-          background: #22c55e;
+          background: linear-gradient(135deg,#4c1d95,#5b21b6);
           color: white;
           padding: 10px 30px;
           border-radius: 30px;
@@ -385,53 +399,43 @@ function Contact() {
         }
 
         .submit-btn:hover {
-          background: #16a34a;
+          background: linear-gradient(135deg,#5b21b6,#7c3aed);
           transform: translateY(-2px);
         }
 
-        .map-container {
-          height: 250px;
-          border-radius: 15px;
-          overflow: hidden;
-        }
-
+        /* INFO BOX */
         .contact-info-box {
           background: white;
           padding: 25px;
           border-radius: 15px;
           box-shadow: 0 15px 40px rgba(0,0,0,0.08);
-          transition: 0.3s ease;
         }
 
         .contact-details p {
           margin-bottom: 10px;
         }
 
+        /* MAP */
+        .map-container {
+          height: 250px;
+          border-radius: 15px;
+          overflow: hidden;
+        }
+
         /* DARK MODE */
         body.dark-mode .contact-section {
-          background: #121212;
+          background: #1e1b4b;
         }
 
         body.dark-mode .contact-info-box {
-          background: #1e293b;
+          background: #312e81;
           color: white;
         }
 
-        body.dark-mode .custom-input {
-          background: #2c2c2c;
-          color: white;
-          border: 1px solid #444;
+        body.dark-mode .section-heading {
+          color: #c4b5fd;
         }
 
-        body.dark-mode .custom-input::placeholder {
-          color: #aaa;
-        }
-
-        @media (max-width: 992px) {
-          .contact-hero {
-            height: 180px;
-          }
-        }
       `}</style>
     </section>
   );

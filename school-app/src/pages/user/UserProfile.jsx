@@ -121,33 +121,33 @@ function UserProfile() {
         darkMode ? "dark-card text-light" : ""
       }`}
     >
-      <h5 className="mb-4 fw-semibold">👤 My Profile</h5>
+      <h5 className="mb-4 fw-semibold text-purple">👤 My Profile</h5>
 
       <div className="row g-3">
         <div className="col-12 col-md-6">
           <div className="profile-item">
-            <small className="text-muted">Name</small>
+            <small className="profile-muted">Name</small>
             <h6 className="mb-0">{student.name}</h6>
           </div>
         </div>
 
         <div className="col-12 col-md-6">
           <div className="profile-item">
-            <small className="text-muted">Email</small>
+            <small className="profile-muted">Email</small>
             <h6 className="mb-0">{student.email}</h6>
           </div>
         </div>
 
         <div className="col-12 col-md-6">
           <div className="profile-item">
-            <small className="text-muted">Class</small>
+            <small className="profile-muted">Class</small>
             <h6 className="mb-0">{student.class}</h6>
           </div>
         </div>
 
         <div className="col-12 col-md-6">
           <div className="profile-item">
-            <small className="text-muted">Fees Status</small>
+            <small className="profile-muted">Fees Status</small>
             <h6
               className={`mb-0 ${
                 student.feeStatus === "Completed"
@@ -159,7 +159,7 @@ function UserProfile() {
             </h6>
 
             {feesMonth && (
-              <small className="text-muted">
+              <small className="profile-muted">
                 {student.feeStatus === "Completed"
                   ? "Completed for"
                   : "Pending for"}{" "}
@@ -172,7 +172,7 @@ function UserProfile() {
         {student.feeStatus === "Completed" && student.approvedAt && (
           <div className="col-12 col-md-6">
             <div className="profile-item">
-              <small className="text-muted">Approved On</small>
+              <small className="profile-muted">Approved On</small>
               <h6 className="mb-0">
                 {student.approvedAt.toDate().toLocaleDateString("en-IN")}
               </h6>
@@ -183,7 +183,7 @@ function UserProfile() {
         {student.updatedAt && (
           <div className="col-12 col-md-6">
             <div className="profile-item">
-              <small className="text-muted">Last Updated</small>
+              <small className="profile-muted">Last Updated</small>
               <h6 className="mb-0">
                 {student.updatedAt.toDate().toLocaleDateString("en-IN")}
               </h6>
@@ -196,36 +196,45 @@ function UserProfile() {
       <style>{`
         .userprofile-card {
           border-radius: 18px;
-          background: linear-gradient(135deg, #ffffff, #f0fdf4);
+          background: linear-gradient(135deg, #ffffff, #f3e8ff);
           transition: all 0.3s ease;
-          border: none;
+          border: 1px solid #ddd6fe;
         }
 
         .dark-card {
-          background: linear-gradient(135deg, #1f2937, #111827);
-          border: 1px solid #2d3748;
+          background: linear-gradient(135deg, #1e1b4b, #0f172a);
+          border: 1px solid #312e81;
+        }
+
+        .text-purple {
+          color: #7c3aed !important;
         }
 
         .profile-item {
           padding: 14px;
           border-radius: 14px;
-          background: rgba(255,255,255,0.6);
+          background: rgba(124,58,237,0.08);
           backdrop-filter: blur(6px);
           transition: all 0.3s ease;
         }
 
         .profile-item:hover {
           transform: translateY(-3px);
-          box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+          box-shadow: 0 8px 20px rgba(124,58,237,0.25);
         }
 
         body.dark-mode .profile-item {
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(124,58,237,0.15);
+          border: 1px solid rgba(124,58,237,0.25);
         }
 
-        body.dark-mode .text-muted {
-          color: #bbb !important;
+        .profile-muted {
+          color: ${darkMode ? "#c4b5fd" : "#6b21a8"};
+          font-size: 13px;
+        }
+
+        body.dark-mode .profile-muted {
+          color: #c4b5fd !important;
         }
       `}</style>
     </div>

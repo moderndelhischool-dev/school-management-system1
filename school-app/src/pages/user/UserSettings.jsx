@@ -44,19 +44,19 @@ function UserSettings() {
           darkMode ? "bg-dark text-light" : ""
         }`}
       >
-        <h5 className="mb-4 fw-semibold">⚙️ Settings</h5>
+        <h5 className="mb-4 fw-semibold text-purple">⚙️ Settings</h5>
 
         <div className="settings-item">
           <div>
             <h6 className="mb-1">Change Password</h6>
-            <small className="text-muted">
+            <small className="settings-muted">
               Update your account password for security
             </small>
           </div>
 
           <button
             className={`btn ${
-              darkMode ? "btn-outline-light" : "btn-outline-primary"
+              darkMode ? "btn-outline-light" : "btn-outline-purple"
             }`}
             onClick={() => setShow(true)}
           >
@@ -72,6 +72,11 @@ function UserSettings() {
         .usersettings-card {
           border-radius: 16px;
           transition: all 0.3s ease;
+          border: 1px solid ${darkMode ? "#312e81" : "#ddd6fe"};
+        }
+
+        .text-purple {
+          color: #7c3aed !important;
         }
 
         .settings-item {
@@ -80,21 +85,33 @@ function UserSettings() {
           align-items: center;
           padding: 16px;
           border-radius: 12px;
-          background: rgba(0,0,0,0.02);
+          background: ${
+            darkMode ? "rgba(124,58,237,0.15)" : "rgba(124,58,237,0.08)"
+          };
           transition: all 0.3s ease;
         }
 
         .settings-item:hover {
           transform: translateY(-2px);
-          box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+          box-shadow: 0 6px 18px rgba(124,58,237,0.25);
+        }
+
+        .settings-muted {
+          color: ${darkMode ? "#c4b5fd" : "#6b21a8"};
+        }
+
+        .btn-outline-purple {
+          border: 1px solid #7c3aed;
+          color: #7c3aed;
+        }
+
+        .btn-outline-purple:hover {
+          background: #7c3aed;
+          color: white;
         }
 
         body.dark-mode .settings-item {
-          background: #2a2a2a;
-        }
-
-        body.dark-mode .text-muted {
-          color: #bbb !important;
+          background: rgba(124,58,237,0.2);
         }
 
         @media (max-width: 576px) {

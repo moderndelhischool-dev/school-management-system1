@@ -150,7 +150,6 @@ function UserLayout({ children, onChangePassword }) {
   const [showSidebar, setShowSidebar] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
-  /* 🔥 Load saved theme */
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme === "dark") {
@@ -159,7 +158,6 @@ function UserLayout({ children, onChangePassword }) {
     }
   }, []);
 
-  /* 🔥 Toggle Theme */
   const toggleTheme = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
@@ -176,7 +174,7 @@ function UserLayout({ children, onChangePassword }) {
   return (
     <div className="container-fluid userlayout-wrapper min-vh-100 p-0">
       <div className="row min-vh-100 g-0 m-0">
-        {/* ================= DESKTOP SIDEBAR ================= */}
+        {/* DESKTOP SIDEBAR */}
         <div className="col-md-3 col-lg-2 d-none d-md-block p-0 sidebar-col">
           <UserSidebar
             activePage={activePage}
@@ -187,12 +185,12 @@ function UserLayout({ children, onChangePassword }) {
           />
         </div>
 
-        {/* ================= MOBILE SIDEBAR ================= */}
+        {/* MOBILE SIDEBAR */}
         <div className={`mobile-user-sidebar ${showSidebar ? "open" : ""}`}>
           <div className="mobile-user-content">
             <div className="text-end mb-3">
               <button
-                className="btn btn-sm btn-light"
+                className="btn btn-sm btn-light close-btn"
                 onClick={() => setShowSidebar(false)}
               >
                 ✖
@@ -212,7 +210,6 @@ function UserLayout({ children, onChangePassword }) {
           </div>
         </div>
 
-        {/* Overlay */}
         {showSidebar && (
           <div
             className="mobile-overlay"
@@ -220,34 +217,30 @@ function UserLayout({ children, onChangePassword }) {
           />
         )}
 
-        {/* ================= MAIN CONTENT ================= */}
+        {/* MAIN CONTENT */}
         <div className="col-12 col-md-9 col-lg-10 p-3 p-md-4 userlayout-content">
-          {/* Mobile menu button */}
           <div className="d-md-none mb-3 d-flex justify-content-between align-items-center">
             <button
-              className="btn btn-success btn-sm"
+              className="btn btn-purple btn-sm"
               onClick={() => setShowSidebar(true)}
             >
               ☰ Menu
             </button>
 
-            {/* Theme toggle mobile */}
             <button
-              className="btn btn-outline-secondary btn-sm"
+              className="btn btn-outline-purple btn-sm"
               onClick={toggleTheme}
             >
               {darkMode ? "🌙 Dark" : "☀ Light"}
             </button>
           </div>
 
-          {/* 🔥 IMPORTANT: pass darkMode to children */}
           {typeof children === "function"
             ? children(activePage, darkMode)
             : children}
         </div>
       </div>
 
-      {/* ================= STYLES ================= */}
       <style>{`
         body {
           margin: 0 !important;
@@ -256,13 +249,13 @@ function UserLayout({ children, onChangePassword }) {
         }
 
         .userlayout-wrapper {
-          background-color: #f8f9fa;
-          transition: background-color 0.3s ease;
+          background: linear-gradient(135deg,#ffffff,#f3e8ff);
+          transition: background 0.3s ease;
           overflow-x: hidden;
         }
 
         body.dark-mode .userlayout-wrapper {
-          background-color: #121212 !important;
+          background: linear-gradient(135deg,#1e1b4b,#0f172a) !important;
           color: white !important;
         }
 
@@ -274,22 +267,22 @@ function UserLayout({ children, onChangePassword }) {
           height: 100vh;
         }
 
-        /* ===== MOBILE SIDEBAR ===== */
+        /* MOBILE SIDEBAR */
         .mobile-user-sidebar {
           position: fixed;
           top: 0;
           left: 0;
           height: 100%;
           width: 260px;
-          background: #f8f9fa;
+          background: linear-gradient(180deg,#ede9fe,#f3e8ff);
           transform: translateX(-100%);
           transition: transform 0.35s ease;
           z-index: 1050;
-          box-shadow: 4px 0 20px rgba(0,0,0,0.2);
+          box-shadow: 4px 0 25px rgba(124,58,237,0.3);
         }
 
         body.dark-mode .mobile-user-sidebar {
-          background: #121212;
+          background: linear-gradient(180deg,#1e1b4b,#0f172a);
         }
 
         .mobile-user-sidebar.open {
@@ -308,8 +301,41 @@ function UserLayout({ children, onChangePassword }) {
           left: 0;
           width: 100%;
           height: 100%;
-          background: rgba(0,0,0,0.4);
+          background: rgba(124,58,237,0.25);
+          backdrop-filter: blur(3px);
           z-index: 1040;
+        }
+
+        /* Buttons */
+        .btn-purple {
+          background: linear-gradient(135deg,#7c3aed,#4c1d95);
+          color: white;
+          border: none;
+        }
+
+        .btn-purple:hover {
+          box-shadow: 0 6px 18px rgba(124,58,237,0.4);
+          transform: translateY(-2px);
+        }
+
+        .btn-outline-purple {
+          border: 1px solid #7c3aed;
+          color: #7c3aed;
+        }
+
+        .btn-outline-purple:hover {
+          background: #7c3aed;
+          color: white;
+        }
+
+        .close-btn {
+          background: #7c3aed;
+          color: white;
+          border: none;
+        }
+
+        .close-btn:hover {
+          background: #6d28d9;
         }
 
         @media (min-width: 768px) {

@@ -238,7 +238,7 @@ function PaymentHistory({ email }) {
 
   if (payments.length === 0)
     return (
-      <p className={darkMode ? "text-light" : "text-muted"}>
+      <p style={{ color: darkMode ? "#c4b5fd" : "#6b21a8" }}>
         No payment history found.
       </p>
     );
@@ -251,7 +251,7 @@ function PaymentHistory({ email }) {
         darkMode ? "bg-dark text-light border-secondary" : ""
       }`}
     >
-      <h5 className="mb-4 fw-bold">🧾 Payment History</h5>
+      <h5 className="mb-4 fw-bold text-purple">🧾 Payment History</h5>
 
       {/* SUMMARY */}
       <div className="mb-4 p-3 rounded summary-box">
@@ -272,7 +272,7 @@ function PaymentHistory({ email }) {
             darkMode ? "table-dark" : "table-bordered"
           }`}
         >
-          <thead>
+          <thead className={darkMode ? "" : "table-light"}>
             <tr>
               <th>#</th>
               <th>Paid</th>
@@ -307,7 +307,7 @@ function PaymentHistory({ email }) {
                   <td>{p.month || "—"}</td>
 
                   <td>
-                    <span className="badge bg-success">approved</span>
+                    <span className="badge bg-purple">approved</span>
                   </td>
 
                   <td>
@@ -337,7 +337,7 @@ function PaymentHistory({ email }) {
             >
               <div className="d-flex justify-content-between mb-2">
                 <strong>Payment #{i + 1}</strong>
-                <span className="badge bg-success">approved</span>
+                <span className="badge bg-purple">approved</span>
               </div>
 
               <div className="small text-muted mb-2">
@@ -374,35 +374,44 @@ function PaymentHistory({ email }) {
         })}
       </div>
 
-      {/* CUSTOM STYLE */}
       <style>{`
         .payment-card {
           border-radius: 16px;
           transition: 0.3s ease;
+          border: 1px solid #ddd6fe;
         }
 
         .payment-card:hover {
-          box-shadow: 0 12px 35px rgba(0,0,0,0.1);
+          box-shadow: 0 12px 35px rgba(124,58,237,0.25);
+        }
+
+        .text-purple {
+          color: #7c3aed !important;
         }
 
         .summary-box {
-          background: linear-gradient(135deg,#ecfdf5,#d1fae5);
+          background: linear-gradient(135deg,#f3e8ff,#ede9fe);
           font-weight: 500;
         }
 
         body.dark-mode .summary-box {
-          background: linear-gradient(135deg,#1e293b,#0f172a);
+          background: linear-gradient(135deg,#1e1b4b,#0f172a);
+        }
+
+        .bg-purple {
+          background: linear-gradient(135deg,#7c3aed,#4c1d95) !important;
+          color: white;
         }
 
         .mobile-card {
           border-radius: 12px;
-          border: 1px solid #e5e7eb;
+          border: 1px solid #ddd6fe;
           transition: 0.3s ease;
         }
 
         .mobile-card:hover {
           transform: translateY(-3px);
-          box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+          box-shadow: 0 8px 20px rgba(124,58,237,0.25);
         }
       `}</style>
     </div>

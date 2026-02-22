@@ -15,6 +15,8 @@
 // import UserProfile from "./user/UserProfile";
 // import UserFees from "./user/UserFees";
 // import UserContact from "./user/UserContact";
+// import UserUniform from "./user/UserUniform";
+// import UserCertificate from "./user/UserCertificate";
 // import ChangePassword from "../components/ChangePassword";
 // import UserCalendar from "./UserCalendar";
 
@@ -189,7 +191,6 @@
 //             {activePage === "home" && (
 //               <>
 //                 <UserHome student={student} />
-
 //                 <div className="mt-4">
 //                   <UserCalendar darkMode={darkMode} />
 //                 </div>
@@ -202,6 +203,12 @@
 
 //             {activePage === "history" && (
 //               <PaymentHistory email={student.email} darkMode={darkMode} />
+//             )}
+
+//             {activePage === "uniform" && <UserUniform student={student} />}
+
+//             {activePage === "certificate" && (
+//               <UserCertificate student={student} />
 //             )}
 
 //             {activePage === "contact" && <UserContact />}
@@ -276,7 +283,7 @@ function PaymentHistory({ email, darkMode }) {
   if (loading)
     return (
       <div className="text-center py-4">
-        <div className="spinner-border text-success"></div>
+        <div className="spinner-border mb-3"></div>
       </div>
     );
 
@@ -294,7 +301,9 @@ function PaymentHistory({ email, darkMode }) {
 
   return (
     <div
-      className={`card shadow-sm p-3 ${darkMode ? "bg-dark text-light" : ""}`}
+      className={`card shadow-sm p-3 payment-card ${
+        darkMode ? "bg-dark text-light" : ""
+      }`}
       style={{ borderRadius: "16px" }}
     >
       <h5 className="mb-3">🧾 Payment History</h5>
@@ -305,7 +314,7 @@ function PaymentHistory({ email, darkMode }) {
             darkMode ? "table-dark" : "table-bordered"
           }`}
         >
-          <thead className={darkMode ? "" : "table-dark"}>
+          <thead>
             <tr>
               <th>#</th>
               <th>Paid</th>
@@ -320,32 +329,35 @@ function PaymentHistory({ email, darkMode }) {
             {payments.map((p, i) => (
               <tr key={p.id}>
                 <td>{i + 1}</td>
-                <td className="text-success fw-semibold">
-                  ₹ {p.paidAmount || 0}
-                </td>
+
+                <td className="fw-semibold paid-text">₹ {p.paidAmount || 0}</td>
+
                 <td
                   className={
                     p.remainingFees === 0
-                      ? "text-success fw-semibold"
+                      ? "fw-semibold paid-text"
                       : "text-danger fw-semibold"
                   }
                 >
                   ₹ {p.remainingFees ?? "—"}
                 </td>
+
                 <td>{p.month || "—"}</td>
+
                 <td>
                   <span
                     className={`badge ${
                       p.status === "approved"
-                        ? "bg-success"
+                        ? "badge-approved"
                         : p.status === "rejected"
                           ? "bg-danger"
-                          : "bg-warning text-dark"
+                          : "badge-pending"
                     }`}
                   >
                     {p.status}
                   </span>
                 </td>
+
                 <td>
                   {p.createdAt
                     ? new Date(p.createdAt.seconds * 1000).toLocaleDateString(
@@ -386,7 +398,7 @@ function UserDashboard() {
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-100">
         <div className="text-center">
-          <div className="spinner-border text-success mb-3"></div>
+          <div className="spinner-border mb-3"></div>
           <h6>Loading dashboard...</h6>
         </div>
       </div>
@@ -417,19 +429,14 @@ function UserDashboard() {
             )}
 
             {activePage === "profile" && <UserProfile student={student} />}
-
             {activePage === "fees" && <UserFees student={student} />}
-
             {activePage === "history" && (
               <PaymentHistory email={student.email} darkMode={darkMode} />
             )}
-
             {activePage === "uniform" && <UserUniform student={student} />}
-
             {activePage === "certificate" && (
               <UserCertificate student={student} />
             )}
-
             {activePage === "contact" && <UserContact />}
           </>
         )}
@@ -438,6 +445,45 @@ function UserDashboard() {
       {showChangePassword && (
         <ChangePassword onClose={() => setShowChangePassword(false)} />
       )}
+
+      {/* ===== PURPLE THEME STYLES ===== */}
+      <style>{`
+        .spinner-border {
+          color: #7c3aed !important;
+        }
+
+        .payment-card {
+          border: none;
+          box-shadow: 0 20px 40px rgba(124,58,237,0.15);
+        }
+
+        .table thead {
+          background: linear-gradient(90deg,#4c1d95,#7c3aed);
+          color: white;
+        }
+
+        .paid-text {
+          color: #7c3aed;
+        }
+
+        .badge-approved {
+          background: #7c3aed;
+        }
+
+        .badge-pending {
+          background: #facc15;
+          color: black;
+        }
+
+        body.dark-mode .payment-card {
+          background: #1e1b4b !important;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+
+        body.dark-mode .table-dark th {
+          background: #312e81 !important;
+        }
+      `}</style>
     </>
   );
 }

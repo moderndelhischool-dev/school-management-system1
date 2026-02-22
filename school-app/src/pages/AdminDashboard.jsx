@@ -9,6 +9,8 @@
 // import ClassBlocks from "../components/ClassBlocks";
 // import PaymentRequests from "../components/payments/PaymentRequests";
 // import AdminCalendar from "./AdminCalendar";
+// import AdminUniform from "../components/AdminUniform";
+// import AdminCertificate from "../components/AdminCertificate";
 
 // function AdminDashboard() {
 //   const [page, setPage] = useState("dashboard");
@@ -49,12 +51,12 @@
 //   return (
 //     <div className="admin-container" style={{ background: bgMain }}>
 //       <div className="row g-0 m-0">
-//         {/* ===== Desktop Sidebar ===== */}
+//         {/* Desktop Sidebar */}
 //         <div className="col-md-3 col-lg-2 p-0 d-none d-md-block">
 //           <Sidebar setPage={setPage} darkMode={darkMode} />
 //         </div>
 
-//         {/* ===== Mobile Sidebar ===== */}
+//         {/* Mobile Sidebar */}
 //         <div className={`mobile-sidebar ${showSidebar ? "open" : ""}`}>
 //           <div className="mobile-sidebar-content">
 //             <div className="text-end mb-3">
@@ -83,9 +85,9 @@
 //           />
 //         )}
 
-//         {/* ===== Main Content ===== */}
+//         {/* Main Content */}
 //         <div className="col-12 col-md-9 col-lg-10 p-3 p-md-4">
-//           {/* ===== Header ===== */}
+//           {/* Header */}
 //           <div
 //             className="d-flex justify-content-between align-items-center mb-4"
 //             style={headerStyle}
@@ -131,24 +133,21 @@
 //             </div>
 //           </div>
 
-//           {/* ===== Page Content Wrapper ===== */}
+//           {/* Page Wrapper */}
 //           <div style={pageWrapper}>
-//             {/* ===== Dashboard Layout ===== */}
+//             {/* Dashboard */}
 //             {page === "dashboard" && (
 //               <>
 //                 <div className="row g-4">
-//                   {/* LEFT SIDE */}
 //                   <div className="col-lg-5">
 //                     <ClassBlocks darkMode={darkMode} />
 //                   </div>
 
-//                   {/* RIGHT SIDE */}
 //                   <div className="col-lg-7">
 //                     <AdminCalendar darkMode={darkMode} />
 //                   </div>
 //                 </div>
 
-//                 {/* Bottom Section */}
 //                 <div className="mt-4">
 //                   <DashboardHome darkMode={darkMode} />
 //                 </div>
@@ -158,11 +157,17 @@
 //             {page === "add" && <AddStudent darkMode={darkMode} />}
 //             {page === "view" && <StudentList darkMode={darkMode} />}
 //             {page === "payments" && <PaymentRequests darkMode={darkMode} />}
+
+//             {/* ✅ NEW UNIFORM PAGE */}
+//             {page === "uniform" && <AdminUniform darkMode={darkMode} />}
+
+//             {/* ✅ NEW CERTIFICATE PAGE */}
+//             {page === "certificate" && <AdminCertificate darkMode={darkMode} />}
 //           </div>
 //         </div>
 //       </div>
 
-//       {/* ===== Styles ===== */}
+//       {/* Styles */}
 //       <style>{`
 //         .admin-container {
 //           min-height: 100vh;
@@ -237,19 +242,20 @@ function AdminDashboard() {
     window.location.href = "/";
   };
 
+  /* 🔥 Updated Purple Theme Background */
   const bgMain = darkMode
-    ? "linear-gradient(135deg,#0f172a,#020617)"
-    : "linear-gradient(135deg,#f0fdf4,#ecfdf5)";
+    ? "linear-gradient(135deg,#0f172a,#1e1b4b)"
+    : "linear-gradient(135deg,#f5f3ff,#ede9fe)";
 
   const headerStyle = {
     background: darkMode
-      ? "linear-gradient(90deg,#111827,#1e293b)"
-      : "linear-gradient(90deg,#16a34a,#22c55e)",
+      ? "linear-gradient(90deg,#1e1b4b,#312e81)"
+      : "linear-gradient(90deg,#4c1d95,#7c3aed)",
     borderRadius: "18px",
     padding: "18px 24px",
     boxShadow: darkMode
       ? "0 10px 30px rgba(0,0,0,0.6)"
-      : "0 10px 30px rgba(34,197,94,0.25)",
+      : "0 10px 30px rgba(124,58,237,0.35)",
     color: "white",
   };
 
@@ -259,7 +265,7 @@ function AdminDashboard() {
     padding: "28px",
     boxShadow: darkMode
       ? "0 20px 45px rgba(0,0,0,0.7)"
-      : "0 20px 45px rgba(0,0,0,0.08)",
+      : "0 20px 45px rgba(124,58,237,0.15)",
     minHeight: "70vh",
   };
 
@@ -323,8 +329,8 @@ function AdminDashboard() {
               <button
                 className="btn btn-sm"
                 style={{
-                  backgroundColor: darkMode ? "#1e293b" : "white",
-                  color: darkMode ? "#ffffff" : "#16a34a",
+                  backgroundColor: darkMode ? "#312e81" : "white",
+                  color: darkMode ? "#ffffff" : "#7c3aed",
                   borderRadius: "12px",
                   border: "none",
                 }}
@@ -350,7 +356,6 @@ function AdminDashboard() {
 
           {/* Page Wrapper */}
           <div style={pageWrapper}>
-            {/* Dashboard */}
             {page === "dashboard" && (
               <>
                 <div className="row g-4">
@@ -372,11 +377,7 @@ function AdminDashboard() {
             {page === "add" && <AddStudent darkMode={darkMode} />}
             {page === "view" && <StudentList darkMode={darkMode} />}
             {page === "payments" && <PaymentRequests darkMode={darkMode} />}
-
-            {/* ✅ NEW UNIFORM PAGE */}
             {page === "uniform" && <AdminUniform darkMode={darkMode} />}
-
-            {/* ✅ NEW CERTIFICATE PAGE */}
             {page === "certificate" && <AdminCertificate darkMode={darkMode} />}
           </div>
         </div>
@@ -394,7 +395,7 @@ function AdminDashboard() {
           left: 0;
           height: 100%;
           width: 280px;
-          background: ${darkMode ? "#0f172a" : "#16a34a"};
+          background: ${darkMode ? "#0f172a" : "#4c1d95"};
           transform: translateX(-100%);
           transition: transform 0.4s ease;
           z-index: 1050;

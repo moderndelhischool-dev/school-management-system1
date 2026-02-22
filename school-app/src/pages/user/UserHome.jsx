@@ -154,13 +154,13 @@ function UserHome() {
 
   return (
     <div className="userhome-wrapper">
-      <h5 className="mb-3">📊 Dashboard Overview</h5>
+      <h5 className="mb-3 text-purple">📊 Dashboard Overview</h5>
 
       <div className="row g-3">
         {/* CLASS */}
         <div className="col-12 col-md-4">
           <div className="card shadow-sm p-3 h-100 userhome-card">
-            <small className="text-muted">Class</small>
+            <small className="home-muted">Class</small>
             <h5 className="fw-semibold mb-0">{student.class}</h5>
           </div>
         </div>
@@ -168,7 +168,7 @@ function UserHome() {
         {/* FEES STATUS */}
         <div className="col-12 col-md-4">
           <div className="card shadow-sm p-3 h-100 userhome-card">
-            <small className="text-muted">Fees Status</small>
+            <small className="home-muted">Fees Status</small>
 
             <h5
               className={`fw-semibold mb-1 ${
@@ -181,7 +181,7 @@ function UserHome() {
             </h5>
 
             {feesMonth && (
-              <small className="text-muted">
+              <small className="home-muted">
                 {student.feeStatus === "Completed"
                   ? "Completed for"
                   : "Pending for"}{" "}
@@ -191,7 +191,7 @@ function UserHome() {
 
             {student.feeStatus === "Completed" && student.approvedAt && (
               <div className="mt-1">
-                <small className="text-muted">
+                <small className="home-muted">
                   Approved on:{" "}
                   {student.approvedAt.toDate().toLocaleDateString("en-IN")}
                 </small>
@@ -203,7 +203,7 @@ function UserHome() {
         {/* PENDING FEES */}
         <div className="col-12 col-md-4">
           <div className="card shadow-sm p-3 h-100 userhome-card">
-            <small className="text-muted">Pending Fees</small>
+            <small className="home-muted">Pending Fees</small>
 
             <h5
               className={
@@ -218,17 +218,45 @@ function UserHome() {
         </div>
       </div>
 
-      {/* DARK MODE STYLE */}
+      {/* PURPLE THEME STYLE */}
       <style>{`
-        /* Dark Mode Only */
+        .userhome-wrapper {
+          background: linear-gradient(135deg,#ffffff,#f3e8ff);
+          padding: 10px;
+          border-radius: 18px;
+          transition: all 0.3s ease;
+        }
+
+        .text-purple {
+          color: #7c3aed !important;
+        }
+
+        .userhome-card {
+          border-radius: 16px;
+          border: 1px solid #ddd6fe;
+          background: rgba(124,58,237,0.05);
+          transition: all 0.3s ease;
+        }
+
+        .userhome-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 10px 25px rgba(124,58,237,0.25);
+        }
+
+        .home-muted {
+          color: #6b21a8;
+          font-size: 13px;
+        }
+
+        /* DARK MODE */
         body.dark-mode .userhome-wrapper {
-          background-color: #121212;
+          background: linear-gradient(135deg,#1e1b4b,#0f172a);
           color: white;
         }
 
         body.dark-mode .userhome-card {
-          background-color: #1e1e1e !important;
-          border: 1px solid #333;
+          background: rgba(124,58,237,0.15) !important;
+          border: 1px solid #312e81;
         }
 
         body.dark-mode .userhome-card h5,
@@ -236,8 +264,8 @@ function UserHome() {
           color: white !important;
         }
 
-        body.dark-mode .userhome-card .text-muted {
-          color: #bbb !important;
+        body.dark-mode .home-muted {
+          color: #c4b5fd !important;
         }
       `}</style>
     </div>

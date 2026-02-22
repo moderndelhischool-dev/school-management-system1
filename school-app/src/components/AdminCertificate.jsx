@@ -238,9 +238,8 @@ function AdminCertificate({ darkMode }) {
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
 
-  const MAX_SIZE = 1024 * 1024; // 1MB
+  const MAX_SIZE = 1024 * 1024;
 
-  // Fetch certificates
   const fetchCertificates = async () => {
     const snapshot = await getDocs(collection(db, "certificates"));
     const data = snapshot.docs.map((doc) => ({
@@ -259,7 +258,6 @@ function AdminCertificate({ darkMode }) {
     fetchCertificates();
   }, []);
 
-  // File select
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -284,7 +282,6 @@ function AdminCertificate({ darkMode }) {
     };
   };
 
-  // Upload
   const handleUpload = async () => {
     if (!pdfData) {
       setMessage("Please select PDF file.");
@@ -311,7 +308,6 @@ function AdminCertificate({ darkMode }) {
     setUploading(false);
   };
 
-  // Delete
   const handleDelete = async (id) => {
     try {
       setDeletingId(id);
@@ -323,7 +319,6 @@ function AdminCertificate({ darkMode }) {
     setDeletingId(null);
   };
 
-  // View PDF properly
   const handleView = (base64File) => {
     const byteCharacters = atob(base64File.split(",")[1]);
     const byteNumbers = new Array(byteCharacters.length);
@@ -347,9 +342,9 @@ function AdminCertificate({ darkMode }) {
         color: darkMode ? "#fff" : "#000",
       }}
     >
-      <h4 className="mb-3">📜 Upload Certificate (Max 1MB)</h4>
+      <h4 className="mb-3 text-purple">📜 Upload Certificate (Max 1MB)</h4>
 
-      {message && <div className="alert alert-info py-2">{message}</div>}
+      {message && <div className="alert alert-purple py-2">{message}</div>}
 
       {/* Upload Card */}
       <div
@@ -362,12 +357,12 @@ function AdminCertificate({ darkMode }) {
         <input
           type="file"
           accept="application/pdf"
-          className="form-control mb-3"
+          className="form-control mb-3 custom-input"
           onChange={handleFileChange}
         />
 
         <button
-          className="btn btn-success"
+          className="btn upload-btn"
           onClick={handleUpload}
           disabled={uploading}
         >
@@ -397,10 +392,9 @@ function AdminCertificate({ darkMode }) {
                 opacity: deletingId === item.id ? 0.5 : 1,
               }}
             >
-              {/* Top Icon */}
               <div
                 style={{
-                  background: darkMode ? "#334155" : "#f1f5f9",
+                  background: darkMode ? "#334155" : "#f3f4f6",
                   padding: "30px",
                   textAlign: "center",
                   fontSize: "40px",
@@ -411,7 +405,6 @@ function AdminCertificate({ darkMode }) {
                 📄
               </div>
 
-              {/* Details */}
               <div className="p-3 d-flex flex-column">
                 <h6 className="fw-bold text-truncate">{item.fileName}</h6>
 
@@ -430,7 +423,7 @@ function AdminCertificate({ darkMode }) {
 
                 <div className="mt-auto d-flex gap-2">
                   <button
-                    className="btn btn-primary btn-sm w-50"
+                    className="btn btn-purple btn-sm w-50"
                     onClick={() => handleView(item.file)}
                   >
                     View
@@ -456,6 +449,47 @@ function AdminCertificate({ darkMode }) {
           </div>
         ))}
       </div>
+
+      {/* ================= PURPLE STYLES ================= */}
+
+      <style>{`
+        .text-purple {
+          color: #7c3aed !important;
+        }
+
+        .alert-purple {
+          background: #ede9fe;
+          color: #4c1d95;
+          border: 1px solid #c4b5fd;
+        }
+
+        .upload-btn {
+          background: linear-gradient(135deg,#7c3aed,#4c1d95);
+          color: white;
+          border: none;
+          transition: 0.3s;
+        }
+
+        .upload-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(124,58,237,0.4);
+        }
+
+        .btn-purple {
+          background: #7c3aed;
+          color: white;
+          border: none;
+        }
+
+        .btn-purple:hover {
+          background: #6d28d9;
+        }
+
+        .custom-input:focus {
+          border-color: #7c3aed !important;
+          box-shadow: 0 0 12px rgba(124,58,237,0.4);
+        }
+      `}</style>
     </div>
   );
 }

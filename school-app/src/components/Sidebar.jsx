@@ -66,6 +66,22 @@
 //         >
 //           💰 Payment Requests
 //         </button>
+
+//         {/* ✅ NEW UNIFORM SECTION */}
+//         <button
+//           style={buttonStyle("uniform")}
+//           onClick={() => handleClick("uniform")}
+//         >
+//           👔 Uniform Requests
+//         </button>
+
+//         {/* ✅ NEW CERTIFICATE SECTION */}
+//         <button
+//           style={buttonStyle("certificate")}
+//           onClick={() => handleClick("certificate")}
+//         >
+//           📜 Certificate Requests
+//         </button>
 //       </div>
 
 //       <div className="mt-auto pt-4">
@@ -81,15 +97,13 @@
 //       </div>
 
 //       <style>{`
-//         /* 👇 FIX FOR LEFT WHITE LINE */
 //         .sidebar-wrapper {
 //           position: sticky;
 //           top: 0;
-//           align-self: stretch;   /* Important */
+//           align-self: stretch;
 //           margin: 0;
 //         }
 
-//         /* Remove unwanted bootstrap gutter space */
 //         @media (min-width: 768px) {
 //           .sidebar-wrapper {
 //             margin-left: 0 !important;
@@ -118,19 +132,19 @@ function Sidebar({ setPage, darkMode }) {
     minHeight: "100vh",
     height: "100%",
     background: darkMode
-      ? "linear-gradient(180deg,#0f172a,#020617)"
-      : "linear-gradient(180deg,#16a34a,#22c55e)",
+      ? "linear-gradient(180deg,#0f172a,#1e1b4b)"
+      : "linear-gradient(180deg,#4c1d95,#7c3aed)",
     color: "#ffffff",
     transition: "all 0.3s ease",
     boxShadow: darkMode
       ? "4px 0 25px rgba(0,0,0,0.6)"
-      : "4px 0 25px rgba(34,197,94,0.25)",
+      : "4px 0 25px rgba(124,58,237,0.35)",
   };
 
   const buttonStyle = (page) => ({
     background:
       active === page
-        ? "linear-gradient(90deg,#22c55e,#16a34a)"
+        ? "linear-gradient(90deg,#7c3aed,#4c1d95)"
         : "transparent",
     color: "#ffffff",
     border: "none",
@@ -177,7 +191,6 @@ function Sidebar({ setPage, darkMode }) {
           💰 Payment Requests
         </button>
 
-        {/* ✅ NEW UNIFORM SECTION */}
         <button
           style={buttonStyle("uniform")}
           onClick={() => handleClick("uniform")}
@@ -185,7 +198,6 @@ function Sidebar({ setPage, darkMode }) {
           👔 Uniform Requests
         </button>
 
-        {/* ✅ NEW CERTIFICATE SECTION */}
         <button
           style={buttonStyle("certificate")}
           onClick={() => handleClick("certificate")}
@@ -197,7 +209,7 @@ function Sidebar({ setPage, darkMode }) {
       <div className="mt-auto pt-4">
         <small
           style={{
-            color: "#bbf7d0",
+            color: darkMode ? "#a5b4fc" : "#ede9fe",
             fontSize: "13px",
             opacity: "0.8",
           }}
@@ -212,6 +224,12 @@ function Sidebar({ setPage, darkMode }) {
           top: 0;
           align-self: stretch;
           margin: 0;
+        }
+
+        /* Smooth Hover Effect */
+        .sidebar-wrapper button:hover {
+          background: linear-gradient(90deg,#8b5cf6,#6d28d9) !important;
+          transform: translateX(6px);
         }
 
         @media (min-width: 768px) {

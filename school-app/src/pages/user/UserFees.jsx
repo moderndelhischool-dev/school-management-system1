@@ -200,7 +200,6 @@ function UserFees() {
   const [alreadyRequested, setAlreadyRequested] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
-  /* ================= LOAD DATA ================= */
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme === "dark") setDarkMode(true);
@@ -229,7 +228,6 @@ function UserFees() {
 
   if (!student) return null;
 
-  /* ================= REQUEST PAYMENT ================= */
   const requestPaymentApproval = async () => {
     const amount = Number(payAmount);
 
@@ -291,9 +289,8 @@ function UserFees() {
         darkMode ? "bg-dark text-light border-secondary" : ""
       }`}
     >
-      <h5 className="mb-4 fw-bold">💳 Fees & Payment</h5>
+      <h5 className="mb-4 fw-bold text-purple">💳 Fees & Payment</h5>
 
-      {/* SUMMARY BOX */}
       <div className="summary-box mb-4 p-3 rounded">
         <div className="d-flex justify-content-between mb-2">
           <span>Total Fees</span>
@@ -319,11 +316,11 @@ function UserFees() {
       <div className="mb-3">
         <div className="progress" style={{ height: "8px" }}>
           <div
-            className="progress-bar bg-success"
+            className="progress-bar bg-purple"
             style={{ width: `${progress}%` }}
           ></div>
         </div>
-        <small className="text-muted">{progress}% Paid</small>
+        <small className="fees-muted">{progress}% Paid</small>
       </div>
 
       <p>
@@ -340,7 +337,7 @@ function UserFees() {
       </p>
 
       {student.month && (
-        <p className="text-muted">
+        <p className="fees-muted">
           <b>Fees Month:</b> {student.month}
         </p>
       )}
@@ -360,7 +357,7 @@ function UserFees() {
               className="img-fluid"
               style={{ maxWidth: 220 }}
             />
-            <p className="text-muted mt-2 mb-0">
+            <p className="fees-muted mt-2 mb-0">
               Scan & pay, then enter paid amount
             </p>
           </div>
@@ -375,7 +372,7 @@ function UserFees() {
           />
 
           <button
-            className="btn btn-success w-100"
+            className="btn btn-purple w-100"
             disabled={loading || alreadyRequested}
             onClick={requestPaymentApproval}
           >
@@ -398,29 +395,51 @@ function UserFees() {
         </div>
       )}
 
-      {/* CUSTOM STYLE */}
       <style>{`
         .fees-card {
           border-radius: 18px;
           transition: 0.3s ease;
+          border: 1px solid #ddd6fe;
         }
 
         .fees-card:hover {
-          box-shadow: 0 12px 35px rgba(0,0,0,0.1);
+          box-shadow: 0 12px 35px rgba(124,58,237,0.25);
+        }
+
+        .text-purple {
+          color: #7c3aed !important;
         }
 
         .summary-box {
-          background: linear-gradient(135deg,#ecfdf5,#d1fae5);
+          background: linear-gradient(135deg,#f3e8ff,#ede9fe);
           font-weight: 500;
         }
 
         body.dark-mode .summary-box {
-          background: linear-gradient(135deg,#1e293b,#0f172a);
+          background: linear-gradient(135deg,#1e1b4b,#0f172a);
+        }
+
+        .bg-purple {
+          background: linear-gradient(90deg,#7c3aed,#4c1d95);
+        }
+
+        .btn-purple {
+          background: linear-gradient(135deg,#7c3aed,#4c1d95);
+          color: white;
+          border: none;
+        }
+
+        .btn-purple:hover {
+          box-shadow: 0 6px 18px rgba(124,58,237,0.4);
         }
 
         .custom-input:focus {
-          border-color: #16a34a !important;
-          box-shadow: 0 0 8px rgba(34,197,94,0.4);
+          border-color: #7c3aed !important;
+          box-shadow: 0 0 8px rgba(124,58,237,0.4);
+        }
+
+        .fees-muted {
+          color: ${darkMode ? "#c4b5fd" : "#6b21a8"};
         }
       `}</style>
     </div>
