@@ -146,13 +146,6 @@
 //   const [student, setStudent] = useState(null);
 //   const [loading, setLoading] = useState(true);
 //   const [showChangePassword, setShowChangePassword] = useState(false);
-//   const [darkMode, setDarkMode] = useState(false);
-
-//   // 🔥 Theme detection once
-//   useEffect(() => {
-//     const savedTheme = localStorage.getItem("theme");
-//     if (savedTheme === "dark") setDarkMode(true);
-//   }, []);
 
 //   useEffect(() => {
 //     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -191,15 +184,14 @@
 //   return (
 //     <>
 //       <UserLayout onChangePassword={() => setShowChangePassword(true)}>
-//         {(activePage) => (
+//         {(activePage, darkMode) => (
 //           <>
 //             {activePage === "home" && (
 //               <>
 //                 <UserHome student={student} />
 
-//                 {/* ✅ Calendar with darkMode prop */}
 //                 <div className="mt-4">
-//                   <UserCalendar />
+//                   <UserCalendar darkMode={darkMode} />
 //                 </div>
 //               </>
 //             )}
@@ -242,6 +234,8 @@ import UserHome from "./user/UserHome";
 import UserProfile from "./user/UserProfile";
 import UserFees from "./user/UserFees";
 import UserContact from "./user/UserContact";
+import UserUniform from "./user/UserUniform";
+import UserCertificate from "./user/UserCertificate";
 import ChangePassword from "../components/ChangePassword";
 import UserCalendar from "./UserCalendar";
 
@@ -416,7 +410,6 @@ function UserDashboard() {
             {activePage === "home" && (
               <>
                 <UserHome student={student} />
-
                 <div className="mt-4">
                   <UserCalendar darkMode={darkMode} />
                 </div>
@@ -429,6 +422,12 @@ function UserDashboard() {
 
             {activePage === "history" && (
               <PaymentHistory email={student.email} darkMode={darkMode} />
+            )}
+
+            {activePage === "uniform" && <UserUniform student={student} />}
+
+            {activePage === "certificate" && (
+              <UserCertificate student={student} />
             )}
 
             {activePage === "contact" && <UserContact />}

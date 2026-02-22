@@ -8,6 +8,7 @@
 // import StudentList from "../components/StudentList";
 // import ClassBlocks from "../components/ClassBlocks";
 // import PaymentRequests from "../components/payments/PaymentRequests";
+// import AdminCalendar from "./AdminCalendar";
 
 // function AdminDashboard() {
 //   const [page, setPage] = useState("dashboard");
@@ -84,6 +85,7 @@
 
 //         {/* ===== Main Content ===== */}
 //         <div className="col-12 col-md-9 col-lg-10 p-3 p-md-4">
+//           {/* ===== Header ===== */}
 //           <div
 //             className="d-flex justify-content-between align-items-center mb-4"
 //             style={headerStyle}
@@ -129,10 +131,24 @@
 //             </div>
 //           </div>
 
+//           {/* ===== Page Content Wrapper ===== */}
 //           <div style={pageWrapper}>
+//             {/* ===== Dashboard Layout ===== */}
 //             {page === "dashboard" && (
 //               <>
-//                 <ClassBlocks darkMode={darkMode} />
+//                 <div className="row g-4">
+//                   {/* LEFT SIDE */}
+//                   <div className="col-lg-5">
+//                     <ClassBlocks darkMode={darkMode} />
+//                   </div>
+
+//                   {/* RIGHT SIDE */}
+//                   <div className="col-lg-7">
+//                     <AdminCalendar darkMode={darkMode} />
+//                   </div>
+//                 </div>
+
+//                 {/* Bottom Section */}
 //                 <div className="mt-4">
 //                   <DashboardHome darkMode={darkMode} />
 //                 </div>
@@ -146,25 +162,12 @@
 //         </div>
 //       </div>
 
-//       {/* ===== FIX FOR WHITE LINE ===== */}
+//       {/* ===== Styles ===== */}
 //       <style>{`
 //         .admin-container {
 //           min-height: 100vh;
-//           padding: 0 !important;
-//           margin: 0 !important;
 //         }
 
-//         .row {
-//           margin: 0 !important;
-//         }
-
-//         .col-md-3,
-//         .col-lg-2 {
-//           padding-left: 0 !important;
-//           padding-right: 0 !important;
-//         }
-
-//         /* ===== Mobile Sidebar ===== */
 //         .mobile-sidebar {
 //           position: fixed;
 //           top: 0;
@@ -221,6 +224,8 @@ import StudentList from "../components/StudentList";
 import ClassBlocks from "../components/ClassBlocks";
 import PaymentRequests from "../components/payments/PaymentRequests";
 import AdminCalendar from "./AdminCalendar";
+import AdminUniform from "../components/AdminUniform";
+import AdminCertificate from "../components/AdminCertificate";
 
 function AdminDashboard() {
   const [page, setPage] = useState("dashboard");
@@ -261,12 +266,12 @@ function AdminDashboard() {
   return (
     <div className="admin-container" style={{ background: bgMain }}>
       <div className="row g-0 m-0">
-        {/* ===== Desktop Sidebar ===== */}
+        {/* Desktop Sidebar */}
         <div className="col-md-3 col-lg-2 p-0 d-none d-md-block">
           <Sidebar setPage={setPage} darkMode={darkMode} />
         </div>
 
-        {/* ===== Mobile Sidebar ===== */}
+        {/* Mobile Sidebar */}
         <div className={`mobile-sidebar ${showSidebar ? "open" : ""}`}>
           <div className="mobile-sidebar-content">
             <div className="text-end mb-3">
@@ -295,9 +300,9 @@ function AdminDashboard() {
           />
         )}
 
-        {/* ===== Main Content ===== */}
+        {/* Main Content */}
         <div className="col-12 col-md-9 col-lg-10 p-3 p-md-4">
-          {/* ===== Header ===== */}
+          {/* Header */}
           <div
             className="d-flex justify-content-between align-items-center mb-4"
             style={headerStyle}
@@ -343,24 +348,21 @@ function AdminDashboard() {
             </div>
           </div>
 
-          {/* ===== Page Content Wrapper ===== */}
+          {/* Page Wrapper */}
           <div style={pageWrapper}>
-            {/* ===== Dashboard Layout ===== */}
+            {/* Dashboard */}
             {page === "dashboard" && (
               <>
                 <div className="row g-4">
-                  {/* LEFT SIDE */}
                   <div className="col-lg-5">
                     <ClassBlocks darkMode={darkMode} />
                   </div>
 
-                  {/* RIGHT SIDE */}
                   <div className="col-lg-7">
                     <AdminCalendar darkMode={darkMode} />
                   </div>
                 </div>
 
-                {/* Bottom Section */}
                 <div className="mt-4">
                   <DashboardHome darkMode={darkMode} />
                 </div>
@@ -370,11 +372,17 @@ function AdminDashboard() {
             {page === "add" && <AddStudent darkMode={darkMode} />}
             {page === "view" && <StudentList darkMode={darkMode} />}
             {page === "payments" && <PaymentRequests darkMode={darkMode} />}
+
+            {/* ✅ NEW UNIFORM PAGE */}
+            {page === "uniform" && <AdminUniform darkMode={darkMode} />}
+
+            {/* ✅ NEW CERTIFICATE PAGE */}
+            {page === "certificate" && <AdminCertificate darkMode={darkMode} />}
           </div>
         </div>
       </div>
 
-      {/* ===== Styles ===== */}
+      {/* Styles */}
       <style>{`
         .admin-container {
           min-height: 100vh;

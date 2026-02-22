@@ -6,6 +6,7 @@
 //   const sidebarStyle = {
 //     width: "230px",
 //     minHeight: "100vh",
+//     height: "100%",
 //     background: darkMode
 //       ? "linear-gradient(180deg,#0f172a,#020617)"
 //       : "linear-gradient(180deg,#16a34a,#22c55e)",
@@ -37,73 +38,36 @@
 //   };
 
 //   return (
-//     <div className="p-4 d-flex flex-column" style={sidebarStyle}>
+//     <div
+//       className="d-flex flex-column p-4 sidebar-wrapper"
+//       style={sidebarStyle}
+//     >
 //       <h5 className="mb-4 fw-bold">👨‍💼 Admin Panel</h5>
 
-//       {/* ===== MENU ===== */}
 //       <div className="d-grid gap-3">
 //         <button
 //           style={buttonStyle("dashboard")}
 //           onClick={() => handleClick("dashboard")}
-//           onMouseEnter={(e) =>
-//             active !== "dashboard" &&
-//             (e.currentTarget.style.transform = "translateX(6px)")
-//           }
-//           onMouseLeave={(e) =>
-//             active !== "dashboard" &&
-//             (e.currentTarget.style.transform = "translateX(0)")
-//           }
 //         >
 //           📊 Dashboard
 //         </button>
 
-//         <button
-//           style={buttonStyle("add")}
-//           onClick={() => handleClick("add")}
-//           onMouseEnter={(e) =>
-//             active !== "add" &&
-//             (e.currentTarget.style.transform = "translateX(6px)")
-//           }
-//           onMouseLeave={(e) =>
-//             active !== "add" &&
-//             (e.currentTarget.style.transform = "translateX(0)")
-//           }
-//         >
+//         <button style={buttonStyle("add")} onClick={() => handleClick("add")}>
 //           ➕ Add Student
 //         </button>
 
-//         <button
-//           style={buttonStyle("view")}
-//           onClick={() => handleClick("view")}
-//           onMouseEnter={(e) =>
-//             active !== "view" &&
-//             (e.currentTarget.style.transform = "translateX(6px)")
-//           }
-//           onMouseLeave={(e) =>
-//             active !== "view" &&
-//             (e.currentTarget.style.transform = "translateX(0)")
-//           }
-//         >
+//         <button style={buttonStyle("view")} onClick={() => handleClick("view")}>
 //           📋 View Students
 //         </button>
 
 //         <button
 //           style={buttonStyle("payments")}
 //           onClick={() => handleClick("payments")}
-//           onMouseEnter={(e) =>
-//             active !== "payments" &&
-//             (e.currentTarget.style.transform = "translateX(6px)")
-//           }
-//           onMouseLeave={(e) =>
-//             active !== "payments" &&
-//             (e.currentTarget.style.transform = "translateX(0)")
-//           }
 //         >
 //           💰 Payment Requests
 //         </button>
 //       </div>
 
-//       {/* ===== FOOTER ===== */}
 //       <div className="mt-auto pt-4">
 //         <small
 //           style={{
@@ -115,6 +79,30 @@
 //           Logged in as Admin
 //         </small>
 //       </div>
+
+//       <style>{`
+//         /* 👇 FIX FOR LEFT WHITE LINE */
+//         .sidebar-wrapper {
+//           position: sticky;
+//           top: 0;
+//           align-self: stretch;   /* Important */
+//           margin: 0;
+//         }
+
+//         /* Remove unwanted bootstrap gutter space */
+//         @media (min-width: 768px) {
+//           .sidebar-wrapper {
+//             margin-left: 0 !important;
+//           }
+//         }
+
+//         @media (max-width: 768px) {
+//           .sidebar-wrapper {
+//             position: relative;
+//             height: auto;
+//           }
+//         }
+//       `}</style>
 //     </div>
 //   );
 // }
@@ -188,6 +176,22 @@ function Sidebar({ setPage, darkMode }) {
         >
           💰 Payment Requests
         </button>
+
+        {/* ✅ NEW UNIFORM SECTION */}
+        <button
+          style={buttonStyle("uniform")}
+          onClick={() => handleClick("uniform")}
+        >
+          👔 Uniform Requests
+        </button>
+
+        {/* ✅ NEW CERTIFICATE SECTION */}
+        <button
+          style={buttonStyle("certificate")}
+          onClick={() => handleClick("certificate")}
+        >
+          📜 Certificate Requests
+        </button>
       </div>
 
       <div className="mt-auto pt-4">
@@ -203,15 +207,13 @@ function Sidebar({ setPage, darkMode }) {
       </div>
 
       <style>{`
-        /* 👇 FIX FOR LEFT WHITE LINE */
         .sidebar-wrapper {
           position: sticky;
           top: 0;
-          align-self: stretch;   /* Important */
+          align-self: stretch;
           margin: 0;
         }
 
-        /* Remove unwanted bootstrap gutter space */
         @media (min-width: 768px) {
           .sidebar-wrapper {
             margin-left: 0 !important;

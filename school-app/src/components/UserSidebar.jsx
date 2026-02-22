@@ -66,14 +66,6 @@
 //         🧾 Payment History
 //       </button>
 
-//       {/* ✅ NEW CONTACT BUTTON */}
-//       <button
-//         className={btnClass("contact")}
-//         onClick={() => setActivePage("contact")}
-//       >
-//         📞 Contact
-//       </button>
-
 //       {/* DARK MODE BUTTON */}
 //       <div className="mt-3">
 //         <button
@@ -86,8 +78,9 @@
 //         </button>
 //       </div>
 
-//       {/* CHANGE PASSWORD */}
-//       <div className="mt-auto pt-4 border-top sidebar-bottom">
+//       {/* 🔥 BOTTOM SECTION */}
+//       <div className="mt-auto pt-4 border-top sidebar-bottom text-center">
+//         {/* CHANGE PASSWORD */}
 //         <button
 //           className={`btn w-100 text-start ${
 //             darkMode ? "btn-outline-light" : "btn-outline-secondary"
@@ -110,10 +103,6 @@
 //         body.dark-mode .user-sidebar {
 //           background: linear-gradient(180deg, #0f172a, #020617) !important;
 //           border-right: 1px solid #1e293b;
-//         }
-
-//         .sidebar-title {
-//           letter-spacing: 0.5px;
 //         }
 
 //         .sidebar-btn {
@@ -139,10 +128,6 @@
 //         body.dark-mode .active-btn {
 //           background: linear-gradient(90deg, #3b82f6, #2563eb) !important;
 //           color: white !important;
-//         }
-
-//         body.dark-mode .sidebar-btn:hover {
-//           box-shadow: 0 6px 18px rgba(59,130,246,0.35);
 //         }
 
 //         .sidebar-bottom {
@@ -194,7 +179,7 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
     <div className="user-sidebar h-100 p-4 d-flex flex-column">
       <h5 className="mb-4 fw-bold sidebar-title">👤 Student Panel</h5>
 
-      {/* MENU ITEMS */}
+      {/* DASHBOARD */}
       <button
         className={btnClass("home")}
         onClick={() => setActivePage("home")}
@@ -202,6 +187,7 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         📊 Dashboard
       </button>
 
+      {/* PROFILE */}
       <button
         className={btnClass("profile")}
         onClick={() => setActivePage("profile")}
@@ -209,6 +195,7 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         🙍 My Profile
       </button>
 
+      {/* FEES */}
       <button
         className={btnClass("fees")}
         onClick={() => setActivePage("fees")}
@@ -216,11 +203,28 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         💳 Fees & Payment
       </button>
 
+      {/* PAYMENT HISTORY */}
       <button
         className={btnClass("history")}
         onClick={() => setActivePage("history")}
       >
         🧾 Payment History
+      </button>
+
+      {/* ✅ NEW UNIFORM BUTTON */}
+      <button
+        className={btnClass("uniform")}
+        onClick={() => setActivePage("uniform")}
+      >
+        👔 Uniform Request
+      </button>
+
+      {/* ✅ NEW CERTIFICATE BUTTON */}
+      <button
+        className={btnClass("certificate")}
+        onClick={() => setActivePage("certificate")}
+      >
+        📜 Certificate Request
       </button>
 
       {/* DARK MODE BUTTON */}
@@ -237,7 +241,6 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
 
       {/* 🔥 BOTTOM SECTION */}
       <div className="mt-auto pt-4 border-top sidebar-bottom text-center">
-        {/* CHANGE PASSWORD */}
         <button
           className={`btn w-100 text-start ${
             darkMode ? "btn-outline-light" : "btn-outline-secondary"
