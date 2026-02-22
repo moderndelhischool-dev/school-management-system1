@@ -89,18 +89,14 @@ function UserProfile() {
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "dark") {
-      setDarkMode(true);
-    }
+    if (savedTheme === "dark") setDarkMode(true);
 
     const load = async () => {
       const user = auth.currentUser;
       if (!user) return;
 
       const snap = await getDoc(doc(db, "students", user.email));
-      if (snap.exists()) {
-        setStudent(snap.data());
-      }
+      if (snap.exists()) setStudent(snap.data());
     };
 
     load();
@@ -108,52 +104,71 @@ function UserProfile() {
 
   if (!student) return null;
 
-  const feesMonth = student.feesDate
-    ? new Date(student.feesDate).toLocaleString("en-IN", {
-        month: "long",
-        year: "numeric",
-      })
-    : null;
+  const feesMonth =
+    student.feesDate &&
+    new Date(student.feesDate).toLocaleString("en-IN", {
+      month: "long",
+      year: "numeric",
+    });
 
   return (
     <div
-      className={`card shadow-lg p-4 userprofile-card ${
-        darkMode ? "dark-card text-light" : ""
-      }`}
+      className="userprofile-card shadow-lg p-4"
+      style={{
+        background: darkMode
+          ? "linear-gradient(135deg,#1e1b4b,#0f172a)"
+          : "linear-gradient(135deg,#ffffff,#f3e8ff)",
+        border: darkMode ? "1px solid #312e81" : "1px solid #ddd6fe",
+        color: darkMode ? "#ffffff" : "#000000",
+        borderRadius: "18px",
+        transition: "0.3s ease",
+      }}
     >
       <h5 className="mb-4 fw-semibold text-purple">👤 My Profile</h5>
 
       <div className="row g-3">
-        <div className="col-12 col-md-6">
+        {/* NAME */}
+        <div className="col-md-6">
           <div className="profile-item">
             <small className="profile-muted">Name</small>
-            <h6 className="mb-0">{student.name}</h6>
+            <h6>{student.name}</h6>
           </div>
         </div>
 
-        <div className="col-12 col-md-6">
+        {/* FATHER NAME ✅ */}
+        <div className="col-md-6">
+          <div className="profile-item">
+            <small className="profile-muted">Father Name</small>
+            <h6>{student.fatherName || "—"}</h6>
+          </div>
+        </div>
+
+        {/* EMAIL */}
+        <div className="col-md-6">
           <div className="profile-item">
             <small className="profile-muted">Email</small>
-            <h6 className="mb-0">{student.email}</h6>
+            <h6>{student.email}</h6>
           </div>
         </div>
 
-        <div className="col-12 col-md-6">
+        {/* CLASS */}
+        <div className="col-md-6">
           <div className="profile-item">
             <small className="profile-muted">Class</small>
-            <h6 className="mb-0">{student.class}</h6>
+            <h6>{student.class}</h6>
           </div>
         </div>
 
-        <div className="col-12 col-md-6">
+        {/* FEES STATUS */}
+        <div className="col-md-6">
           <div className="profile-item">
             <small className="profile-muted">Fees Status</small>
             <h6
-              className={`mb-0 ${
+              className={
                 student.feeStatus === "Completed"
                   ? "text-success fw-semibold"
                   : "text-danger fw-semibold"
-              }`}
+              }
             >
               {student.feeStatus}
             </h6>
@@ -169,43 +184,28 @@ function UserProfile() {
           </div>
         </div>
 
-        {student.feeStatus === "Completed" && student.approvedAt && (
-          <div className="col-12 col-md-6">
+        {/* APPROVED DATE */}
+        {student.approvedAt && (
+          <div className="col-md-6">
             <div className="profile-item">
               <small className="profile-muted">Approved On</small>
-              <h6 className="mb-0">
-                {student.approvedAt.toDate().toLocaleDateString("en-IN")}
-              </h6>
+              <h6>{student.approvedAt.toDate().toLocaleDateString("en-IN")}</h6>
             </div>
           </div>
         )}
 
+        {/* LAST UPDATED */}
         {student.updatedAt && (
-          <div className="col-12 col-md-6">
+          <div className="col-md-6">
             <div className="profile-item">
               <small className="profile-muted">Last Updated</small>
-              <h6 className="mb-0">
-                {student.updatedAt.toDate().toLocaleDateString("en-IN")}
-              </h6>
+              <h6>{student.updatedAt.toDate().toLocaleDateString("en-IN")}</h6>
             </div>
           </div>
         )}
       </div>
 
-      {/* ===== STYLES ===== */}
       <style>{`
-        .userprofile-card {
-          border-radius: 18px;
-          background: linear-gradient(135deg, #ffffff, #f3e8ff);
-          transition: all 0.3s ease;
-          border: 1px solid #ddd6fe;
-        }
-
-        .dark-card {
-          background: linear-gradient(135deg, #1e1b4b, #0f172a);
-          border: 1px solid #312e81;
-        }
-
         .text-purple {
           color: #7c3aed !important;
         }
@@ -213,28 +213,20 @@ function UserProfile() {
         .profile-item {
           padding: 14px;
           border-radius: 14px;
-          background: rgba(124,58,237,0.08);
-          backdrop-filter: blur(6px);
-          transition: all 0.3s ease;
+          background: ${
+            darkMode ? "rgba(124,58,237,0.15)" : "rgba(124,58,237,0.08)"
+          };
+          transition: 0.3s ease;
         }
 
         .profile-item:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 8px 20px rgba(124,58,237,0.25);
-        }
-
-        body.dark-mode .profile-item {
-          background: rgba(124,58,237,0.15);
-          border: 1px solid rgba(124,58,237,0.25);
+          transform: translateY(-4px);
+          box-shadow: 0 10px 25px rgba(124,58,237,0.3);
         }
 
         .profile-muted {
-          color: ${darkMode ? "#c4b5fd" : "#6b21a8"};
           font-size: 13px;
-        }
-
-        body.dark-mode .profile-muted {
-          color: #c4b5fd !important;
+          color: ${darkMode ? "#c4b5fd" : "#6b21a8"};
         }
       `}</style>
     </div>

@@ -1,36 +1,42 @@
 import { useEffect, useState } from "react";
 import { db } from "../../firebase/firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 
 function UserUniform({ darkMode }) {
   const [uniforms, setUniforms] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const fetchUniforms = async () => {
-    const snap = await getDocs(collection(db, "uniforms"));
-
-    const data = snap.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    data.sort(
-      (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0),
-    );
-
-    setUniforms(data);
-    setLoading(false);
-  };
+  const [viewImage, setViewImage] = useState(null);
 
   useEffect(() => {
-    fetchUniforms();
+    const unsubscribe = onSnapshot(collection(db, "uniforms"), (snap) => {
+      const data = snap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
 
-    const interval = setInterval(() => {
-      fetchUniforms();
-    }, 1000);
+      data.sort(
+        (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0),
+      );
 
-    return () => clearInterval(interval);
+      setUniforms(data);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
+
+  const downloadImage = async (url) => {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = "uniform-image.jpg";
+    link.click();
+
+    window.URL.revokeObjectURL(blobUrl);
+  };
 
   if (loading) {
     return (
@@ -58,73 +64,134 @@ function UserUniform({ darkMode }) {
       className="container mt-4"
       style={{
         color: darkMode ? "#ffffff" : "#4c1d95",
-        transition: "all 0.3s ease",
       }}
     >
-      <h4 className="mb-3 text-purple">👔 School Uniform</h4>
+      <h4 className="mb-4 text-purple fw-bold">👔 School Uniform</h4>
 
       <div className="row">
         {uniforms.map((item) => (
-          <div key={item.id} className="col-12 col-md-6 col-lg-4 mb-4">
+          <div key={item.id} className="col-md-6 col-lg-4 mb-4">
             <div
-              className="card shadow-sm h-100"
+              className="uniform-card shadow-sm"
               style={{
                 backgroundColor: darkMode ? "#1e1b4b" : "#ffffff",
-                color: darkMode ? "#ffffff" : "#000000",
-                borderRadius: "16px",
                 border: darkMode ? "1px solid #312e81" : "1px solid #ddd6fe",
-                transition: "all 0.3s ease",
               }}
             >
-              {/* Image Box */}
-              <div
-                style={{
-                  height: "250px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: darkMode ? "#312e81" : "#f3e8ff",
-                  borderTopLeftRadius: "16px",
-                  borderTopRightRadius: "16px",
-                }}
-              >
-                <img
-                  src={item.image}
-                  alt="Uniform"
-                  style={{
-                    maxHeight: "100%",
-                    maxWidth: "100%",
-                    objectFit: "contain",
-                  }}
-                />
+              {/* Image */}
+              <div className="image-box">
+                <img src={item.image} alt="Uniform" />
               </div>
 
-              {/* Date */}
+              {/* Footer */}
               <div className="p-3">
-                <small
-                  style={{
-                    color: darkMode ? "#c4b5fd" : "#6b21a8",
-                  }}
-                >
+                <small className="date-text">
                   {item.createdAt
                     ? new Date(item.createdAt.seconds * 1000).toLocaleString(
                         "en-IN",
                       )
                     : ""}
                 </small>
+
+                <div className="mt-3 d-flex gap-2">
+                  <button
+                    className="btn btn-sm view-btn"
+                    onClick={() => setViewImage(item.image)}
+                  >
+                    👁 View
+                  </button>
+
+                  <button
+                    className="btn btn-sm download-btn"
+                    onClick={() => downloadImage(item.image)}
+                  >
+                    ⬇ Download
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         ))}
       </div>
 
+      {/* VIEW MODAL */}
+      {viewImage && (
+        <div className="view-overlay" onClick={() => setViewImage(null)}>
+          <div className="view-modal">
+            <img src={viewImage} alt="Preview" />
+          </div>
+        </div>
+      )}
+
       <style>{`
         .text-purple {
           color: #7c3aed !important;
         }
 
-        .text-purple-dark {
-          color: #4c1d95 !important;
+        .uniform-card {
+          border-radius: 16px;
+          transition: 0.3s ease;
+        }
+
+        .uniform-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 15px 30px rgba(124,58,237,0.3);
+        }
+
+        .image-box {
+          height: 250px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: ${darkMode ? "#312e81" : "#f3e8ff"};
+          border-top-left-radius: 16px;
+          border-top-right-radius: 16px;
+        }
+
+        .image-box img {
+          max-height: 100%;
+          max-width: 100%;
+          object-fit: contain;
+        }
+
+        .date-text {
+          color: ${darkMode ? "#c4b5fd" : "#6b21a8"};
+          font-size: 13px;
+        }
+
+        .view-btn {
+          background: linear-gradient(135deg,#7c3aed,#4c1d95);
+          color: white;
+          border: none;
+        }
+
+        .download-btn {
+          background: linear-gradient(135deg,#22c55e,#15803d);
+          color: white;
+          border: none;
+        }
+
+        .view-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 9999;
+        }
+
+        .view-modal img {
+          max-width: 90%;
+          max-height: 90vh;
+          border-radius: 12px;
+          box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+          animation: zoomIn 0.3s ease;
+        }
+
+        @keyframes zoomIn {
+          from { transform: scale(0.8); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
         }
 
         .spinner-border.text-purple {

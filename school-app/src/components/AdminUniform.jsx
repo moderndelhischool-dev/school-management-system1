@@ -229,10 +229,10 @@ import { db } from "../firebase/firebase";
 import {
   collection,
   addDoc,
-  getDocs,
   deleteDoc,
   doc,
   Timestamp,
+  onSnapshot,
 } from "firebase/firestore";
 
 function AdminUniform({ darkMode }) {
@@ -241,26 +241,28 @@ function AdminUniform({ darkMode }) {
   const [uniforms, setUniforms] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [viewImage, setViewImage] = useState(null);
   const [message, setMessage] = useState("");
 
-  const fetchUniforms = async () => {
-    const snap = await getDocs(collection(db, "uniforms"));
-    const data = snap.docs.map((d) => ({
-      id: d.id,
-      ...d.data(),
-    }));
-
-    data.sort(
-      (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0),
-    );
-
-    setUniforms(data);
-  };
-
+  /* ================= REALTIME FETCH ================= */
   useEffect(() => {
-    fetchUniforms();
+    const unsubscribe = onSnapshot(collection(db, "uniforms"), (snap) => {
+      const data = snap.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }));
+
+      data.sort(
+        (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0),
+      );
+
+      setUniforms(data);
+    });
+
+    return () => unsubscribe();
   }, []);
 
+  /* ================= IMAGE COMPRESS ================= */
   const compressImage = (file) => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -282,13 +284,13 @@ function AdminUniform({ darkMode }) {
 
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-          const compressed = canvas.toDataURL("image/jpeg", 0.8);
-          resolve(compressed);
+          resolve(canvas.toDataURL("image/jpeg", 0.8));
         };
       };
     });
   };
 
+  /* ================= FILE CHANGE ================= */
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -305,6 +307,7 @@ function AdminUniform({ darkMode }) {
     setUploading(false);
   };
 
+  /* ================= UPLOAD ================= */
   const handleUpload = async () => {
     if (!imageData) {
       setMessage("Please select image first.");
@@ -322,7 +325,6 @@ function AdminUniform({ darkMode }) {
       setMessage("Uniform uploaded successfully ✅");
       setPreview("");
       setImageData(null);
-      fetchUniforms();
     } catch {
       setMessage("Upload failed.");
     }
@@ -330,11 +332,11 @@ function AdminUniform({ darkMode }) {
     setUploading(false);
   };
 
+  /* ================= DELETE ================= */
   const handleDelete = async (id) => {
     try {
       setDeletingId(id);
       await deleteDoc(doc(db, "uniforms", id));
-      fetchUniforms();
     } catch {
       setMessage("Delete failed.");
     }
@@ -346,18 +348,19 @@ function AdminUniform({ darkMode }) {
       className="container mt-4"
       style={{
         color: darkMode ? "#fff" : "#000",
-        transition: "all 0.3s ease",
       }}
     >
-      <h4 className="mb-3 text-purple">👔 Upload Uniform</h4>
+      <h4 className="mb-3 text-purple fw-bold">👔 Upload Uniform</h4>
 
       {message && <div className="alert alert-purple py-2">{message}</div>}
 
+      {/* ================= UPLOAD CARD ================= */}
       <div
         className="card p-3 shadow-sm mb-4"
         style={{
-          backgroundColor: darkMode ? "#1e293b" : "#fff",
+          backgroundColor: darkMode ? "#1e1b4b" : "#fff",
           borderRadius: "16px",
+          border: darkMode ? "1px solid #312e81" : "1px solid #ddd6fe",
         }}
       >
         <input
@@ -368,26 +371,8 @@ function AdminUniform({ darkMode }) {
         />
 
         {preview && (
-          <div
-            style={{
-              height: "260px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: darkMode ? "#334155" : "#f3f4f6",
-              borderRadius: "12px",
-              marginBottom: "15px",
-            }}
-          >
-            <img
-              src={preview}
-              alt="Preview"
-              style={{
-                maxHeight: "100%",
-                maxWidth: "100%",
-                objectFit: "contain",
-              }}
-            />
+          <div className="preview-box">
+            <img src={preview} alt="Preview" />
           </div>
         )}
 
@@ -396,60 +381,30 @@ function AdminUniform({ darkMode }) {
           onClick={handleUpload}
           disabled={uploading}
         >
-          {uploading ? (
-            <>
-              <span className="spinner-border spinner-border-sm me-2"></span>
-              Uploading...
-            </>
-          ) : (
-            "Upload"
-          )}
+          {uploading ? "Uploading..." : "Upload"}
         </button>
       </div>
 
+      {/* ================= UNIFORM LIST ================= */}
       <h5 className="mb-3">Uploaded Uniforms</h5>
 
       <div className="row">
         {uniforms.map((item) => (
-          <div key={item.id} className="col-12 col-md-6 col-lg-4 mb-4">
+          <div key={item.id} className="col-md-6 col-lg-4 mb-4">
             <div
-              className="card shadow-sm h-100"
+              className="uniform-card shadow-sm"
               style={{
-                backgroundColor: darkMode ? "#1e293b" : "#fff",
-                color: darkMode ? "#fff" : "#000",
-                borderRadius: "16px",
-                transition: "all 0.3s ease",
+                backgroundColor: darkMode ? "#1e1b4b" : "#fff",
+                border: darkMode ? "1px solid #312e81" : "1px solid #ddd6fe",
                 opacity: deletingId === item.id ? 0.6 : 1,
               }}
             >
-              <div
-                style={{
-                  height: "250px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: darkMode ? "#334155" : "#f8fafc",
-                  borderTopLeftRadius: "16px",
-                  borderTopRightRadius: "16px",
-                }}
-              >
-                <img
-                  src={item.image}
-                  alt="Uniform"
-                  style={{
-                    maxHeight: "100%",
-                    maxWidth: "100%",
-                    objectFit: "contain",
-                  }}
-                />
+              <div className="image-box">
+                <img src={item.image} alt="Uniform" />
               </div>
 
-              <div className="p-3 d-flex flex-column">
-                <small
-                  style={{
-                    color: darkMode ? "#cbd5e1" : "#6c757d",
-                  }}
-                >
+              <div className="p-3">
+                <small className="date-text">
                   {item.createdAt
                     ? new Date(item.createdAt.seconds * 1000).toLocaleString(
                         "en-IN",
@@ -457,27 +412,36 @@ function AdminUniform({ darkMode }) {
                     : ""}
                 </small>
 
-                <button
-                  className="btn btn-danger btn-sm mt-3"
-                  onClick={() => handleDelete(item.id)}
-                  disabled={deletingId === item.id}
-                >
-                  {deletingId === item.id ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-1"></span>
-                      Deleting...
-                    </>
-                  ) : (
-                    "Delete"
-                  )}
-                </button>
+                <div className="mt-3 d-flex gap-2">
+                  <button
+                    className="btn btn-sm view-btn"
+                    onClick={() => setViewImage(item.image)}
+                  >
+                    👁 View
+                  </button>
+
+                  <button
+                    className="btn btn-sm delete-btn"
+                    onClick={() => handleDelete(item.id)}
+                    disabled={deletingId === item.id}
+                  >
+                    {deletingId === item.id ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* ================= PURPLE STYLES ================= */}
+      {/* ================= VIEW MODAL ================= */}
+      {viewImage && (
+        <div className="view-overlay" onClick={() => setViewImage(null)}>
+          <div className="view-modal">
+            <img src={viewImage} alt="Preview" />
+          </div>
+        </div>
+      )}
 
       <style>{`
         .text-purple {
@@ -494,17 +458,87 @@ function AdminUniform({ darkMode }) {
           background: linear-gradient(135deg,#7c3aed,#4c1d95);
           color: white;
           border: none;
-          transition: 0.3s;
         }
 
-        .upload-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(124,58,237,0.4);
+        .uniform-card {
+          border-radius: 16px;
+          transition: 0.3s ease;
         }
 
-        .custom-input:focus {
-          border-color: #7c3aed !important;
-          box-shadow: 0 0 12px rgba(124,58,237,0.4);
+        .uniform-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 15px 30px rgba(124,58,237,0.3);
+        }
+
+        .image-box {
+          height: 250px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: ${darkMode ? "#312e81" : "#f3e8ff"};
+          border-top-left-radius: 16px;
+          border-top-right-radius: 16px;
+        }
+
+        .image-box img {
+          max-height: 100%;
+          max-width: 100%;
+          object-fit: contain;
+        }
+
+        .view-btn {
+          background: linear-gradient(135deg,#7c3aed,#4c1d95);
+          color: white;
+          border: none;
+        }
+
+        .delete-btn {
+          background: linear-gradient(135deg,#dc2626,#991b1b);
+          color: white;
+          border: none;
+        }
+
+        .view-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 9999;
+        }
+
+        .view-modal img {
+          max-width: 90%;
+          max-height: 90vh;
+          border-radius: 12px;
+          animation: zoomIn 0.3s ease;
+        }
+
+        @keyframes zoomIn {
+          from { transform: scale(0.8); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+
+        .preview-box {
+          height: 260px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: ${darkMode ? "#334155" : "#f3f4f6"};
+          border-radius: 12px;
+          margin-bottom: 15px;
+        }
+
+        .preview-box img {
+          max-height: 100%;
+          max-width: 100%;
+          object-fit: contain;
+        }
+
+        .date-text {
+          color: ${darkMode ? "#cbd5e1" : "#6c757d"};
+          font-size: 13px;
         }
       `}</style>
     </div>
