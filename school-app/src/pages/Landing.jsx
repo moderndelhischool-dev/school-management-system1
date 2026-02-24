@@ -1,34 +1,3 @@
-// import Home from "../components/Home/Home";
-// import About from "../components/About/About";
-// import Contact from "../components/Contact/Contact";
-// import Footer from "../components/Footer/Footer";
-// import ScrollReveal from "../components/ScrollReveal";
-// import Testimonial from "../components/Testimonial/Testimonial";
-// function Landing() {
-//   return (
-//     <>
-//       <ScrollReveal>
-//         <Home />
-//       </ScrollReveal>
-
-//       <ScrollReveal>
-//         <About />
-//       </ScrollReveal>
-
-//       <ScrollReveal>
-//         <Contact />
-//       </ScrollReveal>
-//       <ScrollReveal>
-//         <Testimonial />
-//       </ScrollReveal>
-//       <ScrollReveal>
-//         <Footer />
-//       </ScrollReveal>
-//     </>
-//   );
-// }
-
-// export default Landing;
 import Home from "../components/Home/Home";
 import About from "../components/About/About";
 import Contact from "../components/Contact/Contact";
