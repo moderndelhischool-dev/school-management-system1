@@ -30,17 +30,11 @@
 //           </p>
 
 //           <div className="hero-buttons">
-//             <button
-//               className="btn btn-success hero-btn-green"
-//               onClick={handleApply}
-//             >
+//             <button className="hero-btn-primary" onClick={handleApply}>
 //               Apply Now
 //             </button>
 
-//             <button
-//               className="btn btn-light hero-btn-white"
-//               onClick={handleContact}
-//             >
+//             <button className="hero-btn-outline" onClick={handleContact}>
 //               Contact Us
 //             </button>
 //           </div>
@@ -48,6 +42,7 @@
 //       </div>
 
 //       <style>{`
+
 //         .hero-section {
 //           position: relative;
 //           height: 100vh;
@@ -58,6 +53,7 @@
 //           justify-content: center;
 //         }
 
+//         /* Light overlay only for readability */
 //         .hero-overlay {
 //           width: 100%;
 //           height: 100%;
@@ -74,10 +70,11 @@
 //         }
 
 //         .hero-subtitle {
-//           color: #22c55e;
+//           color: #c4b5fd;
 //           font-weight: 600;
 //           letter-spacing: 1px;
 //           margin-bottom: 15px;
+//           text-transform: uppercase;
 //         }
 
 //         .hero-title {
@@ -89,7 +86,7 @@
 
 //         .hero-description {
 //           font-size: 1.1rem;
-//           color: #e5e5e5;
+//           color: #f3f4f6;
 //           margin-bottom: 30px;
 //         }
 
@@ -100,26 +97,37 @@
 //           flex-wrap: wrap;
 //         }
 
-//         .hero-btn-green {
-//           padding: 12px 30px;
+//         /* Purple primary button */
+//         .hero-btn-primary {
+//           padding: 12px 32px;
 //           font-weight: 600;
 //           border-radius: 50px;
-//           background-color: #22c55e;
+//           background: #5b21b6;
 //           border: none;
+//           color: white;
+//           transition: 0.3s ease;
 //         }
 
-//         .hero-btn-green:hover {
-//           background-color: #16a34a;
+//         .hero-btn-primary:hover {
+//           background: #7c3aed;
+//           transform: translateY(-3px);
+//           box-shadow: 0 10px 25px rgba(124,58,237,0.4);
 //         }
 
-//         .hero-btn-white {
-//           padding: 12px 30px;
+//         /* Outline button */
+//         .hero-btn-outline {
+//           padding: 12px 32px;
 //           font-weight: 600;
 //           border-radius: 50px;
+//           background: transparent;
+//           border: 2px solid #c4b5fd;
+//           color: white;
+//           transition: 0.3s ease;
 //         }
 
-//         .hero-btn-white:hover {
-//           background-color: #f1f1f1;
+//         .hero-btn-outline:hover {
+//           background: rgba(255,255,255,0.15);
+//           transform: translateY(-3px);
 //         }
 
 //         @media (max-width: 992px) {
@@ -128,21 +136,15 @@
 //           }
 //         }
 
-//        @media (max-width: 768px) {
-//   .hero-title {
-//     font-size: 2.3rem;
-//   }
+//         @media (max-width: 768px) {
+//           .hero-title {
+//             font-size: 2.3rem;
+//           }
 
-//   .hero-description {
-//     font-size: 1rem;
-//   }
-// }
-
-// @media (max-width: 576px) {
-//   .hero-overlay {
-//     background: rgba(0, 0, 0, 0.05);
-//   }
-// }
+//           .hero-description {
+//             font-size: 1rem;
+//           }
+//         }
 
 //       `}</style>
 //     </section>
@@ -151,12 +153,21 @@
 
 // export default Home;
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 function Home() {
   const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
+  const [animate, setAnimate] = useState(false);
 
   const handleApply = () => {
-    navigate("/register");
+    setShowModal(true);
+    setTimeout(() => setAnimate(true), 10);
+  };
+
+  const handleClose = () => {
+    setAnimate(false);
+    setTimeout(() => setShowModal(false), 300);
   };
 
   const handleContact = () => {
@@ -167,34 +178,85 @@ function Home() {
   };
 
   return (
-    <section className="hero-section" id="home">
-      <div className="hero-overlay">
-        <div className="hero-content text-center">
-          <p className="hero-subtitle">The Best School of The State</p>
+    <>
+      <section
+        className={`hero-section ${showModal ? "blur-bg" : ""}`}
+        id="home"
+      >
+        <div className="hero-overlay">
+          <div className="hero-content text-center">
+            <p className="hero-subtitle">The Best School of The State</p>
 
-          <h1 className="hero-title">
-            Transformative <br /> Education
-          </h1>
+            <h1 className="hero-title">
+              Transformative <br /> Education
+            </h1>
 
-          <p className="hero-description">
-            Modern New Delhi Public High School is committed to academic
-            excellence, character development, and building future leaders.
-          </p>
+            <p className="hero-description">
+              Modern New Delhi Public High School is committed to academic
+              excellence, character development, and building future leaders.
+            </p>
 
-          <div className="hero-buttons">
-            <button className="hero-btn-primary" onClick={handleApply}>
-              Apply Now
-            </button>
+            <div className="hero-buttons">
+              <button className="hero-btn-primary" onClick={handleApply}>
+                Apply Now
+              </button>
 
-            <button className="hero-btn-outline" onClick={handleContact}>
-              Contact Us
-            </button>
+              <button className="hero-btn-outline" onClick={handleContact}>
+                Contact Us
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      {showModal && (
+        <div className={`modal-overlay ${animate ? "overlay-show" : ""}`}>
+          <div className={`admission-modal ${animate ? "modal-show" : ""}`}>
+            <h2>Admission Details</h2>
+
+            <form className="admission-form">
+              <div className="form-row">
+                <input type="text" placeholder="Student Full Name" required />
+                <input type="date" required />
+              </div>
+
+              <div className="form-row">
+                <input type="text" placeholder="Father's Name" required />
+                <input type="text" placeholder="Mother's Name" required />
+              </div>
+
+              <div className="form-row">
+                <input type="email" placeholder="Email Address" required />
+                <input type="tel" placeholder="Mobile Number" required />
+              </div>
+
+              <div className="form-row">
+                <input type="text" placeholder="Class Applying For" required />
+                <input type="text" placeholder="Previous School Name" />
+              </div>
+
+              <textarea placeholder="Full Address" rows="3"></textarea>
+
+              <div className="form-buttons">
+                <button type="submit" className="submit-btn">
+                  Submit Application
+                </button>
+                <button
+                  type="button"
+                  className="close-btn"
+                  onClick={handleClose}
+                >
+                  Close
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <style>{`
 
+        /* ORIGINAL HERO CSS SAME */
         .hero-section {
           position: relative;
           height: 100vh;
@@ -203,9 +265,13 @@ function Home() {
           display: flex;
           align-items: center;
           justify-content: center;
+          transition: filter 0.3s ease;
         }
 
-        /* Light overlay only for readability */
+        .blur-bg {
+          filter: blur(6px);
+        }
+
         .hero-overlay {
           width: 100%;
           height: 100%;
@@ -249,7 +315,6 @@ function Home() {
           flex-wrap: wrap;
         }
 
-        /* Purple primary button */
         .hero-btn-primary {
           padding: 12px 32px;
           font-weight: 600;
@@ -266,7 +331,6 @@ function Home() {
           box-shadow: 0 10px 25px rgba(124,58,237,0.4);
         }
 
-        /* Outline button */
         .hero-btn-outline {
           padding: 12px 32px;
           font-weight: 600;
@@ -282,24 +346,104 @@ function Home() {
           transform: translateY(-3px);
         }
 
-        @media (max-width: 992px) {
-          .hero-title {
-            font-size: 3rem;
-          }
+        /* MODAL OVERLAY */
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0,0,0,0);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          transition: background 0.3s ease;
         }
 
-        @media (max-width: 768px) {
-          .hero-title {
-            font-size: 2.3rem;
-          }
+        .overlay-show {
+          background: rgba(0,0,0,0.6);
+        }
 
-          .hero-description {
-            font-size: 1rem;
+        /* MODAL BOX */
+        .admission-modal {
+          background: white;
+          width: 90%;
+          max-width: 750px;
+          padding: 40px;
+          border-radius: 20px;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+          transform: scale(0.8);
+          opacity: 0;
+          transition: all 0.3s ease;
+        }
+
+        .modal-show {
+          transform: scale(1);
+          opacity: 1;
+        }
+
+        .admission-modal h2 {
+          text-align: center;
+          margin-bottom: 25px;
+          color: #5b21b6;
+        }
+
+        .admission-form input,
+        .admission-form textarea {
+          width: 100%;
+          padding: 12px;
+          margin-bottom: 15px;
+          border-radius: 10px;
+          border: 1px solid #ddd;
+          outline: none;
+          transition: 0.3s;
+        }
+
+        .admission-form input:focus,
+        .admission-form textarea:focus {
+          border-color: #7c3aed;
+          box-shadow: 0 0 10px rgba(124,58,237,0.3);
+        }
+
+        .form-row {
+          display: flex;
+          gap: 15px;
+        }
+
+        .form-buttons {
+          display: flex;
+          justify-content: space-between;
+        }
+
+        .submit-btn {
+          background: #5b21b6;
+          color: white;
+          border: none;
+          padding: 10px 25px;
+          border-radius: 50px;
+          transition: 0.3s;
+        }
+
+        .submit-btn:hover {
+          background: #7c3aed;
+        }
+
+        .close-btn {
+          background: #e5e7eb;
+          border: none;
+          padding: 10px 25px;
+          border-radius: 50px;
+        }
+
+        @media(max-width:768px){
+          .form-row{
+            flex-direction: column;
           }
         }
 
       `}</style>
-    </section>
+    </>
   );
 }
 
