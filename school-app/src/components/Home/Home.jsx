@@ -1,10 +1,19 @@
 // import { useNavigate } from "react-router-dom";
+// import { useState } from "react";
 
 // function Home() {
 //   const navigate = useNavigate();
+//   const [showModal, setShowModal] = useState(false);
+//   const [animate, setAnimate] = useState(false);
 
 //   const handleApply = () => {
-//     navigate("/register");
+//     setShowModal(true);
+//     setTimeout(() => setAnimate(true), 10);
+//   };
+
+//   const handleClose = () => {
+//     setAnimate(false);
+//     setTimeout(() => setShowModal(false), 300);
 //   };
 
 //   const handleContact = () => {
@@ -15,34 +24,85 @@
 //   };
 
 //   return (
-//     <section className="hero-section" id="home">
-//       <div className="hero-overlay">
-//         <div className="hero-content text-center">
-//           <p className="hero-subtitle">The Best School of The State</p>
+//     <>
+//       <section
+//         className={`hero-section ${showModal ? "blur-bg" : ""}`}
+//         id="home"
+//       >
+//         <div className="hero-overlay">
+//           <div className="hero-content text-center">
+//             <p className="hero-subtitle">The Best School of The State</p>
 
-//           <h1 className="hero-title">
-//             Transformative <br /> Education
-//           </h1>
+//             <h1 className="hero-title">
+//               Transformative <br /> Education
+//             </h1>
 
-//           <p className="hero-description">
-//             Modern New Delhi Public High School is committed to academic
-//             excellence, character development, and building future leaders.
-//           </p>
+//             <p className="hero-description">
+//               Modern New Delhi Public High School is committed to academic
+//               excellence, character development, and building future leaders.
+//             </p>
 
-//           <div className="hero-buttons">
-//             <button className="hero-btn-primary" onClick={handleApply}>
-//               Apply Now
-//             </button>
+//             <div className="hero-buttons">
+//               <button className="hero-btn-primary" onClick={handleApply}>
+//                 Apply Now
+//               </button>
 
-//             <button className="hero-btn-outline" onClick={handleContact}>
-//               Contact Us
-//             </button>
+//               <button className="hero-btn-outline" onClick={handleContact}>
+//                 Contact Us
+//               </button>
+//             </div>
 //           </div>
 //         </div>
-//       </div>
+//       </section>
+
+//       {showModal && (
+//         <div className={`modal-overlay ${animate ? "overlay-show" : ""}`}>
+//           <div className={`admission-modal ${animate ? "modal-show" : ""}`}>
+//             <h2>Admission Details</h2>
+
+//             <form className="admission-form">
+//               <div className="form-row">
+//                 <input type="text" placeholder="Student Full Name" required />
+//                 <input type="date" required />
+//               </div>
+
+//               <div className="form-row">
+//                 <input type="text" placeholder="Father's Name" required />
+//                 <input type="text" placeholder="Mother's Name" required />
+//               </div>
+
+//               <div className="form-row">
+//                 <input type="email" placeholder="Email Address" required />
+//                 <input type="tel" placeholder="Mobile Number" required />
+//               </div>
+
+//               <div className="form-row">
+//                 <input type="text" placeholder="Class Applying For" required />
+//                 <input type="text" placeholder="Previous School Name" />
+//               </div>
+
+//               <textarea placeholder="Full Address" rows="3"></textarea>
+
+//               <div className="form-buttons">
+//                 <button type="submit" className="submit-btn">
+//                   Submit Application
+//                 </button>
+//                 <button
+//                   type="button"
+//                   className="close-btn"
+//                   onClick={handleClose}
+//                 >
+//                   Close
+//                 </button>
+//               </div>
+//             </form>
+//           </div>
+//         </div>
+//       )}
 
 //       <style>{`
 
+//         /* ORIGINAL HERO CSS SAME */
 //         .hero-section {
 //           position: relative;
 //           height: 100vh;
@@ -51,9 +111,13 @@
 //           display: flex;
 //           align-items: center;
 //           justify-content: center;
+//           transition: filter 0.3s ease;
 //         }
 
-//         /* Light overlay only for readability */
+//         .blur-bg {
+//           filter: blur(6px);
+//         }
+
 //         .hero-overlay {
 //           width: 100%;
 //           height: 100%;
@@ -97,7 +161,6 @@
 //           flex-wrap: wrap;
 //         }
 
-//         /* Purple primary button */
 //         .hero-btn-primary {
 //           padding: 12px 32px;
 //           font-weight: 600;
@@ -114,7 +177,6 @@
 //           box-shadow: 0 10px 25px rgba(124,58,237,0.4);
 //         }
 
-//         /* Outline button */
 //         .hero-btn-outline {
 //           padding: 12px 32px;
 //           font-weight: 600;
@@ -130,24 +192,104 @@
 //           transform: translateY(-3px);
 //         }
 
-//         @media (max-width: 992px) {
-//           .hero-title {
-//             font-size: 3rem;
-//           }
+//         /* MODAL OVERLAY */
+//         .modal-overlay {
+//           position: fixed;
+//           top: 0;
+//           left: 0;
+//           width: 100%;
+//           height: 100%;
+//           background: rgba(0,0,0,0);
+//           display: flex;
+//           align-items: center;
+//           justify-content: center;
+//           z-index: 1000;
+//           transition: background 0.3s ease;
 //         }
 
-//         @media (max-width: 768px) {
-//           .hero-title {
-//             font-size: 2.3rem;
-//           }
+//         .overlay-show {
+//           background: rgba(0,0,0,0.6);
+//         }
 
-//           .hero-description {
-//             font-size: 1rem;
+//         /* MODAL BOX */
+//         .admission-modal {
+//           background: white;
+//           width: 90%;
+//           max-width: 750px;
+//           padding: 40px;
+//           border-radius: 20px;
+//           box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+//           transform: scale(0.8);
+//           opacity: 0;
+//           transition: all 0.3s ease;
+//         }
+
+//         .modal-show {
+//           transform: scale(1);
+//           opacity: 1;
+//         }
+
+//         .admission-modal h2 {
+//           text-align: center;
+//           margin-bottom: 25px;
+//           color: #5b21b6;
+//         }
+
+//         .admission-form input,
+//         .admission-form textarea {
+//           width: 100%;
+//           padding: 12px;
+//           margin-bottom: 15px;
+//           border-radius: 10px;
+//           border: 1px solid #ddd;
+//           outline: none;
+//           transition: 0.3s;
+//         }
+
+//         .admission-form input:focus,
+//         .admission-form textarea:focus {
+//           border-color: #7c3aed;
+//           box-shadow: 0 0 10px rgba(124,58,237,0.3);
+//         }
+
+//         .form-row {
+//           display: flex;
+//           gap: 15px;
+//         }
+
+//         .form-buttons {
+//           display: flex;
+//           justify-content: space-between;
+//         }
+
+//         .submit-btn {
+//           background: #5b21b6;
+//           color: white;
+//           border: none;
+//           padding: 10px 25px;
+//           border-radius: 50px;
+//           transition: 0.3s;
+//         }
+
+//         .submit-btn:hover {
+//           background: #7c3aed;
+//         }
+
+//         .close-btn {
+//           background: #e5e7eb;
+//           border: none;
+//           padding: 10px 25px;
+//           border-radius: 50px;
+//         }
+
+//         @media(max-width:768px){
+//           .form-row{
+//             flex-direction: column;
 //           }
 //         }
 
 //       `}</style>
-//     </section>
+//     </>
 //   );
 // }
 
@@ -183,28 +325,26 @@ function Home() {
         className={`hero-section ${showModal ? "blur-bg" : ""}`}
         id="home"
       >
-        <div className="hero-overlay">
-          <div className="hero-content text-center">
-            <p className="hero-subtitle">The Best School of The State</p>
+        <div className="hero-content">
+          <p className="hero-subtitle">THE BEST SCHOOL OF THE STATE</p>
 
-            <h1 className="hero-title">
-              Transformative <br /> Education
-            </h1>
+          <h1 className="hero-title">
+            Transformative <br /> Education
+          </h1>
 
-            <p className="hero-description">
-              Modern New Delhi Public High School is committed to academic
-              excellence, character development, and building future leaders.
-            </p>
+          <p className="hero-description">
+            Modern New Delhi Public High School is committed to academic
+            excellence, character development, and building future leaders.
+          </p>
 
-            <div className="hero-buttons">
-              <button className="hero-btn-primary" onClick={handleApply}>
-                Apply Now
-              </button>
+          <div className="hero-buttons">
+            <button className="hero-btn-primary" onClick={handleApply}>
+              Apply Now
+            </button>
 
-              <button className="hero-btn-outline" onClick={handleContact}>
-                Contact Us
-              </button>
-            </div>
+            <button className="hero-btn-outline" onClick={handleContact}>
+              Contact Us
+            </button>
           </div>
         </div>
       </section>
@@ -256,7 +396,6 @@ function Home() {
 
       <style>{`
 
-        /* ORIGINAL HERO CSS SAME */
         .hero-section {
           position: relative;
           height: 100vh;
@@ -265,47 +404,35 @@ function Home() {
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: filter 0.3s ease;
-        }
-
-        .blur-bg {
-          filter: blur(6px);
-        }
-
-        .hero-overlay {
-          width: 100%;
-          height: 100%;
-          background: rgba(0, 0, 0, 0.45);
-          display: flex;
-          align-items: center;
-          justify-content: center;
         }
 
         .hero-content {
           max-width: 900px;
           padding: 20px;
+          text-align: center;
           color: white;
+          text-shadow: 0 4px 20px rgba(0,0,0,0.8);
         }
 
         .hero-subtitle {
-          color: #c4b5fd;
-          font-weight: 600;
-          letter-spacing: 1px;
-          margin-bottom: 15px;
+          font-weight: 700;
+          letter-spacing: 2px;
+          margin-bottom: 20px;
           text-transform: uppercase;
+          color: #ffffff;
         }
 
         .hero-title {
           font-size: 4rem;
-          font-weight: 800;
+          font-weight: 900;
+          margin-bottom: 25px;
           line-height: 1.2;
-          margin-bottom: 20px;
         }
 
         .hero-description {
-          font-size: 1.1rem;
-          color: #f3f4f6;
-          margin-bottom: 30px;
+          font-size: 1.2rem;
+          margin-bottom: 35px;
+          color: #ffffff;
         }
 
         .hero-buttons {
@@ -316,37 +443,39 @@ function Home() {
         }
 
         .hero-btn-primary {
-          padding: 12px 32px;
-          font-weight: 600;
+          padding: 14px 34px;
           border-radius: 50px;
-          background: #5b21b6;
           border: none;
+          background: #7c3aed;
           color: white;
+          font-weight: 700;
           transition: 0.3s ease;
         }
 
         .hero-btn-primary:hover {
-          background: #7c3aed;
-          transform: translateY(-3px);
-          box-shadow: 0 10px 25px rgba(124,58,237,0.4);
+          background: #5b21b6;
+          transform: translateY(-4px);
+          box-shadow: 0 12px 30px rgba(0,0,0,0.4);
         }
 
         .hero-btn-outline {
-          padding: 12px 32px;
-          font-weight: 600;
+          padding: 14px 34px;
           border-radius: 50px;
-          background: transparent;
-          border: 2px solid #c4b5fd;
+          border: 2px solid white;
+          background: rgba(0,0,0,0.3);
           color: white;
+          font-weight: 700;
           transition: 0.3s ease;
         }
 
         .hero-btn-outline:hover {
-          background: rgba(255,255,255,0.15);
-          transform: translateY(-3px);
+          background: white;
+          color: #5b21b6;
+          transform: translateY(-4px);
         }
 
-        /* MODAL OVERLAY */
+        /* MODAL */
+
         .modal-overlay {
           position: fixed;
           top: 0;
@@ -365,7 +494,6 @@ function Home() {
           background: rgba(0,0,0,0.6);
         }
 
-        /* MODAL BOX */
         .admission-modal {
           background: white;
           width: 90%;
@@ -386,7 +514,7 @@ function Home() {
         .admission-modal h2 {
           text-align: center;
           margin-bottom: 25px;
-          color: #5b21b6;
+          color: #6d28d9;
         }
 
         .admission-form input,
@@ -397,13 +525,6 @@ function Home() {
           border-radius: 10px;
           border: 1px solid #ddd;
           outline: none;
-          transition: 0.3s;
-        }
-
-        .admission-form input:focus,
-        .admission-form textarea:focus {
-          border-color: #7c3aed;
-          box-shadow: 0 0 10px rgba(124,58,237,0.3);
         }
 
         .form-row {
@@ -417,16 +538,11 @@ function Home() {
         }
 
         .submit-btn {
-          background: #5b21b6;
+          background: #7c3aed;
           color: white;
           border: none;
           padding: 10px 25px;
           border-radius: 50px;
-          transition: 0.3s;
-        }
-
-        .submit-btn:hover {
-          background: #7c3aed;
         }
 
         .close-btn {
@@ -439,6 +555,10 @@ function Home() {
         @media(max-width:768px){
           .form-row{
             flex-direction: column;
+          }
+
+          .hero-title{
+            font-size: 2.5rem;
           }
         }
 
