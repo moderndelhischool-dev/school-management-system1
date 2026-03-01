@@ -151,20 +151,17 @@ function GallerySection() {
   box-shadow: 0 10px 25px rgba(109, 40, 217, 0.15);
 }
 
-/* Hover */
 .select-container select:hover {
   background: #f5f3ff;
   box-shadow: 0 15px 35px rgba(109, 40, 217, 0.25);
 }
 
-/* Focus */
 .select-container select:focus {
   outline: none;
   border-color: #7c3aed;
   box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.25);
 }
 
-/* Custom Arrow */
 .select-container::after {
   content: "⌄";
   position: absolute;
@@ -177,7 +174,6 @@ function GallerySection() {
   pointer-events: none;
 }
 
-/* Option styling (limited control by browser) */
 .select-container select option {
   padding: 12px;
   font-weight: 500;
@@ -195,19 +191,44 @@ function GallerySection() {
   gap: 35px;
 }
 
+/* ========================= */
+/* ENHANCED CARD EFFECT */
+/* ========================= */
+
 .gallery-card {
   background: white;
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
-  transition: all 0.4s ease;
+  transition: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
 }
 
+/* POP + GLOW */
 .gallery-card:hover {
-  transform: translateY(-12px);
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+  transform: translateY(-18px) scale(1.03);
+  box-shadow: 
+    0 30px 60px rgba(0, 0, 0, 0.18),
+    0 0 25px rgba(109, 40, 217, 0.35);
 }
 
+/* Animated Top Gradient Line */
+.gallery-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 4px;
+  background: linear-gradient(90deg,#7c3aed,#a78bfa);
+  transition: 0.4s ease;
+}
+
+.gallery-card:hover::before {
+  width: 100%;
+}
+
+/* IMAGE */
 .image-wrapper {
   overflow: hidden;
 }
@@ -220,17 +241,24 @@ function GallerySection() {
 }
 
 .gallery-card:hover img {
-  transform: scale(1.08);
+  transform: scale(1.12);
 }
 
+/* CONTENT */
 .gallery-content {
   padding: 25px;
+  transition: 0.3s ease;
 }
 
 .gallery-content h3 {
   margin-bottom: 12px;
   font-weight: 600;
   color: #111827;
+  transition: 0.3s ease;
+}
+
+.gallery-card:hover .gallery-content h3 {
+  color: #6d28d9;
 }
 
 .gallery-content p {
@@ -238,6 +266,14 @@ function GallerySection() {
   color: #6b7280;
   line-height: 1.6;
 }
+
+.gallery-card:hover .gallery-content {
+  transform: translateY(-3px);
+}
+
+/* ========================= */
+/* RESPONSIVE */
+/* ========================= */
 
 @media (max-width: 768px) {
   .gallery-header {
