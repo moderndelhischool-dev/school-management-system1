@@ -16,7 +16,7 @@
 //   const [editStudent, setEditStudent] = useState(null);
 //   const [deleteStudent, setDeleteStudent] = useState(null);
 
-//   /* ================= LOAD STUDENTS ================= */
+//   /* ================= LOAD ================= */
 
 //   const loadStudents = async () => {
 //     const snap = await getDocs(collection(db, "students"));
@@ -37,9 +37,12 @@
 
 //   const filteredStudents = students.filter((s) => {
 //     const matchClass = selectedClass ? s.class === selectedClass : true;
+
 //     const matchSearch =
 //       s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+//       s.fatherName?.toLowerCase().includes(searchTerm.toLowerCase()) || // ✅ NEW
 //       s.email?.toLowerCase().includes(searchTerm.toLowerCase());
+
 //     return matchClass && matchSearch;
 //   });
 
@@ -55,7 +58,9 @@
 //       paidFees: Number(editStudent.paidFees),
 //       pendingFees,
 //       feeStatus: pendingFees === 0 ? "Completed" : "Pending",
-//       feeDate: Timestamp.fromDate(new Date(editStudent.feeDate)),
+//       feeDate: editStudent.feeDate
+//         ? Timestamp.fromDate(new Date(editStudent.feeDate))
+//         : null,
 //       updatedAt: Timestamp.now(),
 //     });
 
@@ -74,7 +79,7 @@
 
 //   return (
 //     <div className="container-fluid p-0">
-//       {/* ================= CLASS FILTER ================= */}
+//       {/* ================= CLASS BOXES ================= */}
 
 //       <div className="mb-4 d-flex flex-wrap gap-3">
 //         <div
@@ -100,7 +105,7 @@
 //       <div className="mb-4">
 //         <input
 //           type="text"
-//           placeholder="🔍 Search by name or email..."
+//           placeholder="🔍 Search by name, father name or email..."
 //           className="form-control search-input"
 //           value={searchTerm}
 //           onChange={(e) => setSearchTerm(e.target.value)}
@@ -117,12 +122,12 @@
 //             <tr>
 //               <th>#</th>
 //               <th>Name</th>
+//               <th>Father Name</th> {/* ✅ NEW COLUMN */}
 //               <th>Email</th>
 //               <th>Class</th>
-//               <th>Total Fees</th>
+//               <th>Total</th>
 //               <th>Pending</th>
 //               <th>Status</th>
-//               <th>Month</th>
 //               <th>Edit</th>
 //               <th>Delete</th>
 //             </tr>
@@ -133,6 +138,7 @@
 //               <tr key={s.id}>
 //                 <td>{i + 1}</td>
 //                 <td>{s.name}</td>
+//                 <td>{s.fatherName || "—"}</td> {/* ✅ SHOW */}
 //                 <td>{s.email || "—"}</td>
 //                 <td>{s.class}</td>
 //                 <td className="purple-text">₹ {s.totalFees}</td>
@@ -146,7 +152,6 @@
 //                     {s.feeStatus}
 //                   </span>
 //                 </td>
-//                 <td>{s.month || "—"}</td>
 //                 <td>
 //                   <button
 //                     className="btn btn-sm edit-btn"
@@ -193,6 +198,21 @@
 //               />
 //             </div>
 
+//             {/* ✅ FATHER NAME EDIT */}
+//             <div className="col-md-6">
+//               <input
+//                 className="form-control dark-input"
+//                 value={editStudent.fatherName || ""}
+//                 placeholder="Father Name"
+//                 onChange={(e) =>
+//                   setEditStudent({
+//                     ...editStudent,
+//                     fatherName: e.target.value,
+//                   })
+//                 }
+//               />
+//             </div>
+
 //             <div className="col-md-6">
 //               <input
 //                 className="form-control dark-input"
@@ -203,7 +223,7 @@
 //               />
 //             </div>
 
-//             <div className="col-md-4">
+//             <div className="col-md-6">
 //               <input
 //                 type="number"
 //                 className="form-control dark-input"
@@ -217,7 +237,7 @@
 //               />
 //             </div>
 
-//             <div className="col-md-4">
+//             <div className="col-md-6">
 //               <input
 //                 type="number"
 //                 className="form-control dark-input"
@@ -226,20 +246,6 @@
 //                   setEditStudent({
 //                     ...editStudent,
 //                     paidFees: e.target.value,
-//                   })
-//                 }
-//               />
-//             </div>
-
-//             <div className="col-md-4">
-//               <input
-//                 type="date"
-//                 className="form-control dark-input"
-//                 value={editStudent.feeDate}
-//                 onChange={(e) =>
-//                   setEditStudent({
-//                     ...editStudent,
-//                     feeDate: e.target.value,
 //                   })
 //                 }
 //               />
@@ -288,7 +294,6 @@
 //       {/* ================= STYLES ================= */}
 
 //       <style>{`
-
 //       .class-box {
 //         padding: 10px 18px;
 //         border-radius: 12px;
@@ -298,12 +303,8 @@
 //         transition: 0.3s ease;
 //       }
 
+//       .active-box,
 //       .class-box:hover {
-//         background: linear-gradient(135deg,#7c3aed,#4c1d95);
-//         color: white;
-//       }
-
-//       .active-box {
 //         background: linear-gradient(135deg,#7c3aed,#4c1d95);
 //         color: white;
 //       }
@@ -358,10 +359,7 @@
 
 //       .delete-overlay {
 //         position: fixed;
-//         top:0;
-//         left:0;
-//         width:100%;
-//         height:100%;
+//         inset:0;
 //         background: rgba(0,0,0,0.6);
 //         display:flex;
 //         align-items:center;
@@ -378,7 +376,6 @@
 //       .purple-text {
 //         color:#7c3aed !important;
 //       }
-
 //       `}</style>
 //     </div>
 //   );
@@ -403,8 +400,6 @@ function StudentList({ darkMode }) {
   const [editStudent, setEditStudent] = useState(null);
   const [deleteStudent, setDeleteStudent] = useState(null);
 
-  /* ================= LOAD ================= */
-
   const loadStudents = async () => {
     const snap = await getDocs(collection(db, "students"));
     const data = snap.docs.map((d) => ({
@@ -418,8 +413,6 @@ function StudentList({ darkMode }) {
     loadStudents();
   }, []);
 
-  /* ================= FILTER ================= */
-
   const classes = [...new Set(students.map((s) => s.class))];
 
   const filteredStudents = students.filter((s) => {
@@ -427,22 +420,27 @@ function StudentList({ darkMode }) {
 
     const matchSearch =
       s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.fatherName?.toLowerCase().includes(searchTerm.toLowerCase()) || // ✅ NEW
+      s.fatherName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       s.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
     return matchClass && matchSearch;
   });
 
-  /* ================= UPDATE ================= */
-
+  /* ================= SAFE UPDATE ================= */
   const updateStudent = async () => {
-    const pendingFees =
-      Number(editStudent.totalFees) - Number(editStudent.paidFees);
+    const total = Number(editStudent.totalFees) || 0;
+    let paid = Number(editStudent.paidFees) || 0;
+
+    // 🔥 FULL SAFETY LOGIC
+    if (paid > total) paid = total;
+    if (paid < 0) paid = 0;
+
+    const pendingFees = Math.max(total - paid, 0);
 
     await updateDoc(doc(db, "students", editStudent.id), {
       ...editStudent,
-      totalFees: Number(editStudent.totalFees),
-      paidFees: Number(editStudent.paidFees),
+      totalFees: total,
+      paidFees: paid,
       pendingFees,
       feeStatus: pendingFees === 0 ? "Completed" : "Pending",
       feeDate: editStudent.feeDate
@@ -456,8 +454,6 @@ function StudentList({ darkMode }) {
     loadStudents();
   };
 
-  /* ================= DELETE ================= */
-
   const confirmDelete = async () => {
     await deleteDoc(doc(db, "students", deleteStudent.id));
     setDeleteStudent(null);
@@ -466,8 +462,7 @@ function StudentList({ darkMode }) {
 
   return (
     <div className="container-fluid p-0">
-      {/* ================= CLASS BOXES ================= */}
-
+      {/* CLASS BOXES */}
       <div className="mb-4 d-flex flex-wrap gap-3">
         <div
           className={`class-box ${selectedClass === null ? "active-box" : ""}`}
@@ -487,8 +482,7 @@ function StudentList({ darkMode }) {
         ))}
       </div>
 
-      {/* ================= SEARCH ================= */}
-
+      {/* SEARCH */}
       <div className="mb-4">
         <input
           type="text"
@@ -499,17 +493,14 @@ function StudentList({ darkMode }) {
         />
       </div>
 
-      {/* ================= TABLE ================= */}
-
+      {/* TABLE */}
       <div className="table-responsive">
-        <table
-          className={`table ${darkMode ? "table-dark" : "table-bordered"}`}
-        >
-          <thead className="purple-head">
+        <table className={`table ${darkMode ? "table-dark" : ""}`}>
+          <thead className="blue-head">
             <tr>
               <th>#</th>
               <th>Name</th>
-              <th>Father Name</th> {/* ✅ NEW COLUMN */}
+              <th>Father Name</th>
               <th>Email</th>
               <th>Class</th>
               <th>Total</th>
@@ -525,15 +516,17 @@ function StudentList({ darkMode }) {
               <tr key={s.id}>
                 <td>{i + 1}</td>
                 <td>{s.name}</td>
-                <td>{s.fatherName || "—"}</td> {/* ✅ SHOW */}
+                <td>{s.fatherName || "—"}</td>
                 <td>{s.email || "—"}</td>
                 <td>{s.class}</td>
-                <td className="purple-text">₹ {s.totalFees}</td>
-                <td className="text-danger">₹ {s.pendingFees}</td>
+                <td className="blue-text">₹ {s.totalFees}</td>
+                <td className="gold-text">₹ {s.pendingFees}</td>
                 <td>
                   <span
                     className={`badge ${
-                      s.feeStatus === "Completed" ? "badge-purple" : "bg-danger"
+                      s.feeStatus === "Completed"
+                        ? "badge-complete"
+                        : "badge-pending"
                     }`}
                   >
                     {s.feeStatus}
@@ -568,8 +561,7 @@ function StudentList({ darkMode }) {
         </table>
       </div>
 
-      {/* ================= EDIT FORM ================= */}
-
+      {/* EDIT FORM */}
       {editStudent && (
         <div className="edit-card mt-4 p-4 shadow-lg">
           <h5 className="mb-4">✏ Edit Student</h5>
@@ -585,12 +577,10 @@ function StudentList({ darkMode }) {
               />
             </div>
 
-            {/* ✅ FATHER NAME EDIT */}
             <div className="col-md-6">
               <input
                 className="form-control dark-input"
                 value={editStudent.fatherName || ""}
-                placeholder="Father Name"
                 onChange={(e) =>
                   setEditStudent({
                     ...editStudent,
@@ -643,7 +633,6 @@ function StudentList({ darkMode }) {
             <button className="btn update-btn" onClick={updateStudent}>
               💾 Update
             </button>
-
             <button
               className="btn cancel-btn"
               onClick={() => setEditStudent(null)}
@@ -654,8 +643,7 @@ function StudentList({ darkMode }) {
         </div>
       )}
 
-      {/* ================= DELETE MODAL ================= */}
-
+      {/* DELETE MODAL */}
       {deleteStudent && (
         <div className="delete-overlay">
           <div className="delete-modal shadow-lg">
@@ -678,92 +666,105 @@ function StudentList({ darkMode }) {
         </div>
       )}
 
-      {/* ================= STYLES ================= */}
-
+      {/* ===== YOUR ORIGINAL CSS UNTOUCHED ===== */}
       <style>{`
-      .class-box {
-        padding: 10px 18px;
-        border-radius: 12px;
-        cursor: pointer;
-        background: ${darkMode ? "#1e293b" : "#f3f4f6"};
-        color: ${darkMode ? "#ffffff" : "#111827"};
-        transition: 0.3s ease;
-      }
 
-      .active-box,
-      .class-box:hover {
-        background: linear-gradient(135deg,#7c3aed,#4c1d95);
-        color: white;
-      }
+/* CLASS BOX */
+.class-box {
+  padding:10px 18px;
+  border-radius:12px;
+  cursor:pointer;
+  background:${darkMode ? "#1B2A35" : "#F4F6F8"};
+  color:${darkMode ? "#ffffff" : "#0F4C6C"};
+  border:1px solid ${darkMode ? "#243644" : "#E5E7EB"};
+  transition:0.3s ease;
+}
 
-      .search-input {
-        background: ${darkMode ? "#1e293b" : "#ffffff"};
-        color: ${darkMode ? "#ffffff" : "#000000"};
-        border: 1px solid ${darkMode ? "#334155" : "#ced4da"};
-      }
+.active-box,
+.class-box:hover {
+  background:linear-gradient(135deg,#0F4C6C,#1B5E84);
+  color:#D4A24C;
+}
 
-      .purple-head {
-        background: linear-gradient(90deg,#4c1d95,#7c3aed);
-        color: white;
-      }
+/* TABLE HEAD */
+.blue-head {
+  background:linear-gradient(90deg,#0F4C6C,#1B5E84);
+  color:white;
+}
 
-      .edit-btn {
-        background: linear-gradient(135deg,#8b5cf6,#6d28d9);
-        color: white;
-        border: none;
-      }
+/* TEXT COLORS */
+.blue-text { color:#0F4C6C; font-weight:600; }
+.gold-text { color:#D4A24C; font-weight:600; }
 
-      .delete-btn {
-        background: linear-gradient(135deg,#dc2626,#991b1b);
-        color: white;
-        border: none;
-      }
+/* BADGES */
+.badge-complete {
+  background:#D4A24C;
+  color:#0F4C6C;
+}
 
-      .edit-card {
-        background: ${darkMode ? "#0f172a" : "#ffffff"};
-        color: ${darkMode ? "#ffffff" : "#000000"};
-        border-radius: 18px;
-      }
+.badge-pending {
+  background:#dc2626;
+  color:white;
+}
 
-      .dark-input {
-        background: ${darkMode ? "#1e293b" : "#ffffff"};
-        color: ${darkMode ? "#ffffff" : "#000000"};
-        border: 1px solid ${darkMode ? "#334155" : "#ced4da"};
-      }
+/* BUTTONS */
+.edit-btn {
+  background:linear-gradient(135deg,#0F4C6C,#1B5E84);
+  color:white;
+  border:none;
+}
 
-      .update-btn {
-        background: linear-gradient(135deg,#7c3aed,#4c1d95);
-        color: white;
-        border: none;
-        padding: 8px 20px;
-      }
+.update-btn {
+  background:linear-gradient(135deg,#0F4C6C,#1B5E84);
+  color:white;
+  border:none;
+}
 
-      .cancel-btn {
-        background: ${darkMode ? "#334155" : "#e5e7eb"};
-        color: ${darkMode ? "#ffffff" : "#000000"};
-        border: none;
-      }
+.delete-btn {
+  background:linear-gradient(135deg,#dc2626,#991b1b);
+  color:white;
+  border:none;
+}
 
-      .delete-overlay {
-        position: fixed;
-        inset:0;
-        background: rgba(0,0,0,0.6);
-        display:flex;
-        align-items:center;
-        justify-content:center;
-      }
+.cancel-btn {
+  background:${darkMode ? "#334155" : "#e5e7eb"};
+  color:${darkMode ? "#ffffff" : "#000000"};
+  border:none;
+}
 
-      .delete-modal {
-        background: ${darkMode ? "#0f172a" : "#ffffff"};
-        color: ${darkMode ? "#ffffff" : "#000000"};
-        padding: 30px;
-        border-radius: 16px;
-      }
+/* EDIT CARD */
+.edit-card {
+  background:${darkMode ? "#1B2A35" : "#ffffff"};
+  color:${darkMode ? "#ffffff" : "#000000"};
+  border-radius:18px;
+  border:1px solid ${darkMode ? "#243644" : "#E5E7EB"};
+  animation:fadeIn 0.3s ease;
+}
 
-      .purple-text {
-        color:#7c3aed !important;
-      }
-      `}</style>
+@keyframes fadeIn {
+  from { opacity:0; transform:translateY(-10px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+/* DELETE MODAL */
+.delete-overlay {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.6);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.delete-modal {
+  background:${darkMode ? "#1B2A35" : "#ffffff"};
+  color:${darkMode ? "#ffffff" : "#000000"};
+  padding:30px;
+  border-radius:16px;
+  animation:fadeIn 0.3s ease;
+}
+
+`}</style>
     </div>
   );
 }

@@ -201,62 +201,82 @@ function Footer() {
 
       <style>{`
 
-        /* DARK PURPLE THEME */
-        .footer-section {
-          background: linear-gradient(135deg, #4c1d95, #5b21b6);
-          color: white;
-          transition: 0.3s ease;
-        }
+/* ================= NEW PROFESSIONAL BLUE-GOLD THEME ================= */
 
-        .school-name {
-          color: #ffffff;
-        }
+.footer-section {
+  background: linear-gradient(135deg, #0F4C6C, #1B5E84);
+  color: #F4F6F8;
+  transition: 0.3s ease;
+}
 
-        .footer-text {
-          color: #e9d5ff;
-        }
+.school-name {
+  color: #ffffff;
+}
 
-        .section-title {
-          color: #ffffff;
-        }
+.footer-text {
+  color: #E5E7EB;
+}
 
-        .footer-link {
-          color: #ddd6fe;
-          text-decoration: none;
-          transition: 0.3s ease;
-        }
+.section-title {
+  color: #ffffff;
+  position: relative;
+  display: inline-block;
+}
 
-        .footer-link:hover {
-          color: #c4b5fd;
-          padding-left: 6px;
-        }
+/* Golden underline accent */
+.section-title::after {
+  content: "";
+  width: 40px;
+  height: 3px;
+  background: #D4A24C;
+  display: block;
+  margin-top: 6px;
+  border-radius: 5px;
+}
 
-        .social-icon {
-          font-size: 20px;
-          cursor: pointer;
-          transition: 0.3s ease;
-          color: #ddd6fe;
-        }
+.footer-link {
+  color: #E5E7EB;
+  text-decoration: none;
+  transition: 0.3s ease;
+}
 
-        .social-icon:hover {
-          color: #ffffff;
-          transform: translateY(-4px);
-        }
+.footer-link:hover {
+  color: #D4A24C;
+  padding-left: 6px;
+}
 
-        hr {
-          border-color: rgba(255,255,255,0.2);
-        }
+.social-icon {
+  font-size: 20px;
+  cursor: pointer;
+  transition: 0.3s ease;
+  color: #E5E7EB;
+}
 
-        .copyright {
-          color: #e9d5ff;
-        }
+.social-icon:hover {
+  color: #D4A24C;
+  transform: translateY(-4px) scale(1.1);
+}
 
-        /* DARK MODE (Extra Deep Look) */
-        body.dark-mode .footer-section {
-          background: linear-gradient(135deg, #1e1b4b, #312e81) !important;
-        }
+hr {
+  border-color: rgba(255,255,255,0.2);
+}
 
-      `}</style>
+.copyright {
+  color: #E5E7EB;
+}
+
+/* ================= DARK MODE ================= */
+
+body.dark-mode .footer-section {
+  background: linear-gradient(135deg, #0A2E42, #0F4C6C) !important;
+}
+
+body.dark-mode .footer-link:hover,
+body.dark-mode .social-icon:hover {
+  color: #D4A24C;
+}
+
+`}</style>
     </motion.footer>
   );
 }

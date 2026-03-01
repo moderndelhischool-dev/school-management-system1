@@ -27,53 +27,82 @@ function UserProfile() {
       <h5 className="section-subtitle">Attendance</h5>
       <p className="attendance">Attendance: 92%</p>
 
-      {/* ===== PURPLE STYLES ===== */}
       <style>{`
+
         .profile-card {
-          border-radius: 18px;
-          background: linear-gradient(135deg,#f5f3ff,#ede9fe);
+          border-radius: 20px;
+          background: linear-gradient(135deg,#ffffff,#F4F6F8);
           border: none;
           transition: 0.3s ease;
+          box-shadow: 0 15px 35px rgba(15,76,108,0.15);
+        }
+
+        body.dark-mode .profile-card {
+          background: linear-gradient(135deg,#1B2A35,#0A2E42);
+          color: white;
+          box-shadow: 0 15px 35px rgba(0,0,0,0.6);
         }
 
         .profile-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 30px rgba(124,58,237,0.25);
+          transform: translateY(-5px);
+          box-shadow: 0 20px 45px rgba(15,76,108,0.25);
         }
 
         .section-title {
-          color: #4c1d95;
+          color: #0F4C6C;
           font-weight: 700;
-          margin-bottom: 15px;
+          margin-bottom: 18px;
+        }
+
+        body.dark-mode .section-title {
+          color: #D4A24C;
         }
 
         .section-subtitle {
-          color: #6d28d9;
+          color: #1B5E84;
           font-weight: 600;
-          margin-top: 15px;
+          margin-top: 18px;
+        }
+
+        body.dark-mode .section-subtitle {
+          color: #D4A24C;
         }
 
         .label {
-          color: #7c3aed;
+          color: #0F4C6C;
+        }
+
+        body.dark-mode .label {
+          color: #D4A24C;
         }
 
         .paid {
-          color: #7c3aed;
+          color: #0F4C6C;
           font-weight: 600;
         }
 
         .pending {
-          color: #dc2626;
-        }
-
-        .attendance {
-          color: #4c1d95;
+          color: #DC2626;
           font-weight: 600;
         }
 
-        hr {
-          border-color: #ddd6fe;
+        .attendance {
+          color: #1B5E84;
+          font-weight: 600;
         }
+
+        body.dark-mode .attendance {
+          color: #D4A24C;
+        }
+
+        hr {
+          border-color: #E5E7EB;
+        }
+
+        body.dark-mode hr {
+          border-color: #243644;
+        }
+
       `}</style>
     </div>
   );

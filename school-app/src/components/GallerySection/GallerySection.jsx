@@ -111,9 +111,15 @@ function GallerySection() {
       </div>
 
       <style>{`
-       .gallery-section {
+
+/* ========================= */
+/* SECTION */
+/* ========================= */
+
+.gallery-section {
   padding: 90px 8%;
-  background: #f3f4f6;
+  background: #F4F6F8;
+  transition: 0.3s ease;
 }
 
 .gallery-header {
@@ -126,12 +132,12 @@ function GallerySection() {
 
 .gallery-header h2 {
   font-size: 2.5rem;
-  color: #6d28d9;
+  color: #0F4C6C;
   font-weight: 700;
 }
 
 /* ========================= */
-/* PREMIUM DROPDOWN */
+/* DROPDOWN */
 /* ========================= */
 
 .select-container {
@@ -141,25 +147,25 @@ function GallerySection() {
 .select-container select {
   padding: 12px 55px 12px 22px;
   border-radius: 50px;
-  border: 2px solid #6d28d9;
+  border: 2px solid #0F4C6C;
   background: #ffffff;
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
   appearance: none;
   transition: all 0.3s ease;
-  box-shadow: 0 10px 25px rgba(109, 40, 217, 0.15);
+  box-shadow: 0 10px 25px rgba(15, 76, 108, 0.15);
 }
 
 .select-container select:hover {
-  background: #f5f3ff;
-  box-shadow: 0 15px 35px rgba(109, 40, 217, 0.25);
+  background: #EAF3F8;
+  box-shadow: 0 15px 35px rgba(15, 76, 108, 0.25);
 }
 
 .select-container select:focus {
   outline: none;
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.25);
+  border-color: #D4A24C;
+  box-shadow: 0 0 0 4px rgba(212,162,76,0.25);
 }
 
 .select-container::after {
@@ -170,19 +176,12 @@ function GallerySection() {
   transform: translateY(-50%);
   font-size: 1rem;
   font-weight: bold;
-  color: #6d28d9;
+  color: #0F4C6C;
   pointer-events: none;
 }
 
-.select-container select option {
-  padding: 12px;
-  font-weight: 500;
-  background: #ffffff;
-  color: #111827;
-}
-
 /* ========================= */
-/* GALLERY GRID */
+/* GRID */
 /* ========================= */
 
 .gallery-grid {
@@ -192,27 +191,27 @@ function GallerySection() {
 }
 
 /* ========================= */
-/* ENHANCED CARD EFFECT */
+/* CARD */
 /* ========================= */
 
 .gallery-card {
   background: white;
   border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 15px 35px rgba(15,76,108,0.08);
   transition: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
   position: relative;
 }
 
-/* POP + GLOW */
+/* POP + GOLD GLOW */
 .gallery-card:hover {
   transform: translateY(-18px) scale(1.03);
   box-shadow: 
-    0 30px 60px rgba(0, 0, 0, 0.18),
-    0 0 25px rgba(109, 40, 217, 0.35);
+    0 30px 60px rgba(15,76,108,0.18),
+    0 0 25px rgba(212,162,76,0.35);
 }
 
-/* Animated Top Gradient Line */
+/* Animated Top Gold Line */
 .gallery-card::before {
   content: "";
   position: absolute;
@@ -220,7 +219,7 @@ function GallerySection() {
   left: 0;
   width: 0%;
   height: 4px;
-  background: linear-gradient(90deg,#7c3aed,#a78bfa);
+  background: linear-gradient(90deg,#D4A24C,#F5D08A);
   transition: 0.4s ease;
 }
 
@@ -253,22 +252,47 @@ function GallerySection() {
 .gallery-content h3 {
   margin-bottom: 12px;
   font-weight: 600;
-  color: #111827;
+  color: #0F4C6C;
   transition: 0.3s ease;
 }
 
 .gallery-card:hover .gallery-content h3 {
-  color: #6d28d9;
+  color: #D4A24C;
 }
 
 .gallery-content p {
   font-size: 0.95rem;
-  color: #6b7280;
+  color: #4B5563;
   line-height: 1.6;
 }
 
 .gallery-card:hover .gallery-content {
   transform: translateY(-3px);
+}
+
+/* ========================= */
+/* DARK MODE */
+/* ========================= */
+
+body.dark-mode .gallery-section {
+  background: #0E1A24;
+}
+
+body.dark-mode .gallery-card {
+  background: #1B2A35;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+}
+
+body.dark-mode .gallery-content h3 {
+  color: #E5E7EB;
+}
+
+body.dark-mode .gallery-content p {
+  color: #CBD5E1;
+}
+
+body.dark-mode .gallery-card:hover .gallery-content h3 {
+  color: #D4A24C;
 }
 
 /* ========================= */
@@ -281,7 +305,8 @@ function GallerySection() {
     gap: 20px;
   }
 }
-      `}</style>
+
+`}</style>
     </section>
   );
 }

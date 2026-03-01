@@ -29,28 +29,26 @@
 //         className={`hero-section ${showModal ? "blur-bg" : ""}`}
 //         id="home"
 //       >
-//         <div className="hero-overlay">
-//           <div className="hero-content text-center">
-//             <p className="hero-subtitle">The Best School of The State</p>
+//         <div className="hero-content">
+//           <p className="hero-subtitle">THE BEST SCHOOL OF THE STATE</p>
 
-//             <h1 className="hero-title">
-//               Transformative <br /> Education
-//             </h1>
+//           <h1 className="hero-title">
+//             Transformative <br /> Education
+//           </h1>
 
-//             <p className="hero-description">
-//               Modern New Delhi Public High School is committed to academic
-//               excellence, character development, and building future leaders.
-//             </p>
+//           <p className="hero-description">
+//             Modern New Delhi Public High School is committed to academic
+//             excellence, character development, and building future leaders.
+//           </p>
 
-//             <div className="hero-buttons">
-//               <button className="hero-btn-primary" onClick={handleApply}>
-//                 Apply Now
-//               </button>
+//           <div className="hero-buttons">
+//             <button className="hero-btn-primary" onClick={handleApply}>
+//               Apply Now
+//             </button>
 
-//               <button className="hero-btn-outline" onClick={handleContact}>
-//                 Contact Us
-//               </button>
-//             </div>
+//             <button className="hero-btn-outline" onClick={handleContact}>
+//               Contact Us
+//             </button>
 //           </div>
 //         </div>
 //       </section>
@@ -102,7 +100,6 @@
 
 //       <style>{`
 
-//         /* ORIGINAL HERO CSS SAME */
 //         .hero-section {
 //           position: relative;
 //           height: 100vh;
@@ -111,47 +108,35 @@
 //           display: flex;
 //           align-items: center;
 //           justify-content: center;
-//           transition: filter 0.3s ease;
-//         }
-
-//         .blur-bg {
-//           filter: blur(6px);
-//         }
-
-//         .hero-overlay {
-//           width: 100%;
-//           height: 100%;
-//           background: rgba(0, 0, 0, 0.45);
-//           display: flex;
-//           align-items: center;
-//           justify-content: center;
 //         }
 
 //         .hero-content {
 //           max-width: 900px;
 //           padding: 20px;
+//           text-align: center;
 //           color: white;
+//           text-shadow: 0 4px 20px rgba(0,0,0,0.8);
 //         }
 
 //         .hero-subtitle {
-//           color: #c4b5fd;
-//           font-weight: 600;
-//           letter-spacing: 1px;
-//           margin-bottom: 15px;
+//           font-weight: 700;
+//           letter-spacing: 2px;
+//           margin-bottom: 20px;
 //           text-transform: uppercase;
+//           color: #ffffff;
 //         }
 
 //         .hero-title {
 //           font-size: 4rem;
-//           font-weight: 800;
+//           font-weight: 900;
+//           margin-bottom: 25px;
 //           line-height: 1.2;
-//           margin-bottom: 20px;
 //         }
 
 //         .hero-description {
-//           font-size: 1.1rem;
-//           color: #f3f4f6;
-//           margin-bottom: 30px;
+//           font-size: 1.2rem;
+//           margin-bottom: 35px;
+//           color: #ffffff;
 //         }
 
 //         .hero-buttons {
@@ -162,37 +147,39 @@
 //         }
 
 //         .hero-btn-primary {
-//           padding: 12px 32px;
-//           font-weight: 600;
+//           padding: 14px 34px;
 //           border-radius: 50px;
-//           background: #5b21b6;
 //           border: none;
+//           background: #7c3aed;
 //           color: white;
+//           font-weight: 700;
 //           transition: 0.3s ease;
 //         }
 
 //         .hero-btn-primary:hover {
-//           background: #7c3aed;
-//           transform: translateY(-3px);
-//           box-shadow: 0 10px 25px rgba(124,58,237,0.4);
+//           background: #5b21b6;
+//           transform: translateY(-4px);
+//           box-shadow: 0 12px 30px rgba(0,0,0,0.4);
 //         }
 
 //         .hero-btn-outline {
-//           padding: 12px 32px;
-//           font-weight: 600;
+//           padding: 14px 34px;
 //           border-radius: 50px;
-//           background: transparent;
-//           border: 2px solid #c4b5fd;
+//           border: 2px solid white;
+//           background: rgba(0,0,0,0.3);
 //           color: white;
+//           font-weight: 700;
 //           transition: 0.3s ease;
 //         }
 
 //         .hero-btn-outline:hover {
-//           background: rgba(255,255,255,0.15);
-//           transform: translateY(-3px);
+//           background: white;
+//           color: #5b21b6;
+//           transform: translateY(-4px);
 //         }
 
-//         /* MODAL OVERLAY */
+//         /* MODAL */
+
 //         .modal-overlay {
 //           position: fixed;
 //           top: 0;
@@ -211,7 +198,6 @@
 //           background: rgba(0,0,0,0.6);
 //         }
 
-//         /* MODAL BOX */
 //         .admission-modal {
 //           background: white;
 //           width: 90%;
@@ -232,7 +218,7 @@
 //         .admission-modal h2 {
 //           text-align: center;
 //           margin-bottom: 25px;
-//           color: #5b21b6;
+//           color: #6d28d9;
 //         }
 
 //         .admission-form input,
@@ -243,13 +229,6 @@
 //           border-radius: 10px;
 //           border: 1px solid #ddd;
 //           outline: none;
-//           transition: 0.3s;
-//         }
-
-//         .admission-form input:focus,
-//         .admission-form textarea:focus {
-//           border-color: #7c3aed;
-//           box-shadow: 0 0 10px rgba(124,58,237,0.3);
 //         }
 
 //         .form-row {
@@ -263,16 +242,11 @@
 //         }
 
 //         .submit-btn {
-//           background: #5b21b6;
+//           background: #7c3aed;
 //           color: white;
 //           border: none;
 //           padding: 10px 25px;
 //           border-radius: 50px;
-//           transition: 0.3s;
-//         }
-
-//         .submit-btn:hover {
-//           background: #7c3aed;
 //         }
 
 //         .close-btn {
@@ -286,6 +260,10 @@
 //           .form-row{
 //             flex-direction: column;
 //           }
+
+//           .hero-title{
+//             font-size: 2.5rem;
+//           }
 //         }
 
 //       `}</style>
@@ -294,11 +272,9 @@
 // }
 
 // export default Home;
-import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 function Home() {
-  const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const [animate, setAnimate] = useState(false);
 
@@ -321,10 +297,7 @@ function Home() {
 
   return (
     <>
-      <section
-        className={`hero-section ${showModal ? "blur-bg" : ""}`}
-        id="home"
-      >
+      <section className="hero-section" id="home">
         <div className="hero-content">
           <p className="hero-subtitle">THE BEST SCHOOL OF THE STATE</p>
 
@@ -396,171 +369,208 @@ function Home() {
 
       <style>{`
 
-        .hero-section {
-          position: relative;
-          height: 100vh;
-          width: 100%;
-          background: url("/img0.jpg") center center / cover no-repeat;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
+/* ================= HERO ================= */
 
-        .hero-content {
-          max-width: 900px;
-          padding: 20px;
-          text-align: center;
-          color: white;
-          text-shadow: 0 4px 20px rgba(0,0,0,0.8);
-        }
+.hero-section {
+  position: relative;
+  height: 100vh;
+  width: 100%;
+  background: url("/img0.jpg") center center / cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-        .hero-subtitle {
-          font-weight: 700;
-          letter-spacing: 2px;
-          margin-bottom: 20px;
-          text-transform: uppercase;
-          color: #ffffff;
-        }
+.hero-content {
+  max-width: 900px;
+  padding: 20px;
+  text-align: center;
+  color: white;
+}
 
-        .hero-title {
-          font-size: 4rem;
-          font-weight: 900;
-          margin-bottom: 25px;
-          line-height: 1.2;
-        }
+.hero-subtitle {
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  color: #D4A24C;
+}
 
-        .hero-description {
-          font-size: 1.2rem;
-          margin-bottom: 35px;
-          color: #ffffff;
-        }
+.hero-title {
+  font-size: 4rem;
+  font-weight: 900;
+  margin-bottom: 25px;
+  line-height: 1.2;
+}
 
-        .hero-buttons {
-          display: flex;
-          gap: 20px;
-          justify-content: center;
-          flex-wrap: wrap;
-        }
+.hero-description {
+  font-size: 1.2rem;
+  margin-bottom: 35px;
+  color: #F4F6F8;
+}
 
-        .hero-btn-primary {
-          padding: 14px 34px;
-          border-radius: 50px;
-          border: none;
-          background: #7c3aed;
-          color: white;
-          font-weight: 700;
-          transition: 0.3s ease;
-        }
+.hero-buttons {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
 
-        .hero-btn-primary:hover {
-          background: #5b21b6;
-          transform: translateY(-4px);
-          box-shadow: 0 12px 30px rgba(0,0,0,0.4);
-        }
+/* PRIMARY BUTTON */
+.hero-btn-primary {
+  padding: 14px 34px;
+  border-radius: 50px;
+  border: none;
+  background: #D4A24C;
+  color: #0F4C6C;
+  font-weight: 700;
+  transition: 0.3s ease;
+}
 
-        .hero-btn-outline {
-          padding: 14px 34px;
-          border-radius: 50px;
-          border: 2px solid white;
-          background: rgba(0,0,0,0.3);
-          color: white;
-          font-weight: 700;
-          transition: 0.3s ease;
-        }
+.hero-btn-primary:hover {
+  background: white;
+  color: #0F4C6C;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(212,162,76,0.5);
+}
 
-        .hero-btn-outline:hover {
-          background: white;
-          color: #5b21b6;
-          transform: translateY(-4px);
-        }
+/* OUTLINE BUTTON */
+.hero-btn-outline {
+  padding: 14px 34px;
+  border-radius: 50px;
+  border: 2px solid white;
+  background: transparent;
+  color: white;
+  font-weight: 700;
+  transition: 0.3s ease;
+}
 
-        /* MODAL */
+.hero-btn-outline:hover {
+  background: white;
+  color: #0F4C6C;
+  transform: translateY(-4px);
+}
 
-        .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: rgba(0,0,0,0);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-          transition: background 0.3s ease;
-        }
+/* ================= MODAL ================= */
 
-        .overlay-show {
-          background: rgba(0,0,0,0.6);
-        }
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  transition: background 0.3s ease;
+}
 
-        .admission-modal {
-          background: white;
-          width: 90%;
-          max-width: 750px;
-          padding: 40px;
-          border-radius: 20px;
-          box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-          transform: scale(0.8);
-          opacity: 0;
-          transition: all 0.3s ease;
-        }
+.overlay-show {
+  background: rgba(0,0,0,0.7);
+}
 
-        .modal-show {
-          transform: scale(1);
-          opacity: 1;
-        }
+.admission-modal {
+  background: #ffffff;
+  width: 90%;
+  max-width: 750px;
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 30px 70px rgba(15,76,108,0.3);
+  transform: scale(0.8);
+  opacity: 0;
+  transition: all 0.3s ease;
+  border-top: 6px solid #D4A24C;
+}
 
-        .admission-modal h2 {
-          text-align: center;
-          margin-bottom: 25px;
-          color: #6d28d9;
-        }
+.modal-show {
+  transform: scale(1);
+  opacity: 1;
+}
 
-        .admission-form input,
-        .admission-form textarea {
-          width: 100%;
-          padding: 12px;
-          margin-bottom: 15px;
-          border-radius: 10px;
-          border: 1px solid #ddd;
-          outline: none;
-        }
+.admission-modal h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #0F4C6C;
+}
 
-        .form-row {
-          display: flex;
-          gap: 15px;
-        }
+.admission-form input,
+.admission-form textarea {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+  outline: none;
+  transition: 0.3s ease;
+}
 
-        .form-buttons {
-          display: flex;
-          justify-content: space-between;
-        }
+.admission-form input:focus,
+.admission-form textarea:focus {
+  border-color: #D4A24C;
+  box-shadow: 0 0 0 3px rgba(212,162,76,0.25);
+}
 
-        .submit-btn {
-          background: #7c3aed;
-          color: white;
-          border: none;
-          padding: 10px 25px;
-          border-radius: 50px;
-        }
+.form-row {
+  display: flex;
+  gap: 15px;
+}
 
-        .close-btn {
-          background: #e5e7eb;
-          border: none;
-          padding: 10px 25px;
-          border-radius: 50px;
-        }
+.form-buttons {
+  display: flex;
+  justify-content: space-between;
+}
 
-        @media(max-width:768px){
-          .form-row{
-            flex-direction: column;
-          }
+.submit-btn {
+  background: linear-gradient(135deg,#0F4C6C,#1B5E84);
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 50px;
+  font-weight: 600;
+  transition: 0.3s ease;
+}
 
-          .hero-title{
-            font-size: 2.5rem;
-          }
-        }
+.submit-btn:hover {
+  background: #D4A24C;
+  color: #0F4C6C;
+}
+
+.close-btn {
+  background: #E5E7EB;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 50px;
+}
+
+/* ================= DARK MODE ================= */
+
+body.dark-mode .hero-section {
+  background: url("/img0.jpg") center center / cover no-repeat;
+}
+
+body.dark-mode .admission-modal {
+  background: #1B2A35;
+  color: white;
+}
+
+body.dark-mode .admission-form input,
+body.dark-mode .admission-form textarea {
+  background: #0F172A;
+  border: 1px solid #334155;
+  color: white;
+}
+
+@media(max-width:768px){
+  .form-row{
+    flex-direction: column;
+  }
+
+  .hero-title{
+    font-size: 2.5rem;
+  }
+}
 
       `}</style>
     </>

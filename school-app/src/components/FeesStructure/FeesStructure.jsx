@@ -77,11 +77,11 @@ function FeesStructure() {
 
       <style>{`
 
-/* ================= BASE ================= */
+/* ================= SECTION ================= */
 
 .fees-section {
   padding: 110px 8%;
-  background: linear-gradient(to bottom, #f5f3ff, #ede9fe);
+  background: #F4F6F8;
   transition: 0.4s ease;
 }
 
@@ -93,12 +93,12 @@ function FeesStructure() {
 .fees-header h2 {
   font-size: 40px;
   font-weight: 800;
-  color: #4c1d95;
+  color: #0F4C6C;
   margin-bottom: 15px;
 }
 
 .fees-header p {
-  color: #6b7280;
+  color: #4B5563;
   font-size: 16px;
 }
 
@@ -113,19 +113,20 @@ function FeesStructure() {
 
 .fees-box,
 .uniform-box {
-  background: #ffffff;
+  background: white;
   padding: 35px;
   border-radius: 22px;
-  box-shadow: 0 20px 50px rgba(76,29,149,0.12);
-  transition: all 0.4s cubic-bezier(0.22,1,0.36,1);
+  box-shadow: 0 20px 50px rgba(15,76,108,0.12);
+  transition: all 0.4s ease;
+  border-top: 4px solid #D4A24C;
 }
 
 .fees-box:hover,
 .uniform-box:hover {
   transform: translateY(-12px);
-  box-shadow: 
-    0 30px 70px rgba(76,29,149,0.25),
-    0 0 25px rgba(124,58,237,0.25);
+  box-shadow:
+    0 30px 70px rgba(15,76,108,0.25),
+    0 0 25px rgba(212,162,76,0.25);
 }
 
 /* ================= FEES ================= */
@@ -137,7 +138,7 @@ function FeesStructure() {
 .box-title {
   font-size: 22px;
   font-weight: 700;
-  color: #4c1d95;
+  color: #0F4C6C;
   margin-bottom: 25px;
 }
 
@@ -145,18 +146,19 @@ function FeesStructure() {
   display: flex;
   justify-content: space-between;
   padding: 14px 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #E5E7EB;
   font-weight: 500;
   transition: 0.3s;
 }
 
 .fee-item:hover {
-  color: #7c3aed;
+  color: #D4A24C;
   transform: translateX(6px);
 }
 
 .price {
   font-weight: 600;
+  color: #0F4C6C;
 }
 
 .fees-btn {
@@ -164,7 +166,7 @@ function FeesStructure() {
   display: inline-block;
   padding: 14px 24px;
   border-radius: 12px;
-  background: linear-gradient(135deg,#4c1d95,#7c3aed);
+  background: linear-gradient(135deg,#0F4C6C,#1B5E84);
   color: white;
   font-weight: 600;
   text-decoration: none;
@@ -172,8 +174,10 @@ function FeesStructure() {
 }
 
 .fees-btn:hover {
+  background: #D4A24C;
+  color: #0F4C6C;
   transform: scale(1.05);
-  box-shadow: 0 15px 35px rgba(124,58,237,0.4);
+  box-shadow: 0 15px 35px rgba(212,162,76,0.4);
 }
 
 /* ================= UNIFORM ================= */
@@ -205,48 +209,49 @@ function FeesStructure() {
 .uniform-content li {
   margin-bottom: 10px;
   transition: 0.3s;
+  color: #4B5563;
 }
 
 .uniform-content li:hover {
-  color: #7c3aed;
+  color: #D4A24C;
   padding-left: 5px;
 }
 
 /* ================= DARK MODE ================= */
 
 body.dark-mode .fees-section {
-  background: linear-gradient(to bottom, #0f172a, #111827);
+  background: #0E1A24;
 }
 
 body.dark-mode .fees-header h2 {
-  color: #e9d5ff;
+  color: #D4A24C;
 }
 
 body.dark-mode .fees-header p {
-  color: #cbd5e1;
+  color: #CBD5E1;
 }
 
 body.dark-mode .fees-box,
 body.dark-mode .uniform-box {
-  background: #1e293b;
+  background: #1B2A35;
   box-shadow: 0 30px 70px rgba(0,0,0,0.7);
 }
 
 body.dark-mode .box-title {
-  color: #c4b5fd;
+  color: #D4A24C;
 }
 
 body.dark-mode .fee-item {
   border-bottom: 1px solid #334155;
-  color: #e2e8f0;
+  color: #E2E8F0;
+}
+
+body.dark-mode .price {
+  color: #D4A24C;
 }
 
 body.dark-mode .uniform-content li {
-  color: #e2e8f0;
-}
-
-body.dark-mode .fees-btn {
-  background: linear-gradient(135deg,#7c3aed,#a78bfa);
+  color: #CBD5E1;
 }
 
 @media (max-width: 992px) {
