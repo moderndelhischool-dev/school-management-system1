@@ -304,25 +304,26 @@ function PaymentRequests({ darkMode }) {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
+  const [deleteId, setDeleteId] = useState(null);
 
   /* ================= LOAD PAYMENTS ================= */
   const loadPayments = async () => {
     try {
-      setLoading(true);
-
       const snap = await getDocs(collection(db, "payments"));
 
-      const data = snap.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...docSnap.data(),
+      const data = snap.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
       }));
 
+      // Latest first
+      data.sort(
+        (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0),
+      );
+
       setPayments(data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+    } catch {}
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -337,23 +338,24 @@ function PaymentRequests({ darkMode }) {
       const paymentRef = doc(db, "payments", payment.id);
       const studentRef = doc(db, "students", payment.studentEmail);
 
-      // Update payment status
+      // ✅ update payment doc
       await updateDoc(paymentRef, {
         status: "approved",
         approvedAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       });
 
+      // ✅ update student doc
       const studentSnap = await getDoc(studentRef);
-
       if (studentSnap.exists()) {
         const s = studentSnap.data();
 
-        const totalFees = Number(s.totalFees || 0);
+        const total = Number(s.totalFees || 0);
         const oldPaid = Number(s.paidFees || 0);
         const paidNow = Number(payment.paidAmount || 0);
 
-        const newPaid = Math.min(oldPaid + paidNow, totalFees);
-        const newPending = Math.max(totalFees - newPaid, 0);
+        const newPaid = Math.min(oldPaid + paidNow, total);
+        const newPending = Math.max(total - newPaid, 0);
 
         await updateDoc(studentRef, {
           paidFees: newPaid,
@@ -363,38 +365,36 @@ function PaymentRequests({ darkMode }) {
         });
       }
 
-      // 🔥 Only update that row locally
+      // ✅ update UI without reload
       setPayments((prev) =>
         prev.map((p) =>
-          p.id === payment.id ? { ...p, status: "approved" } : p,
+          p.id === payment.id
+            ? {
+                ...p,
+                status: "approved",
+                approvedAt: Timestamp.now(),
+              }
+            : p,
         ),
       );
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setProcessingId(null);
-    }
+    } catch {}
+    setProcessingId(null);
   };
 
   /* ================= DELETE ================= */
-  const deletePayment = async (payment) => {
+  const deletePayment = async (id) => {
     try {
-      setProcessingId(payment.id);
+      setProcessingId(id);
 
-      await deleteDoc(doc(db, "payments", payment.id));
+      await deleteDoc(doc(db, "payments", id));
 
-      // Remove only that row
-      setPayments((prev) => prev.filter((p) => p.id !== payment.id));
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setProcessingId(null);
-    }
+      // remove from UI
+      setPayments((prev) => prev.filter((p) => p.id !== id));
+    } catch {}
+    setProcessingId(null);
   };
 
-  if (loading) {
-    return <p style={{ padding: 20 }}>Loading payments...</p>;
-  }
+  if (loading) return <p style={{ padding: 20 }}>Loading...</p>;
 
   return (
     <div className="container-fluid p-3">
@@ -413,6 +413,7 @@ function PaymentRequests({ darkMode }) {
               <th>Class</th>
               <th>Paid</th>
               <th>Status</th>
+              <th>Approval Date</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -420,7 +421,7 @@ function PaymentRequests({ darkMode }) {
           <tbody>
             {payments.length === 0 ? (
               <tr>
-                <td colSpan="8" className="text-center">
+                <td colSpan="9" className="text-center">
                   No payment requests
                 </td>
               </tr>
@@ -433,12 +434,15 @@ function PaymentRequests({ darkMode }) {
                   <td>{p.studentEmail}</td>
                   <td>{p.class}</td>
                   <td>₹ {p.paidAmount}</td>
+
                   <td>
                     <span
                       className={`badge ${
                         p.status === "approved"
                           ? "bg-success"
-                          : "bg-warning text-dark"
+                          : p.status === "rejected"
+                            ? "bg-danger"
+                            : "bg-warning text-dark"
                       }`}
                     >
                       {p.status}
@@ -446,30 +450,44 @@ function PaymentRequests({ darkMode }) {
                   </td>
 
                   <td>
-                    {processingId === p.id ? (
-                      <button className="btn btn-secondary btn-sm" disabled>
-                        Processing...
-                      </button>
-                    ) : (
-                      <>
-                        {/* ✅ Show Approve only if pending */}
-                        {p.status === "pending" && (
-                          <button
-                            className="btn btn-success btn-sm me-2"
-                            onClick={() => approvePayment(p)}
-                          >
-                            Approve
-                          </button>
-                        )}
+                    {p.approvedAt?.seconds
+                      ? new Date(p.approvedAt.seconds * 1000).toLocaleString(
+                          "en-IN",
+                        )
+                      : "—"}
+                  </td>
 
-                        {/* ✅ Delete always visible */}
+                  <td>
+                    {/* 🔥 Pending → Approve + Delete */}
+                    {p.status === "pending" && (
+                      <>
+                        <button
+                          className="btn btn-success btn-sm me-2"
+                          disabled={processingId === p.id}
+                          onClick={() => approvePayment(p)}
+                        >
+                          {processingId === p.id ? "Processing..." : "Approve"}
+                        </button>
+
                         <button
                           className="btn btn-danger btn-sm"
-                          onClick={() => deletePayment(p)}
+                          disabled={processingId === p.id}
+                          onClick={() => deletePayment(p.id)}
                         >
                           Delete
                         </button>
                       </>
+                    )}
+
+                    {/* 🔥 Approved → Only Delete */}
+                    {p.status === "approved" && (
+                      <button
+                        className="btn btn-danger btn-sm"
+                        disabled={processingId === p.id}
+                        onClick={() => deletePayment(p.id)}
+                      >
+                        {processingId === p.id ? "Deleting..." : "Delete"}
+                      </button>
                     )}
                   </td>
                 </tr>

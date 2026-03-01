@@ -263,6 +263,263 @@
 // }
 
 // export default UserDashboard;
+// import { useEffect, useState } from "react";
+// import { auth, db } from "../firebase/firebase";
+// import {
+//   doc,
+//   getDoc,
+//   collection,
+//   query,
+//   where,
+//   getDocs,
+// } from "firebase/firestore";
+// import { onAuthStateChanged } from "firebase/auth";
+
+// import UserLayout from "./user/UserLayout";
+// import UserHome from "./user/UserHome";
+// import UserProfile from "./user/UserProfile";
+// import UserFees from "./user/UserFees";
+// import UserContact from "./user/UserContact";
+// import UserUniform from "./user/UserUniform";
+// import UserCertificate from "./user/UserCertificate";
+// import ChangePassword from "../components/ChangePassword";
+// import UserCalendar from "./UserCalendar";
+
+// /* ================= PAYMENT HISTORY ================= */
+// function PaymentHistory({ email, darkMode }) {
+//   const [payments, setPayments] = useState([]);
+//   const [loading, setLoading] = useState(false);
+
+//   useEffect(() => {
+//     if (!email) return;
+
+//     const loadPayments = async () => {
+//       setLoading(true);
+
+//       const q = query(
+//         collection(db, "payments"),
+//         where("studentEmail", "==", email),
+//       );
+
+//       const snap = await getDocs(q);
+
+//       const data = snap.docs.map((d) => ({
+//         id: d.id,
+//         ...d.data(),
+//       }));
+
+//       data.sort(
+//         (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0),
+//       );
+
+//       setPayments(data);
+//       setLoading(false);
+//     };
+
+//     loadPayments();
+//   }, [email]);
+
+//   if (loading)
+//     return (
+//       <div className="text-center py-4">
+//         <div className="spinner-border mb-3"></div>
+//       </div>
+//     );
+
+//   if (payments.length === 0) {
+//     return (
+//       <p
+//         className={
+//           darkMode ? "text-light text-center" : "text-muted text-center"
+//         }
+//       >
+//         No payment history found.
+//       </p>
+//     );
+//   }
+
+//   return (
+//     <div className={`payment-card ${darkMode ? "dark" : ""}`}>
+//       <h5 className="section-title">🧾 Payment History</h5>
+
+//       <div className="table-responsive">
+//         <table className={`table align-middle ${darkMode ? "table-dark" : ""}`}>
+//           <thead>
+//             <tr>
+//               <th>#</th>
+//               <th>Paid</th>
+//               <th>Remaining</th>
+//               <th>Month</th>
+//               <th>Status</th>
+//               <th>Date</th>
+//             </tr>
+//           </thead>
+
+//           <tbody>
+//             {payments.map((p, i) => (
+//               <tr key={p.id}>
+//                 <td>{i + 1}</td>
+//                 <td className="paid-text">₹ {p.paidAmount || 0}</td>
+//                 <td>₹ {p.remainingFees ?? "—"}</td>
+//                 <td>{p.month || "—"}</td>
+//                 <td>
+//                   <span className={`badge badge-${p.status}`}>{p.status}</span>
+//                 </td>
+//                 <td>
+//                   {p.createdAt
+//                     ? new Date(p.createdAt.seconds * 1000).toLocaleDateString(
+//                         "en-IN",
+//                       )
+//                     : "—"}
+//                 </td>
+//               </tr>
+//             ))}
+//           </tbody>
+//         </table>
+//       </div>
+//     </div>
+//   );
+// }
+
+// /* ================= USER DASHBOARD ================= */
+// function UserDashboard() {
+//   const [student, setStudent] = useState(null);
+//   const [loading, setLoading] = useState(true);
+//   const [showChangePassword, setShowChangePassword] = useState(false);
+
+//   useEffect(() => {
+//     const unsub = onAuthStateChanged(auth, async (user) => {
+//       if (user) {
+//         const snap = await getDoc(doc(db, "students", user.email));
+//         if (snap.exists()) {
+//           setStudent({ email: user.email, ...snap.data() });
+//         }
+//       }
+//       setLoading(false);
+//     });
+
+//     return () => unsub();
+//   }, []);
+
+//   if (loading) {
+//     return (
+//       <div className="d-flex justify-content-center align-items-center min-vh-100">
+//         <div className="text-center">
+//           <div className="spinner-border mb-3"></div>
+//           <h6>Loading dashboard...</h6>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   if (!student) {
+//     return (
+//       <div className="container mt-5 text-center">
+//         <h5>No student record found</h5>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <>
+//       <UserLayout onChangePassword={() => setShowChangePassword(true)}>
+//         {(activePage, darkMode) => (
+//           <>
+//             {activePage === "home" && (
+//               <>
+//                 <UserHome student={student} darkMode={darkMode} />
+//                 <div className="mt-4">
+//                   <UserCalendar darkMode={darkMode} />
+//                 </div>
+//               </>
+//             )}
+
+//             {activePage === "profile" && (
+//               <UserProfile student={student} darkMode={darkMode} />
+//             )}
+
+//             {activePage === "fees" && (
+//               <UserFees student={student} darkMode={darkMode} />
+//             )}
+
+//             {activePage === "history" && (
+//               <PaymentHistory email={student.email} darkMode={darkMode} />
+//             )}
+
+//             {activePage === "uniform" && (
+//               <UserUniform student={student} darkMode={darkMode} />
+//             )}
+
+//             {activePage === "certificate" && (
+//               <UserCertificate student={student} darkMode={darkMode} />
+//             )}
+
+//             {activePage === "contact" && <UserContact />}
+//           </>
+//         )}
+//       </UserLayout>
+
+//       {showChangePassword && (
+//         <ChangePassword onClose={() => setShowChangePassword(false)} />
+//       )}
+
+//       <style>{`
+
+//       .spinner-border {
+//         color: #1D4ED8;
+//       }
+
+//       .payment-card {
+//         background:white;
+//         padding:20px;
+//         border-radius:16px;
+//         box-shadow:0 20px 40px rgba(29,78,216,0.15);
+//       }
+
+//       .payment-card.dark {
+//         background:#0F172A;
+//       }
+
+//       .section-title {
+//         font-weight:700;
+//         color:#1E3A8A;
+//         margin-bottom:15px;
+//       }
+
+//       body.dark-mode .section-title {
+//         color:#D4A24C;
+//       }
+
+//       .paid-text {
+//         color:#1D4ED8;
+//         font-weight:600;
+//       }
+
+//       body.dark-mode .paid-text {
+//         color:#D4A24C;
+//       }
+
+//       .badge-approved {
+//         background:#1D4ED8;
+//         color:white;
+//       }
+
+//       .badge-pending {
+//         background:#D4A24C;
+//         color:#0F172A;
+//       }
+
+//       .badge-rejected {
+//         background:#dc2626;
+//         color:white;
+//       }
+
+//       `}</style>
+//     </>
+//   );
+// }
+
+// export default UserDashboard;
 import { useEffect, useState } from "react";
 import { auth, db } from "../firebase/firebase";
 import {
@@ -288,32 +545,52 @@ import UserCalendar from "./UserCalendar";
 /* ================= PAYMENT HISTORY ================= */
 function PaymentHistory({ email, darkMode }) {
   const [payments, setPayments] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!email) return;
 
     const loadPayments = async () => {
-      setLoading(true);
+      try {
+        const q = query(
+          collection(db, "payments"),
+          where("studentEmail", "==", email),
+        );
 
-      const q = query(
-        collection(db, "payments"),
-        where("studentEmail", "==", email),
-      );
+        const snap = await getDocs(q);
 
-      const snap = await getDocs(q);
+        const data = snap.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        }));
 
-      const data = snap.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      }));
+        // Sort: Approved first → Pending → Rejected
+        const order = { approved: 1, pending: 2, rejected: 3 };
 
-      data.sort(
-        (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0),
-      );
+        data.sort((a, b) => {
+          if (order[a.status] !== order[b.status]) {
+            return order[a.status] - order[b.status];
+          }
 
-      setPayments(data);
-      setLoading(false);
+          const aTime =
+            a.status === "approved"
+              ? a.approvedAt?.seconds || 0
+              : a.createdAt?.seconds || 0;
+
+          const bTime =
+            b.status === "approved"
+              ? b.approvedAt?.seconds || 0
+              : b.createdAt?.seconds || 0;
+
+          return bTime - aTime;
+        });
+
+        setPayments(data);
+      } catch (err) {
+        console.error("Payment load error:", err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadPayments();
@@ -323,10 +600,11 @@ function PaymentHistory({ email, darkMode }) {
     return (
       <div className="text-center py-4">
         <div className="spinner-border mb-3"></div>
+        <div>Loading payment history...</div>
       </div>
     );
 
-  if (payments.length === 0) {
+  if (payments.length === 0)
     return (
       <p
         className={
@@ -336,7 +614,6 @@ function PaymentHistory({ email, darkMode }) {
         No payment history found.
       </p>
     );
-  }
 
   return (
     <div className={`payment-card ${darkMode ? "dark" : ""}`}>
@@ -348,35 +625,87 @@ function PaymentHistory({ email, darkMode }) {
             <tr>
               <th>#</th>
               <th>Paid</th>
-              <th>Remaining</th>
               <th>Month</th>
               <th>Status</th>
-              <th>Date</th>
+              <th>Date & Time</th>
             </tr>
           </thead>
 
           <tbody>
-            {payments.map((p, i) => (
-              <tr key={p.id}>
-                <td>{i + 1}</td>
-                <td className="paid-text">₹ {p.paidAmount || 0}</td>
-                <td>₹ {p.remainingFees ?? "—"}</td>
-                <td>{p.month || "—"}</td>
-                <td>
-                  <span className={`badge badge-${p.status}`}>{p.status}</span>
-                </td>
-                <td>
-                  {p.createdAt
-                    ? new Date(p.createdAt.seconds * 1000).toLocaleDateString(
-                        "en-IN",
-                      )
-                    : "—"}
-                </td>
-              </tr>
-            ))}
+            {payments.map((p, i) => {
+              const timestamp =
+                p.status === "approved" ? p.approvedAt : p.createdAt;
+
+              const formattedDate = timestamp
+                ? new Date(timestamp.seconds * 1000).toLocaleString("en-IN")
+                : "—";
+
+              return (
+                <tr key={p.id}>
+                  <td>{i + 1}</td>
+                  <td className="paid-text">₹ {p.paidAmount || 0}</td>
+                  <td>{p.month || "—"}</td>
+
+                  <td>
+                    <span className={`badge badge-${p.status}`}>
+                      {p.status}
+                    </span>
+                  </td>
+
+                  <td>{formattedDate}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
+
+      <style>{`
+        .payment-card {
+          background:white;
+          padding:20px;
+          border-radius:16px;
+          box-shadow:0 20px 40px rgba(29,78,216,0.15);
+        }
+
+        .payment-card.dark {
+          background:#0F172A;
+        }
+
+        .section-title {
+          font-weight:700;
+          color:#1E3A8A;
+          margin-bottom:15px;
+        }
+
+        body.dark-mode .section-title {
+          color:#D4A24C;
+        }
+
+        .paid-text {
+          color:#1D4ED8;
+          font-weight:600;
+        }
+
+        body.dark-mode .paid-text {
+          color:#D4A24C;
+        }
+
+        .badge-approved {
+          background:#16A34A;
+          color:white;
+        }
+
+        .badge-pending {
+          background:#D4A24C;
+          color:#0F172A;
+        }
+
+        .badge-rejected {
+          background:#dc2626;
+          color:white;
+        }
+      `}</style>
     </div>
   );
 }
@@ -401,7 +730,7 @@ function UserDashboard() {
     return () => unsub();
   }, []);
 
-  if (loading) {
+  if (loading)
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-100">
         <div className="text-center">
@@ -410,15 +739,13 @@ function UserDashboard() {
         </div>
       </div>
     );
-  }
 
-  if (!student) {
+  if (!student)
     return (
       <div className="container mt-5 text-center">
         <h5>No student record found</h5>
       </div>
     );
-  }
 
   return (
     <>
@@ -462,59 +789,6 @@ function UserDashboard() {
       {showChangePassword && (
         <ChangePassword onClose={() => setShowChangePassword(false)} />
       )}
-
-      <style>{`
-
-      .spinner-border {
-        color: #1D4ED8;
-      }
-
-      .payment-card {
-        background:white;
-        padding:20px;
-        border-radius:16px;
-        box-shadow:0 20px 40px rgba(29,78,216,0.15);
-      }
-
-      .payment-card.dark {
-        background:#0F172A;
-      }
-
-      .section-title {
-        font-weight:700;
-        color:#1E3A8A;
-        margin-bottom:15px;
-      }
-
-      body.dark-mode .section-title {
-        color:#D4A24C;
-      }
-
-      .paid-text {
-        color:#1D4ED8;
-        font-weight:600;
-      }
-
-      body.dark-mode .paid-text {
-        color:#D4A24C;
-      }
-
-      .badge-approved {
-        background:#1D4ED8;
-        color:white;
-      }
-
-      .badge-pending {
-        background:#D4A24C;
-        color:#0F172A;
-      }
-
-      .badge-rejected {
-        background:#dc2626;
-        color:white;
-      }
-
-      `}</style>
     </>
   );
 }

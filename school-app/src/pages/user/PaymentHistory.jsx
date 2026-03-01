@@ -247,46 +247,67 @@ import {
   getDoc,
 } from "firebase/firestore";
 
-function PaymentHistory({ email }) {
+function PaymentHistory({ email, darkMode }) {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [totalFees, setTotalFees] = useState(0);
-  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "dark") setDarkMode(true);
+    const loadPayments = async () => {
+      try {
+        setLoading(true);
 
-    const load = async () => {
-      const studentSnap = await getDoc(doc(db, "students", email));
-      if (studentSnap.exists()) {
-        setTotalFees(Number(studentSnap.data().totalFees || 0));
+        // 🔥 Get student total fees
+        const studentSnap = await getDoc(doc(db, "students", email));
+        if (studentSnap.exists()) {
+          setTotalFees(Number(studentSnap.data().totalFees || 0));
+        }
+
+        // 🔥 Get approved payments
+        const q = query(
+          collection(db, "payments"),
+          where("studentEmail", "==", email),
+          where("status", "==", "approved"),
+        );
+
+        const snap = await getDocs(q);
+
+        const data = snap.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        }));
+
+        // 🔥 Sort by latest timestamp
+        data.sort((a, b) => {
+          const aTime =
+            a.approvedAt?.seconds ||
+            a.updatedAt?.seconds ||
+            a.createdAt?.seconds ||
+            0;
+
+          const bTime =
+            b.approvedAt?.seconds ||
+            b.updatedAt?.seconds ||
+            b.createdAt?.seconds ||
+            0;
+
+          return bTime - aTime;
+        });
+
+        setPayments(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
       }
-
-      const q = query(
-        collection(db, "payments"),
-        where("studentEmail", "==", email),
-        where("status", "==", "approved"),
-      );
-
-      const snap = await getDocs(q);
-      const data = snap.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      }));
-
-      data.sort((a, b) => a.createdAt.seconds - b.createdAt.seconds);
-
-      setPayments(data);
-      setLoading(false);
     };
 
-    load();
+    if (email) loadPayments();
   }, [email]);
 
   if (loading)
     return (
-      <p style={{ color: darkMode ? "#ffffff" : "#0F4C6C" }}>
+      <p style={{ color: darkMode ? "#fff" : "#0F4C6C" }}>
         Loading payment history...
       </p>
     );
@@ -307,12 +328,21 @@ function PaymentHistory({ email }) {
         backgroundColor: darkMode ? "#1B2A35" : "#ffffff",
         color: darkMode ? "#ffffff" : "#0F4C6C",
         border: darkMode ? "1px solid #243644" : "1px solid #E5E7EB",
+        borderRadius: "18px",
       }}
     >
-      <h5 className="mb-4 fw-bold title-text">🧾 Payment History</h5>
+      <h5 className="mb-4 fw-bold">🧾 Payment History</h5>
 
       {/* SUMMARY */}
-      <div className="summary-box mb-4 p-3 rounded">
+      <div
+        className="mb-4 p-3 rounded"
+        style={{
+          background: darkMode
+            ? "linear-gradient(135deg,#243644,#1B2A35)"
+            : "linear-gradient(135deg,#F4F6F8,#ffffff)",
+          border: darkMode ? "1px solid #334155" : "1px solid #E5E7EB",
+        }}
+      >
         <div className="d-flex justify-content-between">
           <span>Total Fees</span>
           <strong>₹ {totalFees}</strong>
@@ -323,17 +353,22 @@ function PaymentHistory({ email }) {
         </div>
       </div>
 
-      {/* DESKTOP TABLE */}
-      <div className="table-responsive d-none d-md-block">
+      {/* TABLE */}
+      <div className="table-responsive">
         <table className={`table align-middle ${darkMode ? "table-dark" : ""}`}>
-          <thead className="blue-head">
+          <thead
+            style={{
+              background: "linear-gradient(90deg,#0F4C6C,#1B5E84)",
+              color: "white",
+            }}
+          >
             <tr>
               <th>#</th>
               <th>Paid</th>
               <th>Remaining</th>
               <th>Month</th>
               <th>Status</th>
-              <th>Date</th>
+              <th>Approval Date & Time</th>
             </tr>
           </thead>
 
@@ -342,18 +377,29 @@ function PaymentHistory({ email }) {
               cumulativePaid += Number(p.paidAmount || 0);
               const remaining = Math.max(totalFees - cumulativePaid, 0);
 
+              const time =
+                p.approvedAt?.seconds ||
+                p.updatedAt?.seconds ||
+                p.createdAt?.seconds;
+
               return (
                 <tr key={p.id}>
                   <td>{i + 1}</td>
 
-                  <td className="gold-text fw-semibold">₹ {p.paidAmount}</td>
+                  <td
+                    style={{
+                      color: "#D4A24C",
+                      fontWeight: "600",
+                    }}
+                  >
+                    ₹ {p.paidAmount}
+                  </td>
 
                   <td
-                    className={
-                      remaining === 0
-                        ? "gold-text fw-semibold"
-                        : "text-danger fw-semibold"
-                    }
+                    style={{
+                      color: remaining === 0 ? "#D4A24C" : "#dc2626",
+                      fontWeight: "600",
+                    }}
                   >
                     ₹ {remaining}
                   </td>
@@ -361,13 +407,22 @@ function PaymentHistory({ email }) {
                   <td>{p.month || "—"}</td>
 
                   <td>
-                    <span className="badge badge-approved">Approved</span>
+                    <span
+                      style={{
+                        background: "#D4A24C",
+                        color: "#0F4C6C",
+                        padding: "4px 10px",
+                        borderRadius: "12px",
+                        fontSize: "12px",
+                        fontWeight: "600",
+                      }}
+                    >
+                      Approved
+                    </span>
                   </td>
 
                   <td>
-                    {new Date(p.createdAt.seconds * 1000).toLocaleDateString(
-                      "en-IN",
-                    )}
+                    {time ? new Date(time * 1000).toLocaleString("en-IN") : "—"}
                   </td>
                 </tr>
               );
@@ -375,112 +430,6 @@ function PaymentHistory({ email }) {
           </tbody>
         </table>
       </div>
-
-      {/* MOBILE CARDS */}
-      <div className="d-md-none">
-        {payments.map((p, i) => {
-          cumulativePaid += Number(p.paidAmount || 0);
-          const remaining = Math.max(totalFees - cumulativePaid, 0);
-
-          return (
-            <div
-              key={p.id}
-              className="mobile-card p-3 mb-3"
-              style={{
-                backgroundColor: darkMode ? "#243644" : "#F4F6F8",
-                border: darkMode ? "1px solid #334155" : "1px solid #E5E7EB",
-              }}
-            >
-              <div className="d-flex justify-content-between mb-2">
-                <strong>Payment #{i + 1}</strong>
-                <span className="badge badge-approved">Approved</span>
-              </div>
-
-              <div className="small text-muted mb-2">
-                {new Date(p.createdAt.seconds * 1000).toLocaleDateString(
-                  "en-IN",
-                )}
-              </div>
-
-              <div>
-                <b>Paid:</b>{" "}
-                <span className="gold-text fw-semibold">₹ {p.paidAmount}</span>
-              </div>
-
-              <div>
-                <b>Remaining:</b>{" "}
-                <span
-                  className={
-                    remaining === 0
-                      ? "gold-text fw-semibold"
-                      : "text-danger fw-semibold"
-                  }
-                >
-                  ₹ {remaining}
-                </span>
-              </div>
-
-              <div>
-                <b>Month:</b> {p.month || "—"}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <style>{`
-      .payment-card {
-        border-radius:18px;
-        transition:0.3s ease;
-      }
-
-      .payment-card:hover {
-        box-shadow:0 15px 40px rgba(15,76,108,0.25);
-      }
-
-      .title-text {
-        color:#0F4C6C;
-      }
-
-      body.dark-mode .title-text {
-        color:#D4A24C;
-      }
-
-      .summary-box {
-        background:linear-gradient(135deg,#F4F6F8,#ffffff);
-        border:1px solid #E5E7EB;
-        font-weight:500;
-      }
-
-      body.dark-mode .summary-box {
-        background:linear-gradient(135deg,#243644,#1B2A35);
-        border:1px solid #334155;
-      }
-
-      .blue-head {
-        background:linear-gradient(90deg,#0F4C6C,#1B5E84);
-        color:white;
-      }
-
-      .gold-text {
-        color:#D4A24C;
-      }
-
-      .badge-approved {
-        background:#D4A24C;
-        color:#0F4C6C;
-      }
-
-      .mobile-card {
-        border-radius:14px;
-        transition:0.3s ease;
-      }
-
-      .mobile-card:hover {
-        transform:translateY(-3px);
-        box-shadow:0 10px 25px rgba(15,76,108,0.2);
-      }
-      `}</style>
     </div>
   );
 }
