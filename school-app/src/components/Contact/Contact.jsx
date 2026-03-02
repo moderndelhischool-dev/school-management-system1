@@ -102,19 +102,19 @@ function Contact() {
 
               <div className="contact-details">
                 <p>
-                  <strong>📍 Location:</strong> Hoshiarpur, Punjab
+                  <strong> Location:</strong> Hoshiarpur, Punjab
                 </p>
                 <p>
-                  <strong>☎ Office:</strong> 01882-298792
+                  <strong>Office:</strong> 01882-298792
                 </p>
                 <p>
-                  <strong>👨‍🏫 Principal:</strong> 9855106665
+                  <strong> Principal:</strong> 9855106665
                 </p>
                 <p>
-                  <strong>🏫 President:</strong> 9855440343
+                  <strong> President:</strong> 9855440343
                 </p>
                 <p>
-                  <strong>📧 Email:</strong> mndps.hsp@gmail.com
+                  <strong> Email:</strong> mndps.hsp@gmail.com
                 </p>
               </div>
             </motion.div>

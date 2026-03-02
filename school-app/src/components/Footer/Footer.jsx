@@ -183,11 +183,11 @@ function Footer() {
           {/* CONTACT DETAILS */}
           <div className="col-md-4 mb-4">
             <h6 className="fw-bold mb-3 section-title">Contact Information</h6>
-            <p className="mb-1">📍 Kakon, Ajjowal, Hoshiarpur, Punjab</p>
-            <p className="mb-1">☎ Office: 01882-298792</p>
-            <p className="mb-1">👨‍🏫 Principal: 9855106665</p>
-            <p className="mb-1">🏫 President: 9855440343</p>
-            <p className="mb-0">📧 mndps.hsp@gmail.com</p>
+            <p className="mb-1"> Kakon, Ajjowal, Hoshiarpur, Punjab</p>
+            <p className="mb-1"> Office: 01882-298792</p>
+            <p className="mb-1"> Principal: 9855106665</p>
+            <p className="mb-1"> President: 9855440343</p>
+            <p className="mb-0"> mndps.hsp@gmail.com</p>
           </div>
         </div>
 

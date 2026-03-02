@@ -53,7 +53,8 @@
 //         }`}
 //       >
 //         <div className="container">
-//           <Link className="navbar-brand fw-bold brand-green" to="/">
+//           {/* DESKTOP BRAND */}
+//           <Link className="navbar-brand fw-bold brand-name" to="/">
 //             🏫 Modern Delhi PH
 //           </Link>
 
@@ -62,11 +63,7 @@
 //             type="button"
 //             onClick={() => setMenuOpen(!menuOpen)}
 //           >
-//             {menuOpen ? (
-//               <span style={{ fontSize: "24px", color: "white" }}>✖</span>
-//             ) : (
-//               <span className="navbar-toggler-icon"></span>
-//             )}
+//             {menuOpen ? "✖" : <span className="navbar-toggler-icon"></span>}
 //           </button>
 
 //           <div
@@ -74,37 +71,21 @@
 //               menuOpen ? "open" : ""
 //             }`}
 //           >
-//             <div className="mobile-header d-lg-none">🏫 Modern Delhi PH</div>
+//             {/* MOBILE BRAND (IMPORTANT FIX) */}
+//             <div className="mobile-brand d-lg-none">🏫 Modern Delhi PH</div>
 
 //             <ul className="navbar-nav ms-auto align-items-lg-center gap-lg-3">
-//               <li className="nav-item">
-//                 <button
-//                   className="nav-link btn btn-link nav-green"
-//                   onClick={() => scrollToSection("home")}
-//                 >
-//                   Home
-//                 </button>
-//               </li>
+//               {["home", "about", "contact"].map((item) => (
+//                 <li className="nav-item" key={item}>
+//                   <button
+//                     className="nav-link-custom"
+//                     onClick={() => scrollToSection(item)}
+//                   >
+//                     {item.charAt(0).toUpperCase() + item.slice(1)}
+//                   </button>
+//                 </li>
+//               ))}
 
-//               <li className="nav-item">
-//                 <button
-//                   className="nav-link btn btn-link nav-green"
-//                   onClick={() => scrollToSection("about")}
-//                 >
-//                   About
-//                 </button>
-//               </li>
-
-//               <li className="nav-item">
-//                 <button
-//                   className="nav-link btn btn-link nav-green"
-//                   onClick={() => scrollToSection("contact")}
-//                 >
-//                   Contact
-//                 </button>
-//               </li>
-
-//               {/* 🔥 UPDATED LOGIN */}
 //               <li className="nav-item">
 //                 <Link
 //                   className="btn px-4 nav-login-btn"
@@ -115,7 +96,6 @@
 //                 </Link>
 //               </li>
 
-//               {/* 🔥 UPDATED SIGNUP */}
 //               <li className="nav-item">
 //                 <Link
 //                   className="btn px-4 nav-signup-btn"
@@ -127,13 +107,12 @@
 //               </li>
 
 //               <li className="nav-item">
-//                 <button
-//                   className={`theme-toggle ${darkMode ? "active" : ""}`}
+//                 <div
+//                   className={`theme-switch ${darkMode ? "active" : ""}`}
 //                   onClick={toggleTheme}
 //                 >
-//                   <span className="icon sun">☀</span>
-//                   <span className="icon moon">🌙</span>
-//                 </button>
+//                   <div className="switch-circle">{darkMode ? "🌙" : "☀"}</div>
+//                 </div>
 //               </li>
 //             </ul>
 //           </div>
@@ -142,164 +121,174 @@
 
 //       <style>{`
 
-//         .custom-navbar {
-//           transition: all 0.4s ease-in-out;
-//           z-index: 3000;
-//         }
+// /* ================= NAVBAR ================= */
 
-//         .navbar-transparent {
-//           background: transparent !important;
-//         }
+// .custom-navbar {
+//   transition: 0.4s ease;
+//   z-index: 3000;
+// }
 
-//         .navbar-transparent .nav-link,
-//         .navbar-transparent .navbar-brand {
-//           color: white !important;
-//         }
+// .navbar-transparent {
+//   background: transparent !important;
+// }
 
-//         .navbar-scrolled {
-//           background: linear-gradient(90deg, #4c1d95, #7c3aed);
-//           box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-//         }
+// .navbar-scrolled {
+//   background: linear-gradient(90deg, #0F4C6C, #1B5E84);
+//   box-shadow: 0 6px 20px rgba(15,76,108,0.4);
+// }
 
-//         .navbar-scrolled .nav-link,
-//         .navbar-scrolled .navbar-brand {
-//           color: white !important;
-//         }
+// .brand-name {
+//   color: white !important;
+// }
 
-//         /* ========= LOGIN BUTTON ========= */
-//         /* ===== DEFAULT (Transparent Navbar) ===== */
+// /* ================= MOBILE BRAND ================= */
+
+// .mobile-brand {
+//   color: white;
+//   font-weight: 700;
+//   font-size: 18px;
+//   margin-bottom: 25px;
+//   text-align: left;
+// }
+
+// /* ================= NAV LINKS ================= */
+
+// .nav-link-custom {
+//   background: none;
+//   border: none;
+//   color: white;
+//   font-weight: 500;
+//   cursor: pointer;
+//   position: relative;
+//   padding: 8px 10px;
+//   transition: 0.3s ease;
+// }
+
+// .nav-link-custom:hover {
+//   color: #D4A24C;
+// }
+
+// .nav-link-custom::after {
+//   content: "";
+//   position: absolute;
+//   left: 0;
+//   bottom: -4px;
+//   width: 0%;
+//   height: 2px;
+//   background: #D4A24C;
+//   transition: width 0.3s ease;
+// }
+
+// .nav-link-custom:hover::after {
+//   width: 100%;
+// }
+
+// /* ================= BUTTONS ================= */
+
 // .nav-login-btn {
 //   border: 2px solid white;
 //   color: white;
 //   background: transparent;
 //   border-radius: 50px;
 //   font-weight: 600;
-//   transition: all 0.3s ease;
+//   transition: 0.3s ease;
 // }
 
-// /* Hover in Transparent Mode */
 // .nav-login-btn:hover {
-//   background: white;
-//   color: #4c1d95;
-//   transform: translateY(-2px);
+//   background: #D4A24C;
+//   color: #0F4C6C;
 // }
 
-// /* ===== WHEN NAVBAR SCROLLED ===== */
-// .navbar-scrolled .nav-login-btn {
-//   background: white;
-//   color: #4c1d95;
+// .nav-signup-btn {
+//   background: #D4A24C;
+//   color: #0F4C6C;
+//   border-radius: 50px;
+//   font-weight: 600;
 //   border: none;
+//   transition: 0.3s ease;
 // }
 
-// /* Hover in Scrolled Mode */
-// .navbar-scrolled .nav-login-btn:hover {
-//   background: #ede9fe;
-//   color: #4c1d95;
-//   box-shadow: 0 8px 20px rgba(124,58,237,0.3);
+// .nav-signup-btn:hover {
+//   background: white;
+//   color: #0F4C6C;
 // }
 
-//         /* ========= SIGNUP BUTTON ========= */
-//         .nav-signup-btn {
-//           background: linear-gradient(135deg,#4c1d95,#7c3aed);
-//           color: white;
-//           border-radius: 50px;
-//           font-weight: 600;
-//           border: none;
-//           transition: all 0.3s ease;
-//         }
+// /* ================= SMOOTH TOGGLE ================= */
 
-//         .nav-signup-btn:hover {
-//           background: linear-gradient(135deg,#5b21b6,#9333ea);
-//           transform: translateY(-2px);
-//           box-shadow: 0 10px 25px rgba(124,58,237,0.5);
-//         }
+// .theme-switch {
+//   width: 60px;
+//   height: 30px;
+//   background: #D4A24C;
+//   border-radius: 50px;
+//   display: flex;
+//   align-items: center;
+//   padding: 3px;
+//   cursor: pointer;
+//   transition: 0.4s ease;
+// }
 
-//         /* Transparent mode adjustments */
-//         .navbar-transparent .nav-login-btn {
-//           border: 2px solid white;
-//           color: white;
-//         }
+// .theme-switch.active {
+//   background: #0F172A;
+// }
 
-//         .navbar-transparent .nav-login-btn:hover {
-//           background: white;
-//           color: #4c1d95;
-//         }
+// .switch-circle {
+//   width: 24px;
+//   height: 24px;
+//   background: white;
+//   border-radius: 50%;
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   transition: 0.4s ease;
+// }
 
-//         .navbar-transparent .nav-signup-btn {
-//           background: white;
-//           color: #4c1d95;
-//         }
+// .theme-switch.active .switch-circle {
+//   transform: translateX(30px);
+//   background: #D4A24C;
+// }
 
-//         /* Dark Mode */
-//         body.dark-mode .nav-login-btn {
-//           border: 2px solid #a78bfa;
-//           color: #a78bfa;
-//         }
+// /* ================= MOBILE DRAWER ================= */
 
-//         body.dark-mode .nav-login-btn:hover {
-//           background: #7c3aed;
-//           color: white;
-//         }
+// @media (max-width: 991px) {
 
-//         body.dark-mode .nav-signup-btn {
-//           background: #7c3aed;
-//         }
+//   .custom-collapse {
+//     position: fixed;
+//     top: 0;
+//     left: 0;
+//     height: 100vh;
+//     width: 260px;
+//     transform: translateX(-100%);
+//     transition: 0.4s ease;
+//     background: linear-gradient(180deg, #0F4C6C, #1B5E84);
+//     padding: 80px 20px 20px 20px;
+//     z-index: 2000;
+//   }
 
-//         body.dark-mode .nav-signup-btn:hover {
-//           background: #9333ea;
-//         }
+//   .custom-collapse.open {
+//     transform: translateX(0);
+//   }
 
-//         /* MOBILE DRAWER */
-//         @media (max-width: 991px) {
+//   .navbar-nav {
+//     align-items: flex-start !important;
+//   }
 
-//           .custom-collapse {
-//             position: fixed;
-//             top: 0;
-//             left: 0;
-//             height: 100vh;
-//             width: 260px;
-//             transform: translateX(-100%);
-//             transition: transform 0.4s ease;
-//             background: linear-gradient(180deg, #4c1d95, #5b21b6);
-//             padding-top: 80px;
-//             z-index: 2000;
-//           }
+//   .nav-item {
+//     width: 100%;
+//     margin-bottom: 15px;
+//   }
+// }
 
-//           .custom-collapse.open {
-//             transform: translateX(0);
-//           }
+// .navbar-toggler {
+//   border: none !important;
+// }
 
-//           .mobile-header {
-//             position: absolute;
-//             top: 20px;
-//             left: 20px;
-//             font-weight: 700;
-//             font-size: 18px;
-//             color: white;
-//           }
+// .navbar-toggler:focus {
+//   box-shadow: none !important;
+// }
 
-//           .custom-collapse ul {
-//             align-items: flex-start !important;
-//             padding-left: 20px;
-//           }
-
-//           .custom-collapse .nav-item {
-//             width: 100%;
-//             margin-bottom: 15px;
-//           }
-//         }
-
-//         .navbar-toggler {
-//           border: none !important;
-//         }
-
-//         .navbar-toggler:focus {
-//           box-shadow: none !important;
-//         }
-
-//         .navbar-toggler-icon {
-//           filter: invert(1);
-//         }
+// .navbar-toggler-icon {
+//   filter: invert(1);
+// }
 
 //       `}</style>
 //     </>
@@ -362,9 +351,9 @@ function Navbar() {
         }`}
       >
         <div className="container">
-          {/* DESKTOP BRAND */}
-          <Link className="navbar-brand fw-bold brand-name" to="/">
-            🏫 Modern Delhi PH
+          <Link className="navbar-brand premium-brand" to="/">
+            Modern Delhi PH
+            <span className="brand-underline"></span>
           </Link>
 
           <button
@@ -376,14 +365,11 @@ function Navbar() {
           </button>
 
           <div
-            className={`navbar-collapse custom-collapse ${
-              menuOpen ? "open" : ""
-            }`}
+            className={`navbar-collapse custom-collapse ${menuOpen ? "open" : ""}`}
           >
-            {/* MOBILE BRAND (IMPORTANT FIX) */}
-            <div className="mobile-brand d-lg-none">🏫 Modern Delhi PH</div>
+            <div className="mobile-brand d-lg-none">Modern Delhi PH</div>
 
-            <ul className="navbar-nav ms-auto align-items-lg-center gap-lg-3">
+            <ul className="navbar-nav ms-auto nav-flex">
               {["home", "about", "contact"].map((item) => (
                 <li className="nav-item" key={item}>
                   <button
@@ -396,21 +382,13 @@ function Navbar() {
               ))}
 
               <li className="nav-item">
-                <Link
-                  className="btn px-4 nav-login-btn"
-                  to="/login"
-                  onClick={() => setMenuOpen(false)}
-                >
+                <Link className="btn nav-login-btn" to="/login">
                   Login
                 </Link>
               </li>
 
               <li className="nav-item">
-                <Link
-                  className="btn px-4 nav-signup-btn"
-                  to="/register"
-                  onClick={() => setMenuOpen(false)}
-                >
+                <Link className="btn nav-signup-btn" to="/register">
                   Signup
                 </Link>
               </li>
@@ -430,9 +408,10 @@ function Navbar() {
 
       <style>{`
 
-/* ================= NAVBAR ================= */
+/* ===== NAVBAR BASE ===== */
 
 .custom-navbar {
+  padding: 6px 0;
   transition: 0.4s ease;
   z-index: 3000;
 }
@@ -443,64 +422,141 @@ function Navbar() {
 
 .navbar-scrolled {
   background: linear-gradient(90deg, #0F4C6C, #1B5E84);
-  box-shadow: 0 6px 20px rgba(15,76,108,0.4);
+  box-shadow: 0 4px 14px rgba(15,76,108,0.35);
 }
 
-.brand-name {
-  color: white !important;
-}
+/* ===== BRAND ===== */
 
-/* ================= MOBILE BRAND ================= */
-
-.mobile-brand {
-  color: white;
-  font-weight: 700;
-  font-size: 18px;
-  margin-bottom: 25px;
-  text-align: left;
-}
-
-/* ================= NAV LINKS ================= */
-
-.nav-link-custom {
-  background: none;
-  border: none;
-  color: white;
-  font-weight: 500;
-  cursor: pointer;
+.premium-brand {
   position: relative;
-  padding: 8px 10px;
+  font-size: 20px;
+  font-weight: 800;
+  color: white !important;
+  text-transform: uppercase;
+}
+
+.brand-underline {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  width: 40%;
+  background: #D4A24C;
   transition: 0.3s ease;
 }
 
-.nav-link-custom:hover {
-  color: #D4A24C;
-}
-
-.nav-link-custom::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: -4px;
-  width: 0%;
-  height: 2px;
-  background: #D4A24C;
-  transition: width 0.3s ease;
-}
-
-.nav-link-custom:hover::after {
+.premium-brand:hover .brand-underline {
   width: 100%;
 }
 
-/* ================= BUTTONS ================= */
+/* ===== DESKTOP ===== */
+
+@media (min-width: 992px) {
+
+  .nav-flex {
+    display: flex;
+    align-items: center;
+  }
+
+  .nav-item {
+    margin-left: 24px;
+  }
+
+  .nav-link-custom {
+    background: none;
+    border: none;
+    color: white;
+    font-weight: 500;
+    position: relative;
+    padding: 8px 0;
+  }
+
+  .nav-link-custom:hover {
+    color: #D4A24C;
+  }
+
+  .nav-link-custom::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -4px;
+    width: 0%;
+    height: 2px;
+    background: #D4A24C;
+    transition: 0.3s;
+  }
+
+  .nav-link-custom:hover::after {
+    width: 100%;
+  }
+}
+
+/* ===== MOBILE ===== */
+
+@media (max-width: 991px) {
+
+  .custom-collapse {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 240px;
+    transform: translateX(-100%);
+    transition: 0.4s ease;
+    background: linear-gradient(180deg, #0F4C6C, #1B5E84);
+    padding: 65px 20px 20px 20px;
+  }
+
+  .custom-collapse.open {
+    transform: translateX(0);
+  }
+
+  .nav-flex {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mobile-brand {
+    font-weight: 700;
+    font-size: 18px;
+    color: #D4A24C;
+    margin-bottom: 20px;
+  }
+
+  /* GAP REDUCED */
+  .nav-item {
+    margin-bottom: 10px;
+  }
+
+  .nav-link-custom {
+    width: 100%;
+    text-align: left;
+    color: white;
+    font-size: 15px;
+    padding: 4px 0;
+    border: none;
+    background: none;
+  }
+
+  .nav-link-custom::after {
+    display: none !important;
+  }
+
+  .nav-login-btn,
+  .nav-signup-btn {
+    width: 100%;
+    margin-top: 6px;
+  }
+}
+
+/* ===== BUTTONS ===== */
 
 .nav-login-btn {
-  border: 2px solid white;
-  color: white;
+  border: 2px solid #D4A24C;
+  color: #D4A24C;
   background: transparent;
   border-radius: 50px;
-  font-weight: 600;
-  transition: 0.3s ease;
+  padding: 6px 18px;
 }
 
 .nav-login-btn:hover {
@@ -512,91 +568,42 @@ function Navbar() {
   background: #D4A24C;
   color: #0F4C6C;
   border-radius: 50px;
-  font-weight: 600;
   border: none;
-  transition: 0.3s ease;
+  padding: 6px 18px;
 }
 
-.nav-signup-btn:hover {
-  background: white;
-  color: #0F4C6C;
-}
-
-/* ================= SMOOTH TOGGLE ================= */
+/* ===== DARK MODE BUTTON FIX ===== */
 
 .theme-switch {
-  width: 60px;
-  height: 30px;
-  background: #D4A24C;
+  width: 50px;
+  height: 22px;
   border-radius: 50px;
   display: flex;
   align-items: center;
-  padding: 3px;
+  padding: 2px;
   cursor: pointer;
-  transition: 0.4s ease;
+  transition: 0.3s ease;
+  background: #D4A24C;
 }
 
 .theme-switch.active {
-  background: #0F172A;
+  background: #111;   /* dark background */
 }
 
 .switch-circle {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   background: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: 0.4s ease;
+  transition: 0.3s ease;
 }
 
 .theme-switch.active .switch-circle {
-  transform: translateX(30px);
+  transform: translateX(24px);
   background: #D4A24C;
-}
-
-/* ================= MOBILE DRAWER ================= */
-
-@media (max-width: 991px) {
-
-  .custom-collapse {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 260px;
-    transform: translateX(-100%);
-    transition: 0.4s ease;
-    background: linear-gradient(180deg, #0F4C6C, #1B5E84);
-    padding: 80px 20px 20px 20px;
-    z-index: 2000;
-  }
-
-  .custom-collapse.open {
-    transform: translateX(0);
-  }
-
-  .navbar-nav {
-    align-items: flex-start !important;
-  }
-
-  .nav-item {
-    width: 100%;
-    margin-bottom: 15px;
-  }
-}
-
-.navbar-toggler {
-  border: none !important;
-}
-
-.navbar-toggler:focus {
-  box-shadow: none !important;
-}
-
-.navbar-toggler-icon {
-  filter: invert(1);
 }
 
       `}</style>
