@@ -1,8 +1,6 @@
-// import { useNavigate } from "react-router-dom";
 // import { useState } from "react";
 
 // function Home() {
-//   const navigate = useNavigate();
 //   const [showModal, setShowModal] = useState(false);
 //   const [animate, setAnimate] = useState(false);
 
@@ -25,10 +23,7 @@
 
 //   return (
 //     <>
-//       <section
-//         className={`hero-section ${showModal ? "blur-bg" : ""}`}
-//         id="home"
-//       >
+//       <section className="hero-section" id="home">
 //         <div className="hero-content">
 //           <p className="hero-subtitle">THE BEST SCHOOL OF THE STATE</p>
 
@@ -100,171 +95,208 @@
 
 //       <style>{`
 
-//         .hero-section {
-//           position: relative;
-//           height: 100vh;
-//           width: 100%;
-//           background: url("/img0.jpg") center center / cover no-repeat;
-//           display: flex;
-//           align-items: center;
-//           justify-content: center;
-//         }
+// /* ================= HERO ================= */
 
-//         .hero-content {
-//           max-width: 900px;
-//           padding: 20px;
-//           text-align: center;
-//           color: white;
-//           text-shadow: 0 4px 20px rgba(0,0,0,0.8);
-//         }
+// .hero-section {
+//   position: relative;
+//   height: 100vh;
+//   width: 100%;
+//   background: url("/img0.jpg") center center / cover no-repeat;
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+// }
 
-//         .hero-subtitle {
-//           font-weight: 700;
-//           letter-spacing: 2px;
-//           margin-bottom: 20px;
-//           text-transform: uppercase;
-//           color: #ffffff;
-//         }
+// .hero-content {
+//   max-width: 900px;
+//   padding: 20px;
+//   text-align: center;
+//   color: white;
+// }
 
-//         .hero-title {
-//           font-size: 4rem;
-//           font-weight: 900;
-//           margin-bottom: 25px;
-//           line-height: 1.2;
-//         }
+// .hero-subtitle {
+//   font-weight: 700;
+//   letter-spacing: 2px;
+//   margin-bottom: 20px;
+//   text-transform: uppercase;
+//   color: #D4A24C;
+// }
 
-//         .hero-description {
-//           font-size: 1.2rem;
-//           margin-bottom: 35px;
-//           color: #ffffff;
-//         }
+// .hero-title {
+//   font-size: 4rem;
+//   font-weight: 900;
+//   margin-bottom: 25px;
+//   line-height: 1.2;
+// }
 
-//         .hero-buttons {
-//           display: flex;
-//           gap: 20px;
-//           justify-content: center;
-//           flex-wrap: wrap;
-//         }
+// .hero-description {
+//   font-size: 1.2rem;
+//   margin-bottom: 35px;
+//   color: #F4F6F8;
+// }
 
-//         .hero-btn-primary {
-//           padding: 14px 34px;
-//           border-radius: 50px;
-//           border: none;
-//           background: #7c3aed;
-//           color: white;
-//           font-weight: 700;
-//           transition: 0.3s ease;
-//         }
+// .hero-buttons {
+//   display: flex;
+//   gap: 20px;
+//   justify-content: center;
+//   flex-wrap: wrap;
+// }
 
-//         .hero-btn-primary:hover {
-//           background: #5b21b6;
-//           transform: translateY(-4px);
-//           box-shadow: 0 12px 30px rgba(0,0,0,0.4);
-//         }
+// /* PRIMARY BUTTON */
+// .hero-btn-primary {
+//   padding: 14px 34px;
+//   border-radius: 50px;
+//   border: none;
+//   background: #D4A24C;
+//   color: #0F4C6C;
+//   font-weight: 700;
+//   transition: 0.3s ease;
+// }
 
-//         .hero-btn-outline {
-//           padding: 14px 34px;
-//           border-radius: 50px;
-//           border: 2px solid white;
-//           background: rgba(0,0,0,0.3);
-//           color: white;
-//           font-weight: 700;
-//           transition: 0.3s ease;
-//         }
+// .hero-btn-primary:hover {
+//   background: white;
+//   color: #0F4C6C;
+//   transform: translateY(-4px);
+//   box-shadow: 0 12px 30px rgba(212,162,76,0.5);
+// }
 
-//         .hero-btn-outline:hover {
-//           background: white;
-//           color: #5b21b6;
-//           transform: translateY(-4px);
-//         }
+// /* OUTLINE BUTTON */
+// .hero-btn-outline {
+//   padding: 14px 34px;
+//   border-radius: 50px;
+//   border: 2px solid white;
+//   background: transparent;
+//   color: white;
+//   font-weight: 700;
+//   transition: 0.3s ease;
+// }
 
-//         /* MODAL */
+// .hero-btn-outline:hover {
+//   background: white;
+//   color: #0F4C6C;
+//   transform: translateY(-4px);
+// }
 
-//         .modal-overlay {
-//           position: fixed;
-//           top: 0;
-//           left: 0;
-//           width: 100%;
-//           height: 100%;
-//           background: rgba(0,0,0,0);
-//           display: flex;
-//           align-items: center;
-//           justify-content: center;
-//           z-index: 1000;
-//           transition: background 0.3s ease;
-//         }
+// /* ================= MODAL ================= */
 
-//         .overlay-show {
-//           background: rgba(0,0,0,0.6);
-//         }
+// .modal-overlay {
+//   position: fixed;
+//   top: 0;
+//   left: 0;
+//   width: 100%;
+//   height: 100%;
+//   background: rgba(0,0,0,0);
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   z-index: 1000;
+//   transition: background 0.3s ease;
+// }
 
-//         .admission-modal {
-//           background: white;
-//           width: 90%;
-//           max-width: 750px;
-//           padding: 40px;
-//           border-radius: 20px;
-//           box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-//           transform: scale(0.8);
-//           opacity: 0;
-//           transition: all 0.3s ease;
-//         }
+// .overlay-show {
+//   background: rgba(0,0,0,0.7);
+// }
 
-//         .modal-show {
-//           transform: scale(1);
-//           opacity: 1;
-//         }
+// .admission-modal {
+//   background: #ffffff;
+//   width: 90%;
+//   max-width: 750px;
+//   padding: 40px;
+//   border-radius: 20px;
+//   box-shadow: 0 30px 70px rgba(15,76,108,0.3);
+//   transform: scale(0.8);
+//   opacity: 0;
+//   transition: all 0.3s ease;
+//   border-top: 6px solid #D4A24C;
+// }
 
-//         .admission-modal h2 {
-//           text-align: center;
-//           margin-bottom: 25px;
-//           color: #6d28d9;
-//         }
+// .modal-show {
+//   transform: scale(1);
+//   opacity: 1;
+// }
 
-//         .admission-form input,
-//         .admission-form textarea {
-//           width: 100%;
-//           padding: 12px;
-//           margin-bottom: 15px;
-//           border-radius: 10px;
-//           border: 1px solid #ddd;
-//           outline: none;
-//         }
+// .admission-modal h2 {
+//   text-align: center;
+//   margin-bottom: 25px;
+//   color: #0F4C6C;
+// }
 
-//         .form-row {
-//           display: flex;
-//           gap: 15px;
-//         }
+// .admission-form input,
+// .admission-form textarea {
+//   width: 100%;
+//   padding: 12px;
+//   margin-bottom: 15px;
+//   border-radius: 12px;
+//   border: 1px solid #E5E7EB;
+//   outline: none;
+//   transition: 0.3s ease;
+// }
 
-//         .form-buttons {
-//           display: flex;
-//           justify-content: space-between;
-//         }
+// .admission-form input:focus,
+// .admission-form textarea:focus {
+//   border-color: #D4A24C;
+//   box-shadow: 0 0 0 3px rgba(212,162,76,0.25);
+// }
 
-//         .submit-btn {
-//           background: #7c3aed;
-//           color: white;
-//           border: none;
-//           padding: 10px 25px;
-//           border-radius: 50px;
-//         }
+// .form-row {
+//   display: flex;
+//   gap: 15px;
+// }
 
-//         .close-btn {
-//           background: #e5e7eb;
-//           border: none;
-//           padding: 10px 25px;
-//           border-radius: 50px;
-//         }
+// .form-buttons {
+//   display: flex;
+//   justify-content: space-between;
+// }
 
-//         @media(max-width:768px){
-//           .form-row{
-//             flex-direction: column;
-//           }
+// .submit-btn {
+//   background: linear-gradient(135deg,#0F4C6C,#1B5E84);
+//   color: white;
+//   border: none;
+//   padding: 10px 25px;
+//   border-radius: 50px;
+//   font-weight: 600;
+//   transition: 0.3s ease;
+// }
 
-//           .hero-title{
-//             font-size: 2.5rem;
-//           }
-//         }
+// .submit-btn:hover {
+//   background: #D4A24C;
+//   color: #0F4C6C;
+// }
+
+// .close-btn {
+//   background: #E5E7EB;
+//   border: none;
+//   padding: 10px 25px;
+//   border-radius: 50px;
+// }
+
+// /* ================= DARK MODE ================= */
+
+// body.dark-mode .hero-section {
+//   background: url("/img0.jpg") center center / cover no-repeat;
+// }
+
+// body.dark-mode .admission-modal {
+//   background: #1B2A35;
+//   color: white;
+// }
+
+// body.dark-mode .admission-form input,
+// body.dark-mode .admission-form textarea {
+//   background: #0F172A;
+//   border: 1px solid #334155;
+//   color: white;
+// }
+
+// @media(max-width:768px){
+//   .form-row{
+//     flex-direction: column;
+//   }
+
+//   .hero-title{
+//     font-size: 2.5rem;
+//   }
+// }
 
 //       `}</style>
 //     </>
@@ -272,6 +304,7 @@
 // }
 
 // export default Home;
+
 import { useState } from "react";
 
 function Home() {
@@ -293,6 +326,46 @@ function Home() {
     if (section) {
       section.scrollIntoView({ behavior: "smooth" });
     }
+  };
+
+  /* ===== WHATSAPP SUBMIT FUNCTION ===== */
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const form = e.target;
+
+    const student = form[0].value;
+    const dob = form[1].value;
+    const father = form[2].value;
+    const mother = form[3].value;
+    const email = form[4].value;
+    const phone = form[5].value;
+    const classApply = form[6].value;
+    const school = form[7].value;
+    const address = form[8].value;
+
+    const message = `New Admission Application
+
+Student Name: ${student}
+DOB: ${dob}
+
+Father Name: ${father}
+Mother Name: ${mother}
+
+Email: ${email}
+Mobile: ${phone}
+
+Class Applying: ${classApply}
+Previous School: ${school}
+
+Address: ${address}`;
+
+    const whatsappURL = `https://wa.me/919910127966?text=${encodeURIComponent(
+      message,
+    )}`;
+
+    window.open(whatsappURL, "_blank");
   };
 
   return (
@@ -327,7 +400,7 @@ function Home() {
           <div className={`admission-modal ${animate ? "modal-show" : ""}`}>
             <h2>Admission Details</h2>
 
-            <form className="admission-form">
+            <form className="admission-form" onSubmit={handleSubmit}>
               <div className="form-row">
                 <input type="text" placeholder="Student Full Name" required />
                 <input type="date" required />
@@ -416,7 +489,6 @@ function Home() {
   flex-wrap: wrap;
 }
 
-/* PRIMARY BUTTON */
 .hero-btn-primary {
   padding: 14px 34px;
   border-radius: 50px;
@@ -434,7 +506,6 @@ function Home() {
   box-shadow: 0 12px 30px rgba(212,162,76,0.5);
 }
 
-/* OUTLINE BUTTON */
 .hero-btn-outline {
   padding: 14px 34px;
   border-radius: 50px;
@@ -544,8 +615,6 @@ function Home() {
   border-radius: 50px;
 }
 
-/* ================= DARK MODE ================= */
-
 body.dark-mode .hero-section {
   background: url("/img0.jpg") center center / cover no-repeat;
 }
@@ -572,7 +641,7 @@ body.dark-mode .admission-form textarea {
   }
 }
 
-      `}</style>
+`}</style>
     </>
   );
 }

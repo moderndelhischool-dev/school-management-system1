@@ -142,7 +142,7 @@ function SocialSidebar() {
 
           <li className="social-item">
             <a
-              href="https://facebook.com"
+              href="https://www.facebook.com/share/18MCmxDe1k/"
               target="_blank"
               rel="noopener noreferrer"
               className="social-hover"
@@ -154,7 +154,7 @@ function SocialSidebar() {
 
           <li className="social-item">
             <a
-              href="https://instagram.com"
+              href="https://www.instagram.com/mndps_officials?igsh=MWk3N2VqcWxxdjI4dQ=="
               target="_blank"
               rel="noopener noreferrer"
               className="social-hover"
