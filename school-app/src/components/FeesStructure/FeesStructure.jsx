@@ -5,7 +5,7 @@ function FeesStructure() {
     <>
       <section className="fees-section">
         <div className="fees-header">
-          <h2>Fees& Uniform Information</h2>
+          <h2>Fees & Uniform Information</h2>
           <p>
             Transparent fee structure and complete uniform details for the
             academic year.
