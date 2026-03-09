@@ -5,7 +5,6 @@
 //   const navigate = useNavigate();
 //   const location = useLocation();
 //   const [darkMode, setDarkMode] = useState(false);
-//   const [scrolled, setScrolled] = useState(false);
 //   const [menuOpen, setMenuOpen] = useState(false);
 
 //   useEffect(() => {
@@ -14,13 +13,6 @@
 //       document.body.classList.add("dark-mode");
 //       setDarkMode(true);
 //     }
-
-//     const handleScroll = () => {
-//       setScrolled(window.scrollY > 60);
-//     };
-
-//     window.addEventListener("scroll", handleScroll);
-//     return () => window.removeEventListener("scroll", handleScroll);
 //   }, []);
 
 //   const toggleTheme = () => {
@@ -47,11 +39,7 @@
 
 //   return (
 //     <>
-//       <nav
-//         className={`navbar navbar-expand-lg fixed-top custom-navbar ${
-//           scrolled ? "navbar-scrolled" : "navbar-transparent"
-//         }`}
-//       >
+//       <nav className="navbar navbar-expand-lg fixed-top custom-navbar">
 //         <div className="container">
 //           <Link className="navbar-brand premium-brand" to="/">
 //             Modern Delhi PH
@@ -67,7 +55,9 @@
 //           </button>
 
 //           <div
-//             className={`navbar-collapse custom-collapse ${menuOpen ? "open" : ""}`}
+//             className={`navbar-collapse custom-collapse ${
+//               menuOpen ? "open" : ""
+//             }`}
 //           >
 //             <div className="mobile-brand d-lg-none">Modern Delhi PH</div>
 
@@ -95,13 +85,14 @@
 //                 </Link>
 //               </li>
 
+//               {/* NEW THEME BUTTON */}
 //               <li className="nav-item">
-//                 <div
-//                   className={`theme-switch ${darkMode ? "active" : ""}`}
+//                 <button
+//                   className={`theme-circle ${darkMode ? "dark" : "light"}`}
 //                   onClick={toggleTheme}
 //                 >
-//                   <div className="switch-circle">{darkMode ? "🌙" : "☀"}</div>
-//                 </div>
+//                   <span className="icon">{darkMode ? "🌙" : "☀"}</span>
+//                 </button>
 //               </li>
 //             </ul>
 //           </div>
@@ -116,13 +107,6 @@
 //   padding: 6px 0;
 //   transition: 0.4s ease;
 //   z-index: 3000;
-// }
-
-// .navbar-transparent {
-//   background: transparent !important;
-// }
-
-// .navbar-scrolled {
 //   background: linear-gradient(90deg, #0F4C6C, #1B5E84);
 //   box-shadow: 0 4px 14px rgba(15,76,108,0.35);
 // }
@@ -225,7 +209,6 @@
 //     margin-bottom: 20px;
 //   }
 
-//   /* GAP REDUCED */
 //   .nav-item {
 //     margin-bottom: 10px;
 //   }
@@ -274,38 +257,51 @@
 //   padding: 6px 18px;
 // }
 
-// /* ===== DARK MODE BUTTON FIX ===== */
+// /* ===== NEW CIRCLE THEME BUTTON ===== */
 
-// .theme-switch {
-//   width: 50px;
-//   height: 22px;
-//   border-radius: 50px;
-//   display: flex;
-//   align-items: center;
-//   padding: 2px;
-//   cursor: pointer;
-//   transition: 0.3s ease;
-//   background: #D4A24C;
-// }
-
-// .theme-switch.active {
-//   background: #111;   /* dark background */
-// }
-
-// .switch-circle {
-//   width: 18px;
-//   height: 18px;
-//   background: white;
+// .theme-circle {
+//   width: 38px;
+//   height: 38px;
 //   border-radius: 50%;
+//   border: none;
+//   cursor: pointer;
 //   display: flex;
 //   align-items: center;
 //   justify-content: center;
-//   transition: 0.3s ease;
+//   font-size: 16px;
+//   transition: all 0.35s ease;
 // }
 
-// .theme-switch.active .switch-circle {
-//   transform: translateX(24px);
-//   background: #D4A24C;
+// /* LIGHT */
+
+// .theme-circle.light {
+//   background: white;
+//   color: #0F4C6C;
+//   box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+// }
+
+// .theme-circle.light:hover {
+//   transform: rotate(20deg) scale(1.1);
+// }
+
+// /* DARK */
+
+// .theme-circle.dark {
+//   background: #111;
+//   color: #FFD700;
+//   box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+// }
+
+// .theme-circle.dark:hover {
+//   transform: rotate(-20deg) scale(1.1);
+// }
+
+// .theme-circle .icon {
+//   transition: transform 0.35s ease;
+// }
+
+// .theme-circle:active .icon {
+//   transform: scale(0.8);
 // }
 
 //       `}</style>
@@ -358,7 +354,7 @@ function Navbar() {
       <nav className="navbar navbar-expand-lg fixed-top custom-navbar">
         <div className="container">
           <Link className="navbar-brand premium-brand" to="/">
-            Modern Delhi PH
+            Modern Delhi PS
             <span className="brand-underline"></span>
           </Link>
 
@@ -389,6 +385,27 @@ function Navbar() {
                 </li>
               ))}
 
+              {/* FEES PDF */}
+
+              <li className="nav-item">
+                <a
+                  className="nav-link-custom pdf-link"
+                  href="/modern_delhi_school_fees.pdf"
+                >
+                  Fees
+                </a>
+              </li>
+
+              {/* UNIFORM PDF */}
+              <li className="nav-item">
+                <a
+                  className="nav-link-custom pdf-link"
+                  href="/modern_delhi_school_uniform.pdf"
+                >
+                  Uniform
+                </a>
+              </li>
+
               <li className="nav-item">
                 <Link className="btn nav-login-btn" to="/login">
                   Login
@@ -401,7 +418,6 @@ function Navbar() {
                 </Link>
               </li>
 
-              {/* NEW THEME BUTTON */}
               <li className="nav-item">
                 <button
                   className={`theme-circle ${darkMode ? "dark" : "light"}`}
@@ -493,6 +509,25 @@ function Navbar() {
   }
 }
 
+/* REMOVE LINE UNDER FEES / UNIFORM */
+
+/* REMOVE LINE FROM FEES & UNIFORM */
+
+.pdf-link,
+.pdf-link:hover,
+.pdf-link:focus,
+.pdf-link:active {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+.pdf-link::after,
+.pdf-link:hover::after {
+  display: none !important;
+  width: 0 !important;
+  content: none !important;
+}
+
 /* ===== MOBILE ===== */
 
 @media (max-width: 991px) {
@@ -573,7 +608,7 @@ function Navbar() {
   padding: 6px 18px;
 }
 
-/* ===== NEW CIRCLE THEME BUTTON ===== */
+/* ===== THEME BUTTON ===== */
 
 .theme-circle {
   width: 38px;
@@ -588,19 +623,11 @@ function Navbar() {
   transition: all 0.35s ease;
 }
 
-/* LIGHT */
-
 .theme-circle.light {
   background: white;
   color: #0F4C6C;
   box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
-
-.theme-circle.light:hover {
-  transform: rotate(20deg) scale(1.1);
-}
-
-/* DARK */
 
 .theme-circle.dark {
   background: #111;
@@ -608,19 +635,7 @@ function Navbar() {
   box-shadow: 0 4px 14px rgba(0,0,0,0.5);
 }
 
-.theme-circle.dark:hover {
-  transform: rotate(-20deg) scale(1.1);
-}
-
-.theme-circle .icon {
-  transition: transform 0.35s ease;
-}
-
-.theme-circle:active .icon {
-  transform: scale(0.8);
-}
-
-      `}</style>
+`}</style>
     </>
   );
 }

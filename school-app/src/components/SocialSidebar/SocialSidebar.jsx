@@ -124,6 +124,7 @@ function SocialSidebar() {
         style={{ right: "0px", zIndex: 3000 }}
       >
         <ul className="list-unstyled m-0 p-0 d-flex flex-column gap-3">
+          {/* WhatsApp */}
           <li className="social-item">
             <a
               href="https://wa.me/919910127966"
@@ -131,11 +132,14 @@ function SocialSidebar() {
               rel="noopener noreferrer"
               className="social-hover"
             >
-              <img src="/whatsapp.png" alt="WhatsApp" className="social-icon" />
+              <div className="icon-circle">
+                <img src="/whatsapp.png" alt="WhatsApp" />
+              </div>
               <span className="social-text">WhatsApp</span>
             </a>
           </li>
 
+          {/* Facebook */}
           <li className="social-item">
             <a
               href="https://www.facebook.com/share/18MCmxDe1k/"
@@ -143,11 +147,14 @@ function SocialSidebar() {
               rel="noopener noreferrer"
               className="social-hover"
             >
-              <img src="/facebook.png" alt="Facebook" className="social-icon" />
+              <div className="icon-circle">
+                <img src="/facebook.png" alt="Facebook" />
+              </div>
               <span className="social-text">Facebook</span>
             </a>
           </li>
 
+          {/* Instagram */}
           <li className="social-item">
             <a
               href="https://www.instagram.com/mndps_officials"
@@ -155,11 +162,9 @@ function SocialSidebar() {
               rel="noopener noreferrer"
               className="social-hover"
             >
-              <img
-                src="/instagram.png"
-                alt="Instagram"
-                className="social-icon"
-              />
+              <div className="icon-circle">
+                <img src="/instagram.png" alt="Instagram" />
+              </div>
               <span className="social-text">Instagram</span>
             </a>
           </li>
@@ -180,22 +185,41 @@ display:flex;
 align-items:center;
 gap:12px;
 
-padding:8px;
+width:50px;
+height:50px;
 
 text-decoration:none;
-
-transition:all .4s ease;
-
 overflow:hidden;
 
-justify-content:flex-end;
+transition:all .35s ease;
 }
 
-/* ICON */
+/* ICON CIRCLE */
 
-.social-icon{
-width:30px;
-height:30px;
+.icon-circle{
+
+width:50px;
+height:50px;
+
+background:white;
+
+border-radius:50%;
+
+display:flex;
+align-items:center;
+justify-content:center;
+
+box-shadow:0 6px 18px rgba(0,0,0,0.2);
+
+flex-shrink:0;
+
+}
+
+/* IMAGE */
+
+.icon-circle img{
+width:40px;
+height:40px;
 object-fit:contain;
 }
 
@@ -204,18 +228,43 @@ object-fit:contain;
 .social-text{
 opacity:0;
 white-space:nowrap;
-transition:opacity .3s ease;
 font-weight:500;
-color:#0F4C6C;
+color:#111;
+transition:opacity .25s ease;
 }
 
-/* HOVER EXPAND */
+/* HOVER */
 
 .social-hover:hover{
+
+width:170px;
+
 background:linear-gradient(135deg,#D4A24C,#C18F2D);
+
 border-radius:30px 0 0 30px;
-padding:10px 20px;
-gap:10px;
+
+padding-left:12px;
+
+}/* ===== DARK MODE ===== */
+
+body.dark-mode .icon-circle{
+
+background:#1f2937;
+
+box-shadow:0 6px 18px rgba(0,0,0,0.6);
+
+}
+
+body.dark-mode .social-text{
+
+color:#f1f5f9;
+
+}
+
+body.dark-mode .social-hover:hover{
+
+background:linear-gradient(135deg,#D4A24C,#C18F2D);
+
 }
 
 .social-hover:hover .social-text{

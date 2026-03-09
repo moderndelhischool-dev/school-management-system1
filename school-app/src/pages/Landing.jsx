@@ -57,7 +57,7 @@ import ScrollReveal from "../components/ScrollReveal";
 import SocialSidebar from "../components/SocialSidebar/SocialSidebar";
 import ChatBot from "../components/ChatBot/ChatBot";
 import GallerySection from "../components/GallerySection/GallerySection";
-import FeesStructure from "../components/FeesStructure/FeesStructure";
+// import FeesStructure from "../components/FeesStructure/FeesStructure";
 
 function Landing() {
   return (
@@ -88,11 +88,11 @@ function Landing() {
       </section>
 
       {/* FEES & UNIFORM */}
-      <section id="fees">
+      {/* <section id="fees">
         <ScrollReveal>
           <FeesStructure />
         </ScrollReveal>
-      </section>
+      </section> */}
 
       {/* CONTACT */}
       <section id="contact">

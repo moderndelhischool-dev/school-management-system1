@@ -26,11 +26,7 @@
 
 //   const btnClass = (page) =>
 //     `sidebar-btn btn w-100 text-start mb-2 ${
-//       activePage === page
-//         ? "active-btn"
-//         : darkMode
-//           ? "btn-dark text-white"
-//           : "btn-light"
+//       activePage === page ? "active-btn" : ""
 //     }`;
 
 //   return (
@@ -41,62 +37,55 @@
 //         className={btnClass("home")}
 //         onClick={() => setActivePage("home")}
 //       >
-//         📊 Dashboard
+//         Dashboard
 //       </button>
 
 //       <button
 //         className={btnClass("profile")}
 //         onClick={() => setActivePage("profile")}
 //       >
-//         🙍 My Profile
+//         My Profile
 //       </button>
 
 //       <button
 //         className={btnClass("fees")}
 //         onClick={() => setActivePage("fees")}
 //       >
-//         💳 Fees & Payment
+//         Fees & Payment
 //       </button>
 
 //       <button
 //         className={btnClass("history")}
 //         onClick={() => setActivePage("history")}
 //       >
-//         🧾 Payment History
+//         Payment History
 //       </button>
 
 //       <button
 //         className={btnClass("uniform")}
 //         onClick={() => setActivePage("uniform")}
 //       >
-//         👔 Uniform Request
+//         Uniform Request
 //       </button>
 
 //       <button
 //         className={btnClass("certificate")}
 //         onClick={() => setActivePage("certificate")}
 //       >
-//         📜 Certificate Request
+//         Certificate Request
 //       </button>
 
-//       {/* DARK MODE BUTTON */}
+//       {/* Theme Toggle */}
 //       <div className="mt-3">
-//         <button
-//           className={`btn w-100 ${
-//             darkMode ? "btn-outline-light" : "btn-outline-dark"
-//           }`}
-//           onClick={toggleTheme}
-//         >
+//         <button className="btn btn-outline-light w-100" onClick={toggleTheme}>
 //           {darkMode ? "☀ Light Mode" : "🌙 Dark Mode"}
 //         </button>
 //       </div>
 
-//       {/* BOTTOM */}
+//       {/* Bottom */}
 //       <div className="mt-auto pt-4 border-top sidebar-bottom text-center">
 //         <button
-//           className={`btn w-100 text-start ${
-//             darkMode ? "btn-outline-light" : "btn-outline-secondary"
-//           }`}
+//           className="btn btn-outline-light w-100 text-start"
 //           onClick={onChangePassword}
 //         >
 //           🔐 Change Password
@@ -107,44 +96,44 @@
 
 //         /* ===== SIDEBAR BACKGROUND ===== */
 //         .user-sidebar {
-//           background: linear-gradient(180deg, #4c1d95, #7c3aed);
+//           background: linear-gradient(180deg,#0F4C6C,#1B5E84);
 //           color: white;
 //           transition: all 0.3s ease;
+//           box-shadow: 4px 0 30px rgba(0,0,0,0.4);
 //         }
 
 //         body.dark-mode .user-sidebar {
-//           background: linear-gradient(180deg, #0f172a, #1e1b4b) !important;
-//           border-right: 1px solid #312e81;
+//           background: linear-gradient(180deg,#0A2E42,#111827) !important;
+//           border-right: 1px solid #243644;
 //         }
 
 //         /* ===== BUTTON BASE ===== */
 //         .sidebar-btn {
-//           border-radius: 12px;
-//           transition: all 0.3s ease;
+//           border-radius: 14px;
+//           background: transparent;
+//           border: none;
+//           color: white;
 //           font-weight: 500;
 //           padding: 10px 14px;
+//           transition: all 0.3s ease;
 //         }
 
 //         /* Hover Effect */
 //         .sidebar-btn:hover {
+//           background: rgba(212,162,76,0.15);
 //           transform: translateX(6px);
-//           box-shadow: 0 6px 18px rgba(124,58,237,0.35);
 //         }
 
 //         /* ===== ACTIVE BUTTON ===== */
 //         .active-btn {
-//           background: linear-gradient(90deg, #ffffff, #ede9fe) !important;
-//           color: #4c1d95 !important;
-//           border: none !important;
+//           background: linear-gradient(90deg,#D4A24C,#C18F2D) !important;
+//           color: #111 !important;
+//           font-weight: 600;
 //           transform: translateX(6px);
-//           box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+//           box-shadow: 0 8px 20px rgba(212,162,76,0.4);
 //         }
 
-//         body.dark-mode .active-btn {
-//           background: linear-gradient(90deg, #7c3aed, #4c1d95) !important;
-//           color: white !important;
-//         }
-
+//         /* Footer */
 //         .sidebar-bottom {
 //           border-color: rgba(255,255,255,0.2);
 //         }
@@ -156,6 +145,16 @@
 
 // export default UserSidebar;
 import { useEffect, useState } from "react";
+
+import { HiOutlineViewGrid } from "react-icons/hi";
+import { HiOutlineUser } from "react-icons/hi";
+import { HiOutlineCreditCard } from "react-icons/hi";
+import { HiOutlineClipboardList } from "react-icons/hi";
+import { HiOutlineShoppingBag } from "react-icons/hi";
+import { HiOutlineDocumentText } from "react-icons/hi";
+import { HiOutlineKey } from "react-icons/hi";
+import { HiOutlineMoon } from "react-icons/hi";
+import { HiOutlineSun } from "react-icons/hi";
 
 function UserSidebar({ activePage, setActivePage, onChangePassword }) {
   const [darkMode, setDarkMode] = useState(false);
@@ -194,6 +193,9 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         className={btnClass("home")}
         onClick={() => setActivePage("home")}
       >
+        <span className="icon">
+          <HiOutlineViewGrid />
+        </span>
         Dashboard
       </button>
 
@@ -201,6 +203,9 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         className={btnClass("profile")}
         onClick={() => setActivePage("profile")}
       >
+        <span className="icon">
+          <HiOutlineUser />
+        </span>
         My Profile
       </button>
 
@@ -208,6 +213,9 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         className={btnClass("fees")}
         onClick={() => setActivePage("fees")}
       >
+        <span className="icon">
+          <HiOutlineCreditCard />
+        </span>
         Fees & Payment
       </button>
 
@@ -215,6 +223,9 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         className={btnClass("history")}
         onClick={() => setActivePage("history")}
       >
+        <span className="icon">
+          <HiOutlineClipboardList />
+        </span>
         Payment History
       </button>
 
@@ -222,6 +233,9 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         className={btnClass("uniform")}
         onClick={() => setActivePage("uniform")}
       >
+        <span className="icon">
+          <HiOutlineShoppingBag />
+        </span>
         Uniform Request
       </button>
 
@@ -229,23 +243,31 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
         className={btnClass("certificate")}
         onClick={() => setActivePage("certificate")}
       >
+        <span className="icon">
+          <HiOutlineDocumentText />
+        </span>
         Certificate Request
       </button>
 
       {/* Theme Toggle */}
       <div className="mt-3">
-        <button className="btn btn-outline-light w-100" onClick={toggleTheme}>
-          {darkMode ? "☀ Light Mode" : "🌙 Dark Mode"}
+        <button
+          className="btn btn-outline-light w-100 d-flex align-items-center gap-2"
+          onClick={toggleTheme}
+        >
+          {darkMode ? <HiOutlineSun /> : <HiOutlineMoon />}
+          {darkMode ? "Light Mode" : "Dark Mode"}
         </button>
       </div>
 
       {/* Bottom */}
       <div className="mt-auto pt-4 border-top sidebar-bottom text-center">
         <button
-          className="btn btn-outline-light w-100 text-start"
+          className="btn btn-outline-light w-100 text-start d-flex align-items-center gap-2"
           onClick={onChangePassword}
         >
-          🔐 Change Password
+          <HiOutlineKey />
+          Change Password
         </button>
       </div>
 
@@ -273,6 +295,17 @@ function UserSidebar({ activePage, setActivePage, onChangePassword }) {
           font-weight: 500;
           padding: 10px 14px;
           transition: all 0.3s ease;
+          display:flex;
+          align-items:center;
+          gap:10px;
+        }
+
+        /* ICON STYLE */
+
+        .icon{
+          font-size:20px;
+          display:flex;
+          align-items:center;
         }
 
         /* Hover Effect */
