@@ -263,11 +263,11 @@ function GallerySection() {
         title: "Competition",
         desc: "Students competed in various athletic categories with great enthusiasm.",
       },
-      // {
-      //   img: "/sports5.jpg",
-      //   title: "Prize Distribution Ceremony",
-      //   desc: "Winners were honored with medals and trophies for outstanding performance.",
-      // },
+      {
+        img: "/sports5.jpg",
+        title: "Prize Distribution Ceremony",
+        desc: "Winners were honored with medals and trophies for outstanding performance.",
+      },
     ],
 
     festival: [
@@ -291,6 +291,11 @@ function GallerySection() {
         title: "Cultural Fest",
         desc: "Students showcased traditional dances and cultural heritage performances.",
       },
+      // {
+      //   img: "/festival5.jpg",
+      //   title: "Diwali Celebration",
+      //   desc: "Students enjoyed cultural activities and festive decorations during Diwali celebration.",
+      // },
     ],
 
     events: [
@@ -314,14 +319,39 @@ function GallerySection() {
         title: "Workshop",
         desc: "Interactive sessions conducted to enhance practical knowledge and skills.",
       },
+      // {
+      //   img: "/event5.jpg",
+      //   title: "School Seminar",
+      //   desc: "Educational seminars conducted for students to enhance knowledge and awareness.",
+      // },
     ],
 
     airobotics: [
+      // {
+      //   img: "/ai-robotics.jpg", // 👉 अपनी image यहाँ डालना
+      //   title: "AI & Robotics Lab Activity",
+      //   desc: "Students explored Artificial Intelligence and Robotics through practical experiments, coding and hands-on robotic projects.",
+      // },
       {
-        img: "/sports5.jpg",
-        title: "Prize Distribution Ceremony",
-        desc: "Winners were honored with medals and trophies for outstanding performance.",
+        img: "/ai2.jpg",
+        title: "Robot Programming",
+        desc: "Students learned programming logic by building and controlling small robots.",
       },
+      // {
+      //   img: "/ai3.jpg",
+      //   title: "STEM Innovation",
+      //   desc: "Creative robotics models built by students to solve real-world problems.",
+      // },
+      // {
+      //   img: "/ai4.jpg",
+      //   title: "Coding Workshop",
+      //   desc: "Hands-on workshop introducing students to AI concepts and robotics technology.",
+      // },
+      // {
+      //   img: "/ai5.jpg",
+      //   title: "Tech Learning",
+      //   desc: "Students explored future technologies like AI, machine learning and automation.",
+      // },
     ],
   };
 
@@ -395,7 +425,7 @@ cursor:pointer;
 
 .gallery-grid{
 display:grid;
-grid-template-columns:repeat(4,1fr);
+grid-template-columns:repeat(5,1fr);   /* 👉 1 row = 5 cards */
 gap:25px;
 }
 
@@ -475,7 +505,7 @@ grid-template-columns:1fr;
 }
 }
 
-      `}</style>
+`}</style>
     </section>
   );
 }
