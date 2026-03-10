@@ -42,7 +42,10 @@
 //       <nav className="navbar navbar-expand-lg fixed-top custom-navbar">
 //         <div className="container">
 //           <Link className="navbar-brand premium-brand" to="/">
-//             Modern Delhi PH
+//             <span className="brand-full">
+//               MODERN NEW DELHI PUBLIC HIGH SCHOOL
+//             </span>
+//             <span className="brand-mobile">Modern New Delhi PS</span>
 //             <span className="brand-underline"></span>
 //           </Link>
 
@@ -73,6 +76,27 @@
 //                 </li>
 //               ))}
 
+//               {/* FEES PDF */}
+
+//               <li className="nav-item">
+//                 <a
+//                   className="nav-link-custom pdf-link"
+//                   href="/modern_delhi_school_fees.pdf"
+//                 >
+//                   Fees
+//                 </a>
+//               </li>
+
+//               {/* UNIFORM PDF */}
+//               <li className="nav-item">
+//                 <a
+//                   className="nav-link-custom pdf-link"
+//                   href="/modern_delhi_school_uniform.pdf"
+//                 >
+//                   Uniform
+//                 </a>
+//               </li>
+
 //               <li className="nav-item">
 //                 <Link className="btn nav-login-btn" to="/login">
 //                   Login
@@ -85,7 +109,6 @@
 //                 </Link>
 //               </li>
 
-//               {/* NEW THEME BUTTON */}
 //               <li className="nav-item">
 //                 <button
 //                   className={`theme-circle ${darkMode ? "dark" : "light"}`}
@@ -177,6 +200,25 @@
 //   }
 // }
 
+// /* REMOVE LINE UNDER FEES / UNIFORM */
+
+// /* REMOVE LINE FROM FEES & UNIFORM */
+
+// .pdf-link,
+// .pdf-link:hover,
+// .pdf-link:focus,
+// .pdf-link:active {
+//   text-decoration: none !important;
+//   border-bottom: none !important;
+// }
+
+// .pdf-link::after,
+// .pdf-link:hover::after {
+//   display: none !important;
+//   width: 0 !important;
+//   content: none !important;
+// }
+
 // /* ===== MOBILE ===== */
 
 // @media (max-width: 991px) {
@@ -257,8 +299,26 @@
 //   padding: 6px 18px;
 // }
 
-// /* ===== NEW CIRCLE THEME BUTTON ===== */
+// /* ===== THEME BUTTON ===== */
+// /* MOBILE BRAND CONTROL */
 
+// .brand-mobile{
+// display:none;
+// }
+
+// @media(max-width:576px){
+
+// .brand-full{
+// display:none;
+// }
+
+// .brand-mobile{
+// display:inline;
+// font-size:16px;
+// font-weight:800;
+// }
+
+// }
 // .theme-circle {
 //   width: 38px;
 //   height: 38px;
@@ -272,19 +332,11 @@
 //   transition: all 0.35s ease;
 // }
 
-// /* LIGHT */
-
 // .theme-circle.light {
 //   background: white;
 //   color: #0F4C6C;
 //   box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 // }
-
-// .theme-circle.light:hover {
-//   transform: rotate(20deg) scale(1.1);
-// }
-
-// /* DARK */
 
 // .theme-circle.dark {
 //   background: #111;
@@ -292,24 +344,13 @@
 //   box-shadow: 0 4px 14px rgba(0,0,0,0.5);
 // }
 
-// .theme-circle.dark:hover {
-//   transform: rotate(-20deg) scale(1.1);
-// }
-
-// .theme-circle .icon {
-//   transition: transform 0.35s ease;
-// }
-
-// .theme-circle:active .icon {
-//   transform: scale(0.8);
-// }
-
-//       `}</style>
+// `}</style>
 //     </>
 //   );
 // }
 
 // export default Navbar;
+
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 
@@ -353,12 +394,21 @@ function Navbar() {
     <>
       <nav className="navbar navbar-expand-lg fixed-top custom-navbar">
         <div className="container">
-          <Link className="navbar-brand premium-brand" to="/">
-            <span className="brand-full">
-              MODERN NEW DELHI PUBLIC HIGH SCHOOL
-            </span>
-            <span className="brand-mobile">Modern New Delhi PS</span>
-            <span className="brand-underline"></span>
+          <Link
+            className="navbar-brand premium-brand d-flex align-items-center"
+            to="/"
+          >
+            <img src="/logo.jpeg" alt="School Logo" className="school-logo" />
+
+            <div className="brand-text">
+              <span className="brand-full">
+                MODERN NEW DELHI PUBLIC HIGH SCHOOL
+              </span>
+
+              <span className="brand-mobile">Modern New Delhi PS</span>
+
+              <span className="brand-underline"></span>
+            </div>
           </Link>
 
           <button
@@ -439,11 +489,27 @@ function Navbar() {
 /* ===== NAVBAR BASE ===== */
 
 .custom-navbar {
-  padding: 6px 0;
+  padding: 5px 0;
   transition: 0.4s ease;
   z-index: 3000;
   background: linear-gradient(90deg, #0F4C6C, #1B5E84);
   box-shadow: 0 4px 14px rgba(15,76,108,0.35);
+}/* SCHOOL LOGO */
+
+.school-logo{
+  width:42px;
+  border-radius:50%;
+  height:42px;
+  object-fit:contain;
+  margin-right:10px;
+}
+
+/* TEXT BLOCK */
+
+.brand-text{
+padding-bottom:5px;
+  display:flex;
+  flex-direction:column;
 }
 
 /* ===== BRAND ===== */
