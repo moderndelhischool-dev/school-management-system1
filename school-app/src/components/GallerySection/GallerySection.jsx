@@ -245,27 +245,27 @@ function GallerySection() {
     sports: [
       {
         img: "/sports1.jpg",
-        title: "Sports Day",
-        desc: "Students participated in track and field events including races, long jump and relay competitions.",
+        title: "Volleyball Winners",
+        desc: "Our school volleyball team proudly celebrated their victory after winning medals in the sports competition.",
       },
       {
         img: "/sports2.jpg",
-        title: "Tournament",
-        desc: "Inter-school tournament promoting teamwork and sportsmanship.",
+        title: "Tug of War",
+        desc: "Students participated in the exciting tug of war event, showing strength, teamwork, and determination.",
       },
       {
         img: "/sports3.jpg",
-        title: "Championship",
-        desc: "Exciting football matches showcasing discipline and team coordination.",
+        title: "Prize Distribution",
+        desc: "Winners were honored on the podium for securing first, second, and third positions in the competition.",
       },
       {
         img: "/sports4.jpg",
-        title: "Competition",
-        desc: "Students competed in various athletic categories with great enthusiasm.",
+        title: "ASMITA Khelo India",
+        desc: "Students represented the school in the prestigious ASMITA Khelo India sports league and achieved great success.",
       },
       {
         img: "/sports5.jpg",
-        title: "Prize Distribution Ceremony",
+        title: "Prize Ceremony",
         desc: "Winners were honored with medals and trophies for outstanding performance.",
       },
     ],
@@ -273,23 +273,23 @@ function GallerySection() {
     festival: [
       {
         img: "/festival1.jpg",
-        title: "Celebration",
-        desc: "Students celebrated Diwali with traditional attire, dance performances and decorations.",
+        title: "Traditional Dance Performance",
+        desc: "Students performed colorful traditional dances, showcasing culture, talent, and festive spirit.",
       },
       {
         img: "/festival2.jpg",
-        title: "Independence Day",
-        desc: "Flag hoisting ceremony followed by patriotic songs and cultural performances.",
+        title: "Independence Day Celebration",
+        desc: "Students celebrated Independence Day with patriotic performances, songs, and cultural activities.",
       },
       {
         img: "/festival3.jpg",
-        title: "Festival",
-        desc: "A colorful celebration filled with joy, unity and festive spirit.",
+        title: "Festival Celebration",
+        desc: "Students celebrated festivals together with traditional dress, decorations, and joyful activities.",
       },
       {
         img: "/festival4.jpg",
-        title: "Cultural Fest",
-        desc: "Students showcased traditional dances and cultural heritage performances.",
+        title: "Janmashtami Celebration",
+        desc: "Students dressed as Radha and Krishna to celebrate Janmashtami with devotion and enthusiasm.",
       },
       // {
       //   img: "/festival5.jpg",
@@ -301,23 +301,23 @@ function GallerySection() {
     events: [
       {
         img: "/event1.jpg",
-        title: "Science Exhibition",
-        desc: "Innovative science projects presented by students demonstrating creativity and learning.",
+        title: "Tree Plantation Drive",
+        desc: "Students participated in a tree plantation drive to promote environmental awareness and a greener future.",
       },
       {
         img: "/event2.jpg",
-        title: "Annual Cultural Function",
-        desc: "Grand annual celebration with dance, drama and music performances.",
+        title: "Swachhata Abhiyan",
+        desc: "Students actively took part in the Swachhata campaign to spread awareness about cleanliness and hygiene.",
       },
       {
         img: "/event3.jpg",
-        title: "Award Ceremony",
-        desc: "Students recognized for academic excellence and co-curricular achievements.",
+        title: "Red Cross Activity",
+        desc: "Students participated in Red Cross activities to learn about social service, health awareness, and community support.",
       },
       {
         img: "/event4.jpg",
-        title: "Workshop",
-        desc: "Interactive sessions conducted to enhance practical knowledge and skills.",
+        title: "Cleanliness Drive",
+        desc: "Students worked together in a cleanliness drive to keep the surroundings clean and promote responsibility.",
       },
       // {
       //   img: "/event5.jpg",
@@ -337,21 +337,6 @@ function GallerySection() {
         title: "Robot Programming",
         desc: "Students learned programming logic by building and controlling small robots.",
       },
-      // {
-      //   img: "/ai3.jpg",
-      //   title: "STEM Innovation",
-      //   desc: "Creative robotics models built by students to solve real-world problems.",
-      // },
-      // {
-      //   img: "/ai4.jpg",
-      //   title: "Coding Workshop",
-      //   desc: "Hands-on workshop introducing students to AI concepts and robotics technology.",
-      // },
-      // {
-      //   img: "/ai5.jpg",
-      //   title: "Tech Learning",
-      //   desc: "Students explored future technologies like AI, machine learning and automation.",
-      // },
     ],
   };
 

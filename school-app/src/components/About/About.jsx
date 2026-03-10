@@ -34,7 +34,6 @@
 //     },
 //   ];
 
-//   // ✅ Smooth Auto Slide
 //   useEffect(() => {
 //     const interval = setInterval(() => {
 //       setActiveIndex((prev) => (prev + 1) % slides.length);
@@ -55,7 +54,6 @@
 //         </div>
 
 //         <div className="about-wrapper">
-//           {/* IMAGE */}
 //           <div className="image-box">
 //             <img
 //               src={slides[activeIndex].img}
@@ -64,7 +62,6 @@
 //             />
 //           </div>
 
-//           {/* CONTENT */}
 //           <div className="content-box">
 //             <span>{slides[activeIndex].subtitle}</span>
 //             <h3>{slides[activeIndex].title}</h3>
@@ -87,7 +84,6 @@
 //           </div>
 //         </div>
 
-//         {/* PAGINATION */}
 //         <div className="pagination-box">
 //           {slides.map((_, index) => (
 //             <button
@@ -106,28 +102,28 @@
 
 //       <style>{`
 
-//      #about {
+// #about {
 //   scroll-margin-top: 100px;
 // }
 
 // .about-section {
 //   padding: 100px 0;
-//   background: #f5f3ff;
+//   background: #F4F6F8;
 // }
 
+// /* HEADER */
 // .about-header h2 {
 //   font-size: 38px;
 //   font-weight: 800;
-//   color: #4c1d95;
+//   color: #0F4C6C;
 // }
 
 // .about-header p {
-//   color: #6b7280;
+//   color: #4B5563;
 //   margin-top: 10px;
 // }
 
-// /* ================= WRAPPER ================= */
-
+// /* WRAPPER */
 // .about-wrapper {
 //   display: flex;
 //   align-items: center;
@@ -135,26 +131,22 @@
 //   margin-top: 60px;
 // }
 
-// /* ================= IMAGE BOX ================= */
-
+// /* IMAGE BOX */
 // .image-box {
 //   flex: 1;
 //   border-radius: 20px;
 //   overflow: hidden;
-//   box-shadow: 0 25px 60px rgba(76,29,149,0.25);
-//   transition: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-//   position: relative;
+//   box-shadow: 0 25px 60px rgba(15,76,108,0.25);
+//   transition: all 0.4s ease;
 // }
 
-// /* Hover Pop Effect */
 // .image-box:hover {
-//   transform: translateY(-18px) scale(1.03);
+//   transform: translateY(-15px) scale(1.03);
 //   box-shadow:
-//     0 35px 70px rgba(76,29,149,0.35),
-//     0 0 30px rgba(124,58,237,0.35);
+//     0 35px 70px rgba(15,76,108,0.35),
+//     0 0 25px rgba(212,162,76,0.3);
 // }
 
-// /* Smooth Fade + Zoom Animation */
 // .fade-image {
 //   width: 100%;
 //   height: 450px;
@@ -164,38 +156,30 @@
 // }
 
 // @keyframes fadeZoom {
-//   0% {
-//     opacity: 0;
-//     transform: scale(1.05);
-//   }
-//   100% {
-//     opacity: 1;
-//     transform: scale(1);
-//   }
+//   0% { opacity: 0; transform: scale(1.05); }
+//   100% { opacity: 1; transform: scale(1); }
 // }
 
-// /* Image Zoom on Hover */
 // .image-box:hover .fade-image {
 //   transform: scale(1.08);
 // }
 
-// /* ================= CONTENT BOX ================= */
-
+// /* CONTENT BOX */
 // .content-box {
 //   flex: 1;
 //   background: white;
 //   padding: 50px;
 //   border-radius: 20px;
-//   box-shadow: 0 20px 50px rgba(76,29,149,0.15);
-//   transition: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+//   box-shadow: 0 20px 50px rgba(15,76,108,0.15);
+//   transition: all 0.4s ease;
+//   border-top: 4px solid #D4A24C;
 // }
 
-// /* Hover Pop Effect */
 // .content-box:hover {
-//   transform: translateY(-18px) scale(1.02);
+//   transform: translateY(-15px);
 //   box-shadow:
-//     0 35px 70px rgba(76,29,149,0.25),
-//     0 0 30px rgba(124,58,237,0.25);
+//     0 35px 70px rgba(15,76,108,0.25),
+//     0 0 25px rgba(212,162,76,0.25);
 // }
 
 // /* Subtitle */
@@ -203,13 +187,7 @@
 //   font-size: 12px;
 //   letter-spacing: 2px;
 //   font-weight: 600;
-//   color: #7c3aed;
-//   transition: 0.3s ease;
-// }
-
-// /* Subtitle Highlight */
-// .content-box:hover span {
-//   color: #5b21b6;
+//   color: #D4A24C;
 // }
 
 // /* Title */
@@ -217,28 +195,21 @@
 //   font-size: 28px;
 //   font-weight: 700;
 //   margin: 15px 0;
-//   color: #4c1d95;
-//   transition: 0.3s ease;
-// }
-
-// /* Title Hover Color */
-// .content-box:hover h3 {
-//   color: #6d28d9;
+//   color: #0F4C6C;
 // }
 
 // /* Paragraph */
 // .content-box p {
-//   color: #6b7280;
+//   color: #4B5563;
 //   line-height: 1.7;
 // }
 
-// /* ================= BUTTON ================= */
-
+// /* BUTTON */
 // .learn-btn {
 //   margin-top: 20px;
 //   padding: 12px 30px;
 //   border: none;
-//   background: linear-gradient(135deg,#4c1d95,#5b21b6);
+//   background: linear-gradient(135deg,#0F4C6C,#1B5E84);
 //   color: white;
 //   border-radius: 30px;
 //   font-weight: 600;
@@ -247,12 +218,12 @@
 // }
 
 // .learn-btn:hover {
-//   background: linear-gradient(135deg,#5b21b6,#7c3aed);
+//   background: #D4A24C;
+//   color: #0F4C6C;
 //   transform: translateY(-3px);
 // }
 
-// /* ================= PAGINATION ================= */
-
+// /* PAGINATION */
 // .pagination-box {
 //   margin-top: 50px;
 //   text-align: center;
@@ -260,7 +231,7 @@
 
 // .page-btn {
 //   border: none;
-//   background: #ede9fe;
+//   background: #E5E7EB;
 //   margin: 0 5px;
 //   padding: 8px 14px;
 //   border-radius: 25px;
@@ -270,15 +241,32 @@
 // }
 
 // .page-btn:hover {
-//   background: #d8b4fe;
+//   background: #D4A24C;
+//   color: #0F4C6C;
 // }
 
 // .page-btn.active {
-//   background: #4c1d95;
+//   background: #0F4C6C;
 //   color: white;
 // }
 
-// /* ================= RESPONSIVE ================= */
+// /* DARK MODE */
+// body.dark-mode .about-section {
+//   background: #0E1A24;
+// }
+
+// body.dark-mode .content-box {
+//   background: #1B2A35;
+//   color: white;
+// }
+
+// body.dark-mode .content-box p {
+//   color: #CBD5E1;
+// }
+
+// body.dark-mode .about-header h2 {
+//   color: #D4A24C;
+// }
 
 // @media (max-width: 992px) {
 //   .about-wrapper {
@@ -308,7 +296,7 @@ function About() {
 
   const slides = [
     {
-      img: "/about1.jpg",
+      img: "/about2.jpg",
       subtitle: "OUR DEDICATED FACULTY",
       title: "Experienced & Qualified Teachers",
       shortText:
@@ -317,7 +305,7 @@ function About() {
         "The teaching staff at Modern New Delhi Public High School brings years of experience, dedication and passion for education. They focus on academic excellence, discipline and character development of every student.",
     },
     {
-      img: "/about2.jpg",
+      img: "/about1.jpg",
       subtitle: "TEAMWORK & GUIDANCE",
       title: "Strong Leadership & Coordination",
       shortText:
@@ -349,11 +337,33 @@ function About() {
     <section id="about" className="about-section">
       <div className="container">
         <div className="about-header text-center">
-          <h2>About Our School</h2>
+          <h2>About Modern New Delhi Public High School</h2>
           <p>
-            Meet the dedicated educators shaping the future of our students.
+            Modern New Delhi Public High School is dedicated to providing
+            quality education and nurturing students with strong moral values,
+            discipline and leadership skills.
           </p>
         </div>
+
+        <section className="vision-mission">
+          <div className="vision-box">
+            <h3>Our Vision</h3>
+            <p>
+              To inspire students to become responsible citizens and future
+              leaders through innovative education and strong values.
+            </p>
+          </div>
+
+          <div className="mission-box">
+            <h3>Our Mission</h3>
+            <ul>
+              <li>Provide quality education</li>
+              <li>Encourage creativity and innovation</li>
+              <li>Develop leadership and confidence</li>
+              <li>Promote discipline and strong values</li>
+            </ul>
+          </div>
+        </section>
 
         <div className="about-wrapper">
           <div className="image-box">
@@ -370,11 +380,7 @@ function About() {
 
             <p>
               {slides[activeIndex].shortText}
-              {expanded && (
-                <span className="extra-text">
-                  {" " + slides[activeIndex].fullText}
-                </span>
-              )}
+              {expanded && <span>{" " + slides[activeIndex].fullText}</span>}
             </p>
 
             <button
@@ -400,6 +406,41 @@ function About() {
             </button>
           ))}
         </div>
+
+        <section className="principal-section">
+          <h2>Principal's Message</h2>
+
+          <p>
+            At Modern New Delhi Public High School we believe that education is
+            the foundation of success. Our aim is to create an environment where
+            students can explore their talents, develop confidence and achieve
+            excellence in academics, sports and cultural activities.
+          </p>
+        </section>
+
+        <section className="facilities">
+          <h2>Our Facilities</h2>
+
+          <div className="facility-grid">
+            <div className="facility-card">Smart Classrooms</div>
+            <div className="facility-card">Science Laboratory</div>
+            <div className="facility-card">Computer Lab</div>
+            <div className="facility-card">Library</div>
+            <div className="facility-card">Sports Ground</div>
+            <div className="facility-card">Cultural Activities</div>
+          </div>
+        </section>
+
+        <section className="choose">
+          <h2>Why Choose Our School</h2>
+
+          <div className="choose-grid">
+            <div className="choose-card">Experienced Teachers</div>
+            <div className="choose-card">Modern Education System</div>
+            <div className="choose-card">Safe Environment</div>
+            <div className="choose-card">Focus on Overall Development</div>
+          </div>
+        </section>
       </div>
 
       <style>{`
@@ -583,8 +624,233 @@ body.dark-mode .about-header h2 {
     padding: 30px;
   }
 }
+#about {
+scroll-margin-top:100px;
+}
 
-      `}</style>
+.about-section{
+padding:100px 0;
+background:#F4F6F8;
+}
+
+/* HEADER */
+
+.about-header h2{
+font-size:38px;
+font-weight:800;
+color:#0F4C6C;
+}
+
+.about-header p{
+color:#4B5563;
+margin-top:10px;
+}
+
+/* VISION MISSION */
+
+.vision-mission{
+display:flex;
+gap:40px;
+margin-top:50px;
+}
+
+.vision-box,
+.mission-box{
+flex:1;
+background:white;
+padding:35px;
+border-radius:15px;
+box-shadow:0 10px 30px rgba(0,0,0,0.08);
+transition:.3s;
+border-top:4px solid #D4A24C;
+}
+
+.vision-box:hover,
+.mission-box:hover{
+transform:translateY(-8px);
+background:#0F4C6C;
+color:white;
+}
+
+/* WRAPPER */
+
+.about-wrapper{
+display:flex;
+gap:50px;
+margin-top:60px;
+}
+
+.image-box{
+flex:1;
+border-radius:20px;
+overflow:hidden;
+box-shadow:0 20px 50px rgba(0,0,0,0.2);
+}
+
+.fade-image{
+width:100%;
+height:450px;
+object-fit:cover;
+}
+
+.content-box{
+flex:1;
+background:white;
+padding:50px;
+border-radius:20px;
+box-shadow:0 20px 50px rgba(15,76,108,0.15);
+border-top:4px solid #D4A24C;
+}
+
+.content-box span{
+color:#D4A24C;
+font-weight:600;
+letter-spacing:1px;
+}
+
+.content-box h3{
+color:#0F4C6C;
+}
+
+.content-box p{
+color:#4B5563;
+line-height:1.7;
+}
+
+/* BUTTON */
+
+.learn-btn{
+margin-top:20px;
+padding:12px 30px;
+border:none;
+background:#0F4C6C;
+color:white;
+border-radius:30px;
+cursor:pointer;
+}
+
+.learn-btn:hover{
+background:#D4A24C;
+color:#0F4C6C;
+}
+
+/* PRINCIPAL */
+
+.principal-section{
+margin-top:70px;
+background:white;
+padding:40px;
+border-radius:15px;
+box-shadow:0 10px 30px rgba(0,0,0,0.1);
+}
+
+/* FACILITIES */
+
+.facilities{
+margin-top:70px;
+}
+
+.facility-grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:20px;
+margin-top:20px;
+}
+
+.facility-card{
+background:white;
+padding:25px;
+border-radius:12px;
+text-align:center;
+box-shadow:0 10px 25px rgba(0,0,0,0.08);
+transition:.3s;
+}
+
+.facility-card:hover{
+background:#0F4C6C;
+color:white;
+transform:translateY(-6px);
+}
+
+/* CHOOSE */
+
+.choose{
+margin-top:70px;
+}
+
+.choose-grid{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:20px;
+margin-top:20px;
+}
+
+.choose-card{
+background:white;
+padding:25px;
+border-radius:12px;
+text-align:center;
+box-shadow:0 10px 25px rgba(0,0,0,0.08);
+transition:.3s;
+}
+
+.choose-card:hover{
+background:#0F4C6C;
+color:white;
+transform:translateY(-6px);
+}
+
+/* DARK MODE */
+
+body.dark-mode .about-section{
+background:#0E1A24;
+}
+
+body.dark-mode .about-header h2{
+color:#D4A24C;
+}
+
+body.dark-mode .about-header p{
+color:#CBD5E1;
+}
+
+body.dark-mode .vision-box,
+body.dark-mode .mission-box,
+body.dark-mode .content-box,
+body.dark-mode .principal-section,
+body.dark-mode .facility-card,
+body.dark-mode .choose-card{
+background:#1B2A35;
+color:white;
+}
+
+body.dark-mode .content-box p{
+color:#CBD5E1;
+}
+
+body.dark-mode .facility-card:hover,
+body.dark-mode .choose-card:hover{
+background:#D4A24C;
+color:#0F4C6C;
+}
+
+@media(max-width:992px){
+
+.about-wrapper{
+flex-direction:column;
+}
+
+.vision-mission{
+flex-direction:column;
+}
+
+.facility-grid{
+grid-template-columns:1fr 1fr;
+}
+
+}
+
+`}</style>
     </section>
   );
 }

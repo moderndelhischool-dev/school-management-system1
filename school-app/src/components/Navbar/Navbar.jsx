@@ -354,7 +354,7 @@ function Navbar() {
       <nav className="navbar navbar-expand-lg fixed-top custom-navbar">
         <div className="container">
           <Link className="navbar-brand premium-brand" to="/">
-            Modern New Delhi PS
+            MODERN NEW DELHI PUBLIC HIGH SCHOOL
             <span className="brand-underline"></span>
           </Link>
 
