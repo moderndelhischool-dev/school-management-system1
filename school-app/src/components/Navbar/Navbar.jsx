@@ -354,7 +354,10 @@ function Navbar() {
       <nav className="navbar navbar-expand-lg fixed-top custom-navbar">
         <div className="container">
           <Link className="navbar-brand premium-brand" to="/">
-            MODERN NEW DELHI PUBLIC HIGH SCHOOL
+            <span className="brand-full">
+              MODERN NEW DELHI PUBLIC HIGH SCHOOL
+            </span>
+            <span className="brand-mobile">Modern New Delhi PS</span>
             <span className="brand-underline"></span>
           </Link>
 
@@ -609,7 +612,25 @@ function Navbar() {
 }
 
 /* ===== THEME BUTTON ===== */
+/* MOBILE BRAND CONTROL */
 
+.brand-mobile{
+display:none;
+}
+
+@media(max-width:576px){
+
+.brand-full{
+display:none;
+}
+
+.brand-mobile{
+display:inline;
+font-size:16px;
+font-weight:800;
+}
+
+}
 .theme-circle {
   width: 38px;
   height: 38px;

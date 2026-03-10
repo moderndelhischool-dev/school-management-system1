@@ -834,18 +834,107 @@ background:#D4A24C;
 color:#0F4C6C;
 }
 
-@media(max-width:992px){
+/* MOBILE ONLY (PHONE SIZE) */
 
-.about-wrapper{
-flex-direction:column;
+@media (max-width:576px){
+
+.about-section{
+padding:60px 15px;
 }
+
+/* HEADER */
+
+.about-header h2{
+font-size:26px;
+}
+
+.about-header p{
+font-size:14px;
+line-height:1.6;
+}
+
+/* VISION MISSION */
 
 .vision-mission{
 flex-direction:column;
+gap:20px;
 }
 
+.vision-box,
+.mission-box{
+padding:20px;
+}
+
+/* IMAGE + CONTENT */
+
+.about-wrapper{
+flex-direction:column;
+gap:25px;
+margin-top:40px;
+}
+
+.fade-image{
+height:220px;
+}
+
+/* CONTENT BOX */
+
+.content-box{
+padding:20px;
+}
+
+.content-box h3{
+font-size:20px;
+}
+
+.content-box p{
+font-size:14px;
+}
+
+/* BUTTON */
+
+.learn-btn{
+padding:10px 22px;
+font-size:14px;
+}
+
+/* PAGINATION */
+
+.page-btn{
+padding:6px 12px;
+font-size:12px;
+margin:3px;
+}
+
+/* PRINCIPAL */
+
+.principal-section{
+padding:25px 20px;
+margin-top:40px;
+}
+
+/* FACILITIES */
+
 .facility-grid{
-grid-template-columns:1fr 1fr;
+grid-template-columns:1fr;
+gap:15px;
+}
+
+.facility-card{
+padding:18px;
+font-size:14px;
+}
+
+/* CHOOSE */
+
+.choose-grid{
+grid-template-columns:1fr;
+gap:15px;
+}
+
+.choose-card{
+padding:18px;
+font-size:14px;
 }
 
 }
