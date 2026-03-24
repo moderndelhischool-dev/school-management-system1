@@ -394,9 +394,9 @@ function AddStudent({ darkMode }) {
           borderRadius: "20px",
         }}
       >
+        {/* Grid: 5 rows (md+): row1–2 = 4 cols each, row3 = 4 cols (2 fields + spacers), row4 = divider, row5 = submit */}
         <div className="row g-3">
-          {/* Section 1: Basic Info */}
-          <div className="col-md-3">
+          <div className="col-12 col-md-3">
             <label className="label">Roll Number</label>
             <input
               className="form-control custom-input"
@@ -405,7 +405,7 @@ function AddStudent({ darkMode }) {
               placeholder="101"
             />
           </div>
-          <div className="col-md-5">
+          <div className="col-12 col-md-3">
             <label className="label">Student Name</label>
             <input
               className="form-control custom-input"
@@ -414,7 +414,7 @@ function AddStudent({ darkMode }) {
               placeholder="Full Name"
             />
           </div>
-          <div className="col-md-4">
+          <div className="col-12 col-md-3">
             <label className="label">Gmail / ID</label>
             <input
               className="form-control custom-input"
@@ -423,8 +423,7 @@ function AddStudent({ darkMode }) {
               placeholder="student@gmail.com"
             />
           </div>
-
-          <div className="col-md-4">
+          <div className="col-12 col-md-3">
             <label className="label">Father's Name</label>
             <input
               className="form-control custom-input"
@@ -432,7 +431,8 @@ function AddStudent({ darkMode }) {
               onChange={(e) => setFatherName(e.target.value)}
             />
           </div>
-          <div className="col-md-4">
+
+          <div className="col-12 col-md-3">
             <label className="label">Class</label>
             <input
               className="form-control custom-input"
@@ -440,7 +440,7 @@ function AddStudent({ darkMode }) {
               onChange={(e) => setCls(e.target.value)}
             />
           </div>
-          <div className="col-md-4">
+          <div className="col-12 col-md-3">
             <label className="label">Gender</label>
             <select
               className="form-select custom-input"
@@ -453,11 +453,7 @@ function AddStudent({ darkMode }) {
               <option value="Other">Other</option>
             </select>
           </div>
-
-          <hr className="my-3 opacity-25" />
-
-          {/* Section 2: Fee Info */}
-          <div className="col-md-6">
+          <div className="col-12 col-md-3">
             <label className="label">Fee Month</label>
             <select
               className="form-select custom-input"
@@ -472,7 +468,7 @@ function AddStudent({ darkMode }) {
               ))}
             </select>
           </div>
-          <div className="col-md-6">
+          <div className="col-12 col-md-3">
             <label className="label">Payment Date</label>
             <input
               type="date"
@@ -482,7 +478,7 @@ function AddStudent({ darkMode }) {
             />
           </div>
 
-          <div className="col-md-6">
+          <div className="col-12 col-md-3">
             <label className="label text-primary">Total Amount (₹)</label>
             <input
               type="number"
@@ -491,7 +487,7 @@ function AddStudent({ darkMode }) {
               onChange={(e) => setTotalFees(e.target.value)}
             />
           </div>
-          <div className="col-md-6">
+          <div className="col-12 col-md-3">
             <label className="label text-success">Paid Amount (₹)</label>
             <input
               type="number"
@@ -500,16 +496,26 @@ function AddStudent({ darkMode }) {
               onChange={(e) => setPaidFees(e.target.value)}
             />
           </div>
+          <div className="col-md-3 d-none d-md-block" aria-hidden="true" />
+          <div className="col-md-3 d-none d-md-block" aria-hidden="true" />
         </div>
 
-        <div className="text-center mt-5">
-          <button
-            className="save-btn px-5 py-2 shadow"
-            disabled={loading}
-            onClick={saveStudent}
-          >
-            {loading ? "Saving Data..." : "💾 Save Student Record"}
-          </button>
+        <div className="row g-3 mt-1">
+          <div className="col-12">
+            <hr className="my-2 opacity-25" />
+          </div>
+        </div>
+
+        <div className="row g-3 mt-3">
+          <div className="col-12 text-center">
+            <button
+              className="save-btn px-5 py-2 shadow"
+              disabled={loading}
+              onClick={saveStudent}
+            >
+              {loading ? "Saving Data..." : "💾 Save Student Record"}
+            </button>
+          </div>
         </div>
       </div>
 

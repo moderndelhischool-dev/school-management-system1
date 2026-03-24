@@ -215,16 +215,77 @@
 // }
 
 // export default UserFees;
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { jsPDF } from "jspdf";
 import { db } from "../../firebase/firebase";
-import { doc, setDoc, Timestamp } from "firebase/firestore";
+import { applyRazorpayPaymentApproval } from "../../utils/applyRazorpayPaymentApproval";
+
+/** Same key in session + local: survives tab close / logout on this browser */
+const FEE_SYNC_STORAGE_KEY = "school_app_fee_firestore_sync_pending";
+
+function readPendingSyncPayload(studentEmail) {
+  if (typeof window === "undefined" || !studentEmail) return null;
+  try {
+    const raw =
+      sessionStorage.getItem(FEE_SYNC_STORAGE_KEY) 
+      // || localStorage.getItem(FEE_SYNC_STORAGE_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    if (p.studentEmail !== studentEmail) return null;
+    return {
+      paymentId: p.paymentId,
+      paidAmount: Number(p.paidAmount),
+      razorpayResponse: p.razorpayResponse || {},
+    };
+  } catch {
+    sessionStorage.removeItem(FEE_SYNC_STORAGE_KEY);
+    // localStorage.removeItem(FEE_SYNC_STORAGE_KEY);
+    return null;
+  }
+}
 
 function UserFees({ student, darkMode }) {
   const [payAmount, setPayAmount] = useState("");
-  const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
-  const [paymentSuccessData, setPaymentSuccessData] = useState(null);
+  /** Last successful payment — for receipt download */
+  const [receipt, setReceipt] = useState(null);
+  /** Razorpay succeeded but Firestore save failed — user can retry same payment */
+  const [pendingSync, setPendingSync] = useState(null);
+
+  useEffect(() => {
+    if (!student?.email) return;
+    const restored = readPendingSyncPayload(student.email);
+    if (!restored) return;
+    setPendingSync(restored);
+    setMsg(
+      "❌ A payment reached Razorpay but school records did not save. Use Retry sync below.",
+    );
+  }, [student?.email]);
+
+  const persistPendingSync = (payload) => {
+    const json = JSON.stringify({ studentEmail: student.email, ...payload });
+    try {
+      sessionStorage.setItem(FEE_SYNC_STORAGE_KEY, json);
+    } catch {
+      /* quota / private mode */
+    }
+    try {
+      localStorage.setItem(FEE_SYNC_STORAGE_KEY, json);
+    } catch {
+      /* quota / private mode */
+    }
+  };
+
+  const clearPendingSyncStorage = () => {
+    try {
+      sessionStorage.removeItem(FEE_SYNC_STORAGE_KEY);
+      //   localStorage.removeItem(FEE_SYNC_STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
+
+  };
 
   const loadRazorpay = () => {
     return new Promise((resolve) => {
@@ -262,13 +323,45 @@ function UserFees({ student, darkMode }) {
       currency: "INR",
       name: "School Fees Online",
       description: `Payment for ${student.name} (${student.rollNo})`,
-      handler: (response) => {
-        setPaymentSuccessData({
-          amount: amount,
-          id: response.razorpay_payment_id,
-        });
-        setMsg("✅ Payment Authorized! Now upload the screenshot below.");
-        setLoading(false);
+      handler: async (response) => {
+        const paymentId = response.razorpay_payment_id;
+        try {
+          const result = await applyRazorpayPaymentApproval(db, {
+            paymentId,
+            paidAmount: amount,
+            student,
+            razorpayResponse: response,
+          });
+          clearPendingSyncStorage();
+          setPendingSync(null);
+          const issuedAt = new Date().toLocaleString("en-IN");
+          setReceipt({ amount, paymentId, issuedAt });
+          setPayAmount("");
+          setMsg(
+            result?.alreadyProcessed
+              ? "✅ This payment is already on file. You can download the receipt again."
+              : "✅ Payment successful! Fees updated. You can download your receipt below.",
+          );
+        } catch (err) {
+          console.error(err);
+          const payload = {
+            paymentId,
+            paidAmount: amount,
+            razorpayResponse: {
+              razorpay_order_id: response.razorpay_order_id || "",
+              razorpay_payment_id: paymentId,
+              razorpay_signature: response.razorpay_signature || "",
+            },
+          };
+          setPendingSync(payload);
+          persistPendingSync(payload);
+          setMsg(
+            "❌ Razorpay may have charged you but saving to school failed. Tap “Retry sync” or contact office with payment ID: " +
+              paymentId,
+          );
+        } finally {
+          setLoading(false);
+        }
       },
       prefill: {
         name: student.name,
@@ -281,60 +374,74 @@ function UserFees({ student, darkMode }) {
     new window.Razorpay(options).open();
   };
 
-  const handleFinalSubmission = async () => {
-    if (!file) {
-      setMsg("❌ Please upload the payment screenshot");
-      return;
-    }
-
+  const handleRetrySync = async () => {
+    if (!pendingSync) return;
+    const syncSnapshot = pendingSync;
+    setLoading(true);
+    setMsg("⏳ Retrying save to school records...");
     try {
-      setLoading(true);
-      setMsg("⏳ Uploading Proof...");
-
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", "school_slips");
-
-      const cloudRes = await fetch(
-        "https://api.cloudinary.com/v1_1/decwyq6sn/image/upload",
-        { method: "POST", body: formData },
-      );
-
-      const cloudData = await cloudRes.json();
-      if (!cloudData.secure_url) throw new Error("Upload failed");
-
-      const downloadURL = cloudData.secure_url;
-
-      const finalID = paymentSuccessData.id;
-      await setDoc(doc(db, "payments", finalID), {
-        studentEmail: student.email,
-        studentName: student.name,
-        rollNo: student.rollNo, // Extra Detail
-        class: student.class, // Extra Detail
-        paidAmount: paymentSuccessData.amount,
-        slipUrl: downloadURL,
-        status: "pending",
-        mode: "Online (Razorpay)",
-        paymentId: finalID,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-        month: new Date().toLocaleString("default", {
-          month: "long",
-          year: "numeric",
-        }),
+      const result = await applyRazorpayPaymentApproval(db, {
+        paymentId: syncSnapshot.paymentId,
+        paidAmount: syncSnapshot.paidAmount,
+        student,
+        razorpayResponse: syncSnapshot.razorpayResponse,
       });
-
-      setMsg("🎉 Request Submitted! Wait for Admin Approval.");
+      clearPendingSyncStorage();
+      setPendingSync(null);
+      const { paymentId, paidAmount } = syncSnapshot;
+      const issuedAt = new Date().toLocaleString("en-IN");
+      setReceipt({ amount: paidAmount, paymentId, issuedAt });
       setPayAmount("");
-      setFile(null);
-      setPaymentSuccessData(null);
-      setTimeout(() => window.location.reload(), 3000);
+      setMsg(
+        result?.alreadyProcessed
+          ? "✅ Record is now in sync. You can download your receipt."
+          : "✅ Saved successfully. Fees updated. You can download your receipt below.",
+      );
     } catch (err) {
       console.error(err);
-      setMsg("❌ Submission failed. Check Cloudinary settings.");
+      setMsg(
+        "❌ Retry failed. Please try again or contact school with payment ID: " +
+          syncSnapshot.paymentId,
+      );
     } finally {
       setLoading(false);
     }
+  };
+
+  const downloadReceiptPdf = () => {
+    if (!receipt) return;
+    const docPdf = new jsPDF({ unit: "pt", format: "a4" });
+    const margin = 48;
+    let y = margin;
+    docPdf.setFontSize(16);
+    docPdf.text("Fee payment receipt", margin, y);
+    y += 28;
+    docPdf.setFontSize(10);
+    docPdf.text(`Date: ${receipt.issuedAt}`, margin, y);
+    y += 22;
+    docPdf.text(`Student: ${student.name}`, margin, y);
+    y += 18;
+    docPdf.text(`Roll no: ${student.rollNo ?? "—"}`, margin, y);
+    y += 18;
+    docPdf.text(`Class: ${student.class ?? "—"}`, margin, y);
+    y += 18;
+    docPdf.text(`Email: ${student.email}`, margin, y);
+    y += 28;
+    docPdf.setFontSize(11);
+    docPdf.text(`Amount paid: ₹${receipt.amount}`, margin, y);
+    y += 20;
+    docPdf.setFontSize(10);
+    docPdf.text(`Razorpay payment ID: ${receipt.paymentId}`, margin, y);
+    y += 18;
+    docPdf.text(`Mode: Online (Razorpay)`, margin, y);
+    y += 24;
+    docPdf.setFontSize(9);
+    docPdf.text(
+      "This receipt is system-generated after successful payment.",
+      margin,
+      y,
+    );
+    docPdf.save(`fee-receipt-${receipt.paymentId}.pdf`);
   };
 
   if (!student) return null;
@@ -342,8 +449,7 @@ function UserFees({ student, darkMode }) {
   return (
     <div className={`payment-container ${darkMode ? "dark" : "light"}`}>
       <div className="payment-wrapper shadow-lg">
-        {!paymentSuccessData ? (
-          <div className="payment-step animate-in">
+        <div className="payment-step animate-in">
             <h4 className="fw-bold mb-4 text-center">💳 Online Fees Payment</h4>
 
             {/* --- Extra Student Details Section --- */}
@@ -385,40 +491,84 @@ function UserFees({ student, darkMode }) {
             <button
               className="pay-btn"
               onClick={handleOnlinePayment}
-              disabled={loading}
+              disabled={loading || !!pendingSync}
+              title={
+                pendingSync
+                  ? "Finish Retry sync for the previous payment first"
+                  : undefined
+              }
             >
               {loading ? "Processing..." : `Pay ₹${payAmount || "0"}`}
             </button>
-          </div>
-        ) : (
-          <div className="upload-step animate-in text-center">
-            {/* ... (Upload screen same rahega) ... */}
-            <div className="success-icon mb-2">✔️</div>
-            <h4 className="fw-bold text-success mb-2">Payment Authorized</h4>
-            <p className="small text-muted mb-4">
-              Trans ID: {paymentSuccessData.id}
-            </p>
 
-            <div className="upload-box p-4 rounded-4 border-2 border-dashed">
-              <label className="fw-bold d-block mb-3">
-                Upload Payment Screenshot
-              </label>
-              <input
-                type="file"
-                className="form-control mb-3"
-                onChange={(e) => setFile(e.target.files[0])}
-                accept="image/*"
-              />
-              <button
-                className="submit-btn"
-                onClick={handleFinalSubmission}
-                disabled={loading}
+            {pendingSync && (
+              <div
+                className="sync-retry-box mt-3 p-3 rounded-3"
+                style={{
+                  border: "2px dashed #f59e0b",
+                  background: darkMode ? "#1e293b" : "#fffbeb",
+                }}
               >
-                {loading ? "Submitting..." : "Submit for Verification"}
-              </button>
-            </div>
+                <p className="small fw-bold mb-1 text-warning">
+                  Action needed — school record not saved
+                </p>
+                <p className="small text-muted mb-2">
+                  Razorpay payment ID:{" "}
+                  <strong className="text-break">{pendingSync.paymentId}</strong>
+                  <br />
+                  Amount: ₹{pendingSync.paidAmount}
+                </p>
+                <button
+                  type="button"
+                  className="btn w-100"
+                  style={{
+                    background: "#D4A24C",
+                    color: "#0F4C6C",
+                    fontWeight: 700,
+                  }}
+                  onClick={handleRetrySync}
+                  disabled={loading}
+                >
+                  {loading ? "Working..." : "Retry sync (save to school)"}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-link btn-sm text-muted mt-2 p-0"
+                  disabled={loading}
+                  onClick={() => {
+                    clearPendingSyncStorage();
+                    setPendingSync(null);
+                    setMsg("");
+                  }}
+                >
+                  Dismiss (payment already synced? check balance first)
+                </button>
+              </div>
+            )}
+
+            {receipt && (
+              <div className="mt-4 d-grid gap-2">
+                <button
+                  type="button"
+                  className="submit-btn"
+                  onClick={downloadReceiptPdf}
+                >
+                  Download receipt (PDF)
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary btn-sm"
+                  onClick={() => {
+                    setReceipt(null);
+                    setMsg("");
+                    window.location.reload();
+                  }}
+                >
+                  Refresh balance
+                </button>
+              </div>
+            )}
           </div>
-        )}
 
         {msg && (
           <div

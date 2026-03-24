@@ -222,6 +222,7 @@ import {
   getDoc,
   Timestamp,
 } from "firebase/firestore";
+import { computeFeeBalances } from "../../utils/applyRazorpayPaymentApproval";
 
 function PaymentRequests({ darkMode }) {
   const [payments, setPayments] = useState([]);
@@ -272,17 +273,16 @@ function PaymentRequests({ darkMode }) {
       const studentSnap = await getDoc(studentRef);
       if (studentSnap.exists()) {
         const s = studentSnap.data();
-        const total = Number(s.totalFees || 0);
-        const oldPaid = Number(s.paidFees || 0);
-        const paidNow = Number(payment.paidAmount || 0);
-
-        const newPaid = oldPaid + paidNow;
-        const newPending = Math.max(total - newPaid, 0);
+        const { newPaid, newPending, feeStatus } = computeFeeBalances(
+          s.totalFees,
+          s.paidFees,
+          payment.paidAmount,
+        );
 
         await updateDoc(studentRef, {
           paidFees: newPaid,
           pendingFees: newPending,
-          feeStatus: newPending === 0 ? "Completed" : "Pending",
+          feeStatus,
           updatedAt: Timestamp.now(),
         });
       }
