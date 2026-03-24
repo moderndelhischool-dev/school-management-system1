@@ -1,437 +1,233 @@
 // import { useEffect, useState } from "react";
-// import { db } from "../firebase/firebase";
+// import { db } from "../../firebase/firebase"; // Apna path check kar lena
 // import {
 //   collection,
 //   query,
 //   where,
-//   getDocs,
+//   onSnapshot,
 //   doc,
 //   getDoc,
 // } from "firebase/firestore";
+// import { jsPDF } from "jspdf";
+// import "jspdf-autotable";
+// import { HiOutlineDownload, HiOutlineEye, HiOutlineX } from "react-icons/hi";
 
-// function PaymentHistory({ email }) {
+// function PaymentHistory({ email, darkMode }) {
 //   const [payments, setPayments] = useState([]);
 //   const [loading, setLoading] = useState(true);
-//   const [totalFees, setTotalFees] = useState(0);
-//   const [darkMode, setDarkMode] = useState(false);
+//   const [studentInfo, setStudentInfo] = useState(null);
+//   const [selectedSlip, setSelectedSlip] = useState(null); // Slip Preview ke liye
 
 //   useEffect(() => {
-//     const savedTheme = localStorage.getItem("theme");
-//     if (savedTheme === "dark") {
-//       setDarkMode(true);
-//     }
+//     if (!email) return;
 
-//     const load = async () => {
+//     // Student ki extra details fetch karne ke liye (PDF ke kaam aayega)
+//     const fetchStudent = async () => {
 //       const studentSnap = await getDoc(doc(db, "students", email));
-//       if (studentSnap.exists()) {
-//         setTotalFees(Number(studentSnap.data().totalFees || 0));
-//       }
+//       if (studentSnap.exists()) setStudentInfo(studentSnap.data());
+//     };
+//     fetchStudent();
 
-//       const q = query(
-//         collection(db, "payments"),
-//         where("studentEmail", "==", email),
-//         where("status", "==", "approved"),
-//       );
+//     // Payments fetch karne ke liye
+//     const q = query(
+//       collection(db, "payments"),
+//       where("studentEmail", "==", email),
+//     );
 
-//       const snap = await getDocs(q);
-//       const data = snap.docs.map((d) => ({
-//         id: d.id,
-//         ...d.data(),
-//       }));
-
-//       data.sort((a, b) => a.createdAt.seconds - b.createdAt.seconds);
-
+//     const unsubscribe = onSnapshot(q, (snapshot) => {
+//       const data = snapshot.docs
+//         .map((d) => ({ id: d.id, ...d.data() }))
+//         .sort(
+//           (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0),
+//         );
 //       setPayments(data);
 //       setLoading(false);
-//     };
+//     });
 
-//     load();
+//     return () => unsubscribe();
 //   }, [email]);
 
-//   if (loading)
-//     return (
-//       <p className={darkMode ? "text-light" : ""}>Loading payment history...</p>
-//     );
+//   // PDF Generate Function
+//   const generatePDF = (p) => {
+//     const doc = new jsPDF();
+//     doc.setFontSize(20);
+//     doc.setTextColor(15, 76, 108); // School Theme Color
+//     doc.text("FEE RECEIPT", 105, 20, { align: "center" });
 
-//   if (payments.length === 0)
-//     return (
-//       <p style={{ color: darkMode ? "#c4b5fd" : "#6b21a8" }}>
-//         No payment history found.
-//       </p>
-//     );
+//     doc.setFontSize(12);
+//     doc.setTextColor(0, 0, 0);
+//     doc.text(`Student Name: ${studentInfo?.name || p.studentName}`, 14, 40);
+//     doc.text(`Roll No: ${studentInfo?.rollNo || "N/A"}`, 14, 47);
+//     doc.text(`Class: ${studentInfo?.class || "N/A"}`, 14, 54);
 
-//   let cumulativePaid = 0;
+//     doc.autoTable({
+//       startY: 65,
+//       head: [["Description", "Details"]],
+//       body: [
+//         ["Transaction ID", p.paymentId || p.id],
+//         ["Fees Month", p.month],
+//         ["Amount Paid", `Rs. ${p.paidAmount}`],
+//         ["Payment Mode", p.mode || "Online"],
+//         ["Status", p.status.toUpperCase()],
+//         [
+//           "Date",
+//           p.createdAt?.seconds
+//             ? new Date(p.createdAt.seconds * 1000).toLocaleString()
+//             : "N/A",
+//         ],
+//       ],
+//       theme: "grid",
+//       headStyles: { fillColor: [15, 76, 108] },
+//     });
+
+//     doc.text(
+//       "This is a computer generated receipt.",
+//       105,
+//       doc.lastAutoTable.finalY + 20,
+//       { align: "center" },
+//     );
+//     doc.save(`Receipt_${p.month}_${studentInfo?.name}.pdf`);
+//   };
+
+//   if (loading) return <div className="p-5 text-center">Loading...</div>;
 
 //   return (
-//     <div
-//       className={`card shadow-sm p-4 payment-card ${
-//         darkMode ? "bg-dark text-light border-secondary" : ""
-//       }`}
-//     >
-//       <h5 className="mb-4 fw-bold text-purple">🧾 Payment History</h5>
+//     <div className={`history-container ${darkMode ? "dark" : "light"}`}>
+//       <div className="card-custom shadow-sm p-4">
+//         <h4 className="fw-bold mb-4">🧾 Payment History</h4>
 
-//       {/* SUMMARY */}
-//       <div className="mb-4 p-3 rounded summary-box">
-//         <div className="d-flex justify-content-between">
-//           <span>Total Fees</span>
-//           <strong>₹ {totalFees}</strong>
-//         </div>
-//         <div className="d-flex justify-content-between">
-//           <span>Total Payments</span>
-//           <strong>{payments.length}</strong>
-//         </div>
-//       </div>
-
-//       {/* DESKTOP TABLE */}
-//       <div className="table-responsive d-none d-md-block">
-//         <table
-//           className={`table align-middle ${
-//             darkMode ? "table-dark" : "table-bordered"
-//           }`}
-//         >
-//           <thead className={darkMode ? "" : "table-light"}>
-//             <tr>
-//               <th>#</th>
-//               <th>Paid</th>
-//               <th>Remaining</th>
-//               <th>Month</th>
-//               <th>Status</th>
-//               <th>Date</th>
-//             </tr>
-//           </thead>
-
-//           <tbody>
-//             {payments.map((p, i) => {
-//               cumulativePaid += Number(p.paidAmount || 0);
-//               const remaining = Math.max(totalFees - cumulativePaid, 0);
-
-//               return (
-//                 <tr key={p.id}>
-//                   <td>{i + 1}</td>
-
-//                   <td className="text-success fw-semibold">₹ {p.paidAmount}</td>
-
-//                   <td
-//                     className={
-//                       remaining === 0
-//                         ? "text-success fw-semibold"
-//                         : "text-danger fw-semibold"
-//                     }
-//                   >
-//                     ₹ {remaining}
-//                   </td>
-
-//                   <td>{p.month || "—"}</td>
-
-//                   <td>
-//                     <span className="badge bg-purple">approved</span>
-//                   </td>
-
-//                   <td>
-//                     {new Date(p.createdAt.seconds * 1000).toLocaleDateString(
-//                       "en-IN",
-//                     )}
+//         <div className="table-responsive">
+//           <table className="table custom-table align-middle">
+//             <thead>
+//               <tr className={darkMode ? "text-white" : "text-dark"}>
+//                 <th>#</th>
+//                 <th>Paid</th>
+//                 <th>Month</th>
+//                 <th>Status</th>
+//                 <th>Slip</th> {/* Naya Column */}
+//                 <th>Date & Time</th>
+//                 <th className="text-end">Action</th>
+//               </tr>
+//             </thead>
+//             <tbody>
+//               {payments.length > 0 ? (
+//                 payments.map((p, i) => (
+//                   <tr key={p.id} className={darkMode ? "text-white-50" : ""}>
+//                     <td>{i + 1}</td>
+//                     <td className="fw-bold text-primary">₹{p.paidAmount}</td>
+//                     <td>{p.month}</td>
+//                     <td>
+//                       <span
+//                         className={`status-badge ${p.status?.toLowerCase()}`}
+//                       >
+//                         {p.status}
+//                       </span>
+//                     </td>
+//                     <td>
+//                       {/* Slip View Button */}
+//                       {p.slipUrl ? (
+//                         <button
+//                           className="btn-view-slip"
+//                           onClick={() => setSelectedSlip(p.slipUrl)}
+//                         >
+//                           <HiOutlineEye /> View
+//                         </button>
+//                       ) : (
+//                         <span className="text-muted small">No Slip</span>
+//                       )}
+//                     </td>
+//                     <td className="small">
+//                       {p.createdAt?.seconds
+//                         ? new Date(p.createdAt.seconds * 1000).toLocaleString()
+//                         : "—"}
+//                     </td>
+//                     <td className="text-end">
+//                       {/* PDF Only if Approved */}
+//                       {p.status === "approved" ? (
+//                         <button
+//                           className="btn-pdf-download"
+//                           onClick={() => generatePDF(p)}
+//                         >
+//                           <HiOutlineDownload /> PDF
+//                         </button>
+//                       ) : (
+//                         <span className="text-muted small">
+//                           Pending Approval
+//                         </span>
+//                       )}
+//                     </td>
+//                   </tr>
+//                 ))
+//               ) : (
+//                 <tr>
+//                   <td colSpan="7" className="text-center p-5 text-muted">
+//                     No Payment Records Found.
 //                   </td>
 //                 </tr>
-//               );
-//             })}
-//           </tbody>
-//         </table>
+//               )}
+//             </tbody>
+//           </table>
+//         </div>
 //       </div>
 
-//       {/* MOBILE CARDS */}
-//       <div className="d-md-none">
-//         {payments.map((p, i) => {
-//           cumulativePaid += Number(p.paidAmount || 0);
-//           const remaining = Math.max(totalFees - cumulativePaid, 0);
-
-//           return (
-//             <div
-//               key={p.id}
-//               className={`mobile-card p-3 mb-3 ${
-//                 darkMode ? "bg-dark text-light border-secondary" : ""
-//               }`}
+//       {/* --- Image Preview Modal --- */}
+//       {selectedSlip && (
+//         <div
+//           className="slip-modal-overlay"
+//           onClick={() => setSelectedSlip(null)}
+//         >
+//           <div
+//             className="slip-modal-content"
+//             onClick={(e) => e.stopPropagation()}
+//           >
+//             <button
+//               className="close-modal"
+//               onClick={() => setSelectedSlip(null)}
 //             >
-//               <div className="d-flex justify-content-between mb-2">
-//                 <strong>Payment #{i + 1}</strong>
-//                 <span className="badge bg-purple">approved</span>
-//               </div>
-
-//               <div className="small text-muted mb-2">
-//                 {new Date(p.createdAt.seconds * 1000).toLocaleDateString(
-//                   "en-IN",
-//                 )}
-//               </div>
-
-//               <div>
-//                 <b>Paid:</b>{" "}
-//                 <span className="text-success fw-semibold">
-//                   ₹ {p.paidAmount}
-//                 </span>
-//               </div>
-
-//               <div>
-//                 <b>Remaining:</b>{" "}
-//                 <span
-//                   className={
-//                     remaining === 0
-//                       ? "text-success fw-semibold"
-//                       : "text-danger fw-semibold"
-//                   }
-//                 >
-//                   ₹ {remaining}
-//                 </span>
-//               </div>
-
-//               <div>
-//                 <b>Month:</b> {p.month || "—"}
-//               </div>
-//             </div>
-//           );
-//         })}
-//       </div>
+//               <HiOutlineX size={30} />
+//             </button>
+//             <img src={selectedSlip} alt="Payment Proof" />
+//           </div>
+//         </div>
+//       )}
 
 //       <style>{`
-//         .payment-card {
-//           border-radius: 16px;
-//           transition: 0.3s ease;
-//           border: 1px solid #ddd6fe;
+//         .card-custom {
+//           background: ${darkMode ? "#1e293b" : "#ffffff"};
+//           border-radius: 15px;
+//           border: 1px solid ${darkMode ? "#334155" : "#edf2f7"};
+//         }
+//         .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+//         .status-badge.approved { background: #dcfce7; color: #166534; }
+//         .status-badge.pending { background: #fef9c3; color: #854d0e; }
+
+//         .btn-view-slip {
+//           background: transparent; border: 1px solid #0F4C6C; color: #0F4C6C;
+//           padding: 3px 10px; border-radius: 6px; display: flex; align-items: center; gap: 5px; cursor: pointer;
+//         }
+//         .btn-view-slip:hover { background: #0F4C6C; color: white; }
+
+//         .btn-pdf-download {
+//           background: #0F4C6C; color: #D4A24C; border: none;
+//           padding: 6px 12px; border-radius: 8px; cursor: pointer; font-weight: 600;
 //         }
 
-//         .payment-card:hover {
-//           box-shadow: 0 12px 35px rgba(124,58,237,0.25);
+//         /* Modal Styling */
+//         .slip-modal-overlay {
+//           position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+//           background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 1000;
+//         }
+//         .slip-modal-content { position: relative; max-width: 500px; width: 90%; }
+//         .slip-modal-content img { width: 100%; border-radius: 12px; border: 4px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+//         .close-modal {
+//           position: absolute; top: -45px; right: 0; background: none; border: none; color: white; cursor: pointer;
 //         }
 
-//         .text-purple {
-//           color: #7c3aed !important;
-//         }
-
-//         .summary-box {
-//           background: linear-gradient(135deg,#f3e8ff,#ede9fe);
-//           font-weight: 500;
-//         }
-
-//         body.dark-mode .summary-box {
-//           background: linear-gradient(135deg,#1e1b4b,#0f172a);
-//         }
-
-//         .bg-purple {
-//           background: linear-gradient(135deg,#7c3aed,#4c1d95) !important;
-//           color: white;
-//         }
-
-//         .mobile-card {
-//           border-radius: 12px;
-//           border: 1px solid #ddd6fe;
-//           transition: 0.3s ease;
-//         }
-
-//         .mobile-card:hover {
-//           transform: translateY(-3px);
-//           box-shadow: 0 8px 20px rgba(124,58,237,0.25);
-//         }
+//         .custom-table thead th { border-bottom: 2px solid #edf2f7; padding-bottom: 15px; }
+//         .custom-table tbody td { padding: 15px 0; border-bottom: 1px solid ${darkMode ? "#334155" : "#f1f5f9"}; }
 //       `}</style>
 //     </div>
 //   );
 // }
 
 // export default PaymentHistory;
-import { useEffect, useState } from "react";
-import { db } from "../firebase/firebase";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  doc,
-  getDoc,
-} from "firebase/firestore";
-
-function PaymentHistory({ email, darkMode }) {
-  const [payments, setPayments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [totalFees, setTotalFees] = useState(0);
-
-  useEffect(() => {
-    const loadPayments = async () => {
-      try {
-        setLoading(true);
-
-        // 🔥 Get student total fees
-        const studentSnap = await getDoc(doc(db, "students", email));
-        if (studentSnap.exists()) {
-          setTotalFees(Number(studentSnap.data().totalFees || 0));
-        }
-
-        // 🔥 Get approved payments
-        const q = query(
-          collection(db, "payments"),
-          where("studentEmail", "==", email),
-          where("status", "==", "approved"),
-        );
-
-        const snap = await getDocs(q);
-
-        const data = snap.docs.map((d) => ({
-          id: d.id,
-          ...d.data(),
-        }));
-
-        // 🔥 Sort by latest timestamp
-        data.sort((a, b) => {
-          const aTime =
-            a.approvedAt?.seconds ||
-            a.updatedAt?.seconds ||
-            a.createdAt?.seconds ||
-            0;
-
-          const bTime =
-            b.approvedAt?.seconds ||
-            b.updatedAt?.seconds ||
-            b.createdAt?.seconds ||
-            0;
-
-          return bTime - aTime;
-        });
-
-        setPayments(data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (email) loadPayments();
-  }, [email]);
-
-  if (loading)
-    return (
-      <p style={{ color: darkMode ? "#fff" : "#0F4C6C" }}>
-        Loading payment history...
-      </p>
-    );
-
-  if (payments.length === 0)
-    return (
-      <p style={{ color: darkMode ? "#D4A24C" : "#0F4C6C" }}>
-        No payment history found.
-      </p>
-    );
-
-  let cumulativePaid = 0;
-
-  return (
-    <div
-      className="payment-card shadow-sm p-4"
-      style={{
-        backgroundColor: darkMode ? "#1B2A35" : "#ffffff",
-        color: darkMode ? "#ffffff" : "#0F4C6C",
-        border: darkMode ? "1px solid #243644" : "1px solid #E5E7EB",
-        borderRadius: "18px",
-      }}
-    >
-      <h5 className="mb-4 fw-bold">🧾 Payment History</h5>
-
-      {/* SUMMARY */}
-      <div
-        className="mb-4 p-3 rounded"
-        style={{
-          background: darkMode
-            ? "linear-gradient(135deg,#243644,#1B2A35)"
-            : "linear-gradient(135deg,#F4F6F8,#ffffff)",
-          border: darkMode ? "1px solid #334155" : "1px solid #E5E7EB",
-        }}
-      >
-        <div className="d-flex justify-content-between">
-          <span>Total Fees</span>
-          <strong>₹ {totalFees}</strong>
-        </div>
-        <div className="d-flex justify-content-between">
-          <span>Total Payments</span>
-          <strong>{payments.length}</strong>
-        </div>
-      </div>
-
-      {/* TABLE */}
-      <div className="table-responsive">
-        <table className={`table align-middle ${darkMode ? "table-dark" : ""}`}>
-          <thead
-            style={{
-              background: "linear-gradient(90deg,#0F4C6C,#1B5E84)",
-              color: "white",
-            }}
-          >
-            <tr>
-              <th>#</th>
-              <th>Paid</th>
-              <th>Remaining</th>
-              <th>Month</th>
-              <th>Status</th>
-              <th>Approval Date & Time</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {payments.map((p, i) => {
-              cumulativePaid += Number(p.paidAmount || 0);
-              const remaining = Math.max(totalFees - cumulativePaid, 0);
-
-              const time =
-                p.approvedAt?.seconds ||
-                p.updatedAt?.seconds ||
-                p.createdAt?.seconds;
-
-              return (
-                <tr key={p.id}>
-                  <td>{i + 1}</td>
-
-                  <td
-                    style={{
-                      color: "#D4A24C",
-                      fontWeight: "600",
-                    }}
-                  >
-                    ₹ {p.paidAmount}
-                  </td>
-
-                  <td
-                    style={{
-                      color: remaining === 0 ? "#D4A24C" : "#dc2626",
-                      fontWeight: "600",
-                    }}
-                  >
-                    ₹ {remaining}
-                  </td>
-
-                  <td>{p.month || "—"}</td>
-
-                  <td>
-                    <span
-                      style={{
-                        background: "#D4A24C",
-                        color: "#0F4C6C",
-                        padding: "4px 10px",
-                        borderRadius: "12px",
-                        fontSize: "12px",
-                        fontWeight: "600",
-                      }}
-                    >
-                      Approved
-                    </span>
-                  </td>
-
-                  <td>
-                    {time ? new Date(time * 1000).toLocaleString("en-IN") : "—"}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-export default PaymentHistory;

@@ -1,5 +1,13 @@
 // import { useState } from "react";
 
+// import { HiOutlineViewGrid } from "react-icons/hi";
+// import { HiOutlineCalendar } from "react-icons/hi";
+// import { HiOutlineUserAdd } from "react-icons/hi";
+// import { HiOutlineUsers } from "react-icons/hi";
+// import { HiOutlineCreditCard } from "react-icons/hi";
+// import { HiOutlineShoppingBag } from "react-icons/hi";
+// import { HiOutlineDocumentText } from "react-icons/hi";
+
 // function Sidebar({ setPage, darkMode }) {
 //   const [active, setActive] = useState("dashboard");
 
@@ -18,19 +26,32 @@
 //       {/* Menu */}
 //       <div className="sidebar-menu">
 //         {[
-//           { id: "dashboard", label: " Dashboard" },
-//           { id: "events", label: "Event Manager" },
-//           { id: "add", label: "➕ Add Student" },
-//           { id: "view", label: " View Students" },
-//           { id: "payments", label: " Payment Requests" },
-//           { id: "uniform", label: " Uniform Requests" },
-//           { id: "certificate", label: " Certificate Requests" },
+//           { id: "dashboard", label: "Dashboard", icon: <HiOutlineViewGrid /> },
+//           { id: "events", label: "Event Manager", icon: <HiOutlineCalendar /> },
+//           { id: "add", label: "Add Student", icon: <HiOutlineUserAdd /> },
+//           { id: "view", label: "View Students", icon: <HiOutlineUsers /> },
+//           {
+//             id: "payments",
+//             label: "Payment Requests",
+//             icon: <HiOutlineCreditCard />,
+//           },
+//           {
+//             id: "uniform",
+//             label: "Uniform Requests",
+//             icon: <HiOutlineShoppingBag />,
+//           },
+//           {
+//             id: "certificate",
+//             label: "Certificate Requests",
+//             icon: <HiOutlineDocumentText />,
+//           },
 //         ].map((item) => (
 //           <button
 //             key={item.id}
 //             className={active === item.id ? "active-btn" : ""}
 //             onClick={() => handleClick(item.id)}
 //           >
+//             <span className="menu-icon">{item.icon}</span>
 //             {item.label}
 //           </button>
 //         ))}
@@ -59,6 +80,7 @@
 // }
 
 // /* Light Mode */
+
 // .sidebar-wrapper.light {
 //   background:linear-gradient(180deg,#0F4C6C,#1B5E84);
 //   color:white;
@@ -66,6 +88,7 @@
 // }
 
 // /* Dark Mode */
+
 // .sidebar-wrapper.dark {
 //   background:linear-gradient(180deg,#0b2230,#111827);
 //   color:#f1f5f9;
@@ -100,25 +123,40 @@
 //   font-weight:500;
 //   transition:all 0.3s ease;
 //   cursor:pointer;
+//   display:flex;
+//   align-items:center;
+//   gap:12px;
+// }
+
+// /* ===== ICON STYLE ===== */
+
+// .menu-icon{
+//   font-size:20px;
+//   display:flex;
+//   align-items:center;
 // }
 
 // /* Hover Light */
+
 // .sidebar-wrapper.light .sidebar-menu button:hover {
 //   background:rgba(255,255,255,0.15);
 //   transform:translateX(6px);
+//   color:black;
 // }
 
 // /* Hover Dark */
+
 // .sidebar-wrapper.dark .sidebar-menu button:hover {
 //   background:rgba(255,255,255,0.08);
 //   transform:translateX(6px);
+//   color:black;
 // }
 
 // /* ===== ACTIVE BUTTON ===== */
 
 // .active-btn {
 //   background:linear-gradient(90deg,#D4A24C,#C18F2D);
-//   color:#111 !important;
+//   color:white !important;
 //   font-weight:600;
 //   transform:translateX(6px);
 //   box-shadow:0 8px 20px rgba(212,162,76,0.4);
@@ -160,6 +198,7 @@ import { HiOutlineUsers } from "react-icons/hi";
 import { HiOutlineCreditCard } from "react-icons/hi";
 import { HiOutlineShoppingBag } from "react-icons/hi";
 import { HiOutlineDocumentText } from "react-icons/hi";
+import { HiOutlineClipboardList } from "react-icons/hi"; // ✅ NEW ICON
 
 function Sidebar({ setPage, darkMode }) {
   const [active, setActive] = useState("dashboard");
@@ -183,6 +222,14 @@ function Sidebar({ setPage, darkMode }) {
           { id: "events", label: "Event Manager", icon: <HiOutlineCalendar /> },
           { id: "add", label: "Add Student", icon: <HiOutlineUserAdd /> },
           { id: "view", label: "View Students", icon: <HiOutlineUsers /> },
+
+          // 🔥 NEW (Fees History)
+          {
+            id: "fees-history",
+            label: "Fees History",
+            icon: <HiOutlineClipboardList />,
+          },
+
           {
             id: "payments",
             label: "Payment Requests",
