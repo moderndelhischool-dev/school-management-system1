@@ -323,7 +323,7 @@ function PaymentRequests({ darkMode }) {
 
   return (
     <div className="container-fluid p-3">
-      <h4 className="mb-4 fw-bold">💰 Payment Verification Requests</h4>
+      <h4 className="mb-4 fw-bold">💰 Payment verification Requests</h4>
 
       <div className="table-responsive">
         <table
