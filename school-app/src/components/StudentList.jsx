@@ -5,7 +5,8 @@
 //   getDocs,
 //   doc,
 //   updateDoc,
-//   setDoc, // Naya import for fees history
+//   writeBatch,
+//   setDoc,
 //   deleteDoc,
 //   Timestamp,
 // } from "firebase/firestore";
@@ -16,6 +17,7 @@
 //   const [searchTerm, setSearchTerm] = useState("");
 //   const [editStudent, setEditStudent] = useState(null);
 //   const [deleteStudent, setDeleteStudent] = useState(null);
+//   const [updatingAll, setUpdatingAll] = useState(false);
 
 //   const months = [
 //     "January",
@@ -45,6 +47,53 @@
 //     loadStudents();
 //   }, []);
 
+//   /* ================= BULK UPDATE: MOVING COMPLETED TO NEXT MONTH ================= */
+//   const handleBulkNextMonth = async () => {
+//     const completedStudents = students.filter(
+//       (s) => s.feeStatus === "Completed",
+//     );
+//     if (completedStudents.length === 0) {
+//       alert("No 'Completed' students found!");
+//       return;
+//     }
+
+//     if (
+//       !window.confirm(
+//         `${completedStudents.length} students ko next month shift karein?`,
+//       )
+//     )
+//       return;
+
+//     setUpdatingAll(true);
+//     const batch = writeBatch(db);
+
+//     completedStudents.forEach((s) => {
+//       const currentIndex = months.indexOf(s.selectedMonth);
+//       const nextIndex = (currentIndex + 1) % 12;
+//       const nextMonthName = months[nextIndex];
+
+//       const studentRef = doc(db, "students", s.id);
+//       batch.update(studentRef, {
+//         selectedMonth: nextMonthName,
+//         paidFees: 0,
+//         pendingFees: Number(s.totalFees) || 0,
+//         feeStatus: "Pending",
+//         updatedAt: Timestamp.now(),
+//       });
+//     });
+
+//     try {
+//       await batch.commit();
+//       alert(`✅ Success! ${completedStudents.length} students updated.`);
+//       loadStudents();
+//     } catch (err) {
+//       console.error(err);
+//       alert("❌ Error updating students.");
+//     } finally {
+//       setUpdatingAll(false);
+//     }
+//   };
+
 //   const classes = [...new Set(students.map((s) => s.class))];
 
 //   const filteredStudents = students.filter((s) => {
@@ -52,11 +101,12 @@
 //     const matchSearch =
 //       (s.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
 //       (s.fatherName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+//       (s.rollNo || "").toString().includes(searchTerm) ||
 //       (s.email || "").toLowerCase().includes(searchTerm.toLowerCase());
 //     return matchClass && matchSearch;
 //   });
 
-//   /* ================= SAFE UPDATE WITH HISTORY ================= */
+//   /* ================= SAFE UPDATE WITH HISTORY & AUTO-SHIFT ================= */
 //   const updateStudent = async () => {
 //     const total = Number(editStudent.totalFees) || 0;
 //     let paid = Number(editStudent.paidFees) || 0;
@@ -68,27 +118,38 @@
 //     const status =
 //       pendingFees === 0 ? "Completed" : paid > 0 ? "Partial" : "Pending";
 
-//     // 1. Update Main Student Document
+//     let finalMonth = editStudent.selectedMonth;
+//     let finalPaid = paid;
+//     let finalPending = pendingFees;
+//     let finalStatus = status;
+
+//     if (status === "Completed") {
+//       const idx = months.indexOf(editStudent.selectedMonth);
+//       finalMonth = months[(idx + 1) % 12];
+//       finalPaid = 0;
+//       finalPending = total;
+//       finalStatus = "Pending";
+//     }
+
 //     const studentRef = doc(db, "students", editStudent.id);
 //     await updateDoc(studentRef, {
 //       ...editStudent,
+//       rollNo: editStudent.rollNo || "",
 //       totalFees: total,
-//       paidFees: paid,
-//       pendingFees,
-//       feeStatus: status,
+//       paidFees: finalPaid,
+//       pendingFees: finalPending,
+//       feeStatus: finalStatus,
+//       selectedMonth: finalMonth,
 //       feeDate: editStudent.feeDate
 //         ? Timestamp.fromDate(new Date(editStudent.feeDate))
 //         : null,
 //       updatedAt: Timestamp.now(),
 //     });
 
-//     // 2. Update Fees History Sub-collection
-//     // Hum month format ko "YYYY-MM" jaisa banate hain taaki History sort ho sake
 //     if (editStudent.selectedMonth) {
 //       const currentYear = new Date().getFullYear();
 //       const monthIndex = months.indexOf(editStudent.selectedMonth) + 1;
 //       const monthId = `${currentYear}-${monthIndex.toString().padStart(2, "0")}`;
-
 //       const historyRef = doc(db, "students", editStudent.id, "fees", monthId);
 
 //       await setDoc(
@@ -96,17 +157,18 @@
 //         {
 //           amount: total,
 //           paid: paid,
-//           status: status,
+//           status: "Completed",
+//           month: editStudent.selectedMonth,
 //           date: editStudent.feeDate
 //             ? Timestamp.fromDate(new Date(editStudent.feeDate))
 //             : Timestamp.now(),
 //           updatedAt: Timestamp.now(),
 //         },
 //         { merge: true },
-//       ); // merge: true se purana data delete nahi hoga
+//       );
 //     }
 
-//     alert("Student Details & Fees History Updated!");
+//     alert("✅ Student Details & History Updated!");
 //     setEditStudent(null);
 //     loadStudents();
 //   };
@@ -119,43 +181,48 @@
 
 //   return (
 //     <div className="container-fluid p-0">
-//       {/* CLASS BOXES */}
-//       <div className="mb-4 d-flex flex-wrap gap-3">
-//         <div
-//           className={`class-box ${selectedClass === null ? "active-box" : ""}`}
-//           onClick={() => setSelectedClass(null)}
-//         >
-//           All
-//         </div>
-
-//         {classes.map((cls) => (
+//       <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+//         <div className="d-flex flex-wrap gap-3">
 //           <div
-//             key={cls}
-//             className={`class-box ${selectedClass === cls ? "active-box" : ""}`}
-//             onClick={() => setSelectedClass(cls)}
+//             className={`class-box ${selectedClass === null ? "active-box" : ""}`}
+//             onClick={() => setSelectedClass(null)}
 //           >
-//             Class {cls}
+//             All
 //           </div>
-//         ))}
+//           {classes.map((cls) => (
+//             <div
+//               key={cls}
+//               className={`class-box ${selectedClass === cls ? "active-box" : ""}`}
+//               onClick={() => setSelectedClass(cls)}
+//             >
+//               Class {cls}
+//             </div>
+//           ))}
+//         </div>
+//         <button
+//           className="btn bulk-update-btn"
+//           onClick={handleBulkNextMonth}
+//           disabled={updatingAll}
+//         >
+//           {updatingAll ? "⏳ Updating..." : "🚀 Move Completed to Next Month"}
+//         </button>
 //       </div>
 
-//       {/* SEARCH */}
 //       <div className="mb-4">
 //         <input
 //           type="text"
-//           placeholder="🔍 Search by name, father name or email..."
+//           placeholder="🔍 Search Roll No, Name, Father Name, Email..."
 //           className="form-control search-input"
 //           value={searchTerm}
 //           onChange={(e) => setSearchTerm(e.target.value)}
 //         />
 //       </div>
 
-//       {/* TABLE */}
 //       <div className="table-responsive">
 //         <table className={`table ${darkMode ? "table-dark" : ""}`}>
 //           <thead className="blue-head">
 //             <tr>
-//               <th>#</th>
+//               <th>Roll No</th>
 //               <th>Name</th>
 //               <th>Father Name</th>
 //               <th>Email</th>
@@ -169,11 +236,10 @@
 //               <th>Delete</th>
 //             </tr>
 //           </thead>
-
 //           <tbody>
-//             {filteredStudents.map((s, i) => (
+//             {filteredStudents.map((s) => (
 //               <tr key={s.id}>
-//                 <td>{i + 1}</td>
+//                 <td>{s.rollNo || "—"}</td>
 //                 <td>{s.name}</td>
 //                 <td>{s.fatherName || "—"}</td>
 //                 <td>{s.email || "—"}</td>
@@ -224,13 +290,22 @@
 //         </table>
 //       </div>
 
-//       {/* EDIT FORM */}
 //       {editStudent && (
 //         <div className="edit-card mt-4 p-4 shadow-lg">
-//           <h5 className="mb-4">✏ Edit Student & Fees History</h5>
+//           <h5 className="mb-4">✏ Edit Student & Fees</h5>
 //           <div className="row g-3">
 //             <div className="col-md-4">
-//               <label className="small mb-1">Name</label>
+//               <label className="small fw-bold">Roll Number</label>
+//               <input
+//                 className="form-control dark-input"
+//                 value={editStudent.rollNo || ""}
+//                 onChange={(e) =>
+//                   setEditStudent({ ...editStudent, rollNo: e.target.value })
+//                 }
+//               />
+//             </div>
+//             <div className="col-md-4">
+//               <label className="small fw-bold">Name</label>
 //               <input
 //                 className="form-control dark-input"
 //                 value={editStudent.name}
@@ -240,7 +315,7 @@
 //               />
 //             </div>
 //             <div className="col-md-4">
-//               <label className="small mb-1">Father Name</label>
+//               <label className="small fw-bold">Father Name</label>
 //               <input
 //                 className="form-control dark-input"
 //                 value={editStudent.fatherName || ""}
@@ -250,7 +325,7 @@
 //               />
 //             </div>
 //             <div className="col-md-4">
-//               <label className="small mb-1">Email</label>
+//               <label className="small fw-bold">Email</label>
 //               <input
 //                 className="form-control dark-input"
 //                 value={editStudent.email || ""}
@@ -260,7 +335,7 @@
 //               />
 //             </div>
 //             <div className="col-md-4">
-//               <label className="small mb-1">Fee Month (Update History)</label>
+//               <label className="small fw-bold">Fee Month</label>
 //               <select
 //                 className="form-control dark-input"
 //                 value={editStudent.selectedMonth || ""}
@@ -271,7 +346,6 @@
 //                   })
 //                 }
 //               >
-//                 <option value="">Select Month</option>
 //                 {months.map((m) => (
 //                   <option key={m} value={m}>
 //                     {m}
@@ -280,7 +354,7 @@
 //               </select>
 //             </div>
 //             <div className="col-md-4">
-//               <label className="small mb-1">Fee Date</label>
+//               <label className="small fw-bold">Fee Date</label>
 //               <input
 //                 type="date"
 //                 className="form-control dark-input"
@@ -291,7 +365,7 @@
 //               />
 //             </div>
 //             <div className="col-md-4">
-//               <label className="small mb-1">Class</label>
+//               <label className="small fw-bold">Class</label>
 //               <input
 //                 className="form-control dark-input"
 //                 value={editStudent.class}
@@ -300,8 +374,8 @@
 //                 }
 //               />
 //             </div>
-//             <div className="col-md-6">
-//               <label className="small mb-1">Total Fees</label>
+//             <div className="col-md-4">
+//               <label className="small fw-bold">Total Fees</label>
 //               <input
 //                 type="number"
 //                 className="form-control dark-input"
@@ -311,8 +385,8 @@
 //                 }
 //               />
 //             </div>
-//             <div className="col-md-6">
-//               <label className="small mb-1">Paid Fees</label>
+//             <div className="col-md-4">
+//               <label className="small fw-bold">Paid Fees</label>
 //               <input
 //                 type="number"
 //                 className="form-control dark-input"
@@ -325,7 +399,7 @@
 //           </div>
 //           <div className="mt-4 d-flex gap-3">
 //             <button className="btn update-btn" onClick={updateStudent}>
-//               💾 Update Everything
+//               💾 Save All Changes
 //             </button>
 //             <button
 //               className="btn cancel-btn"
@@ -337,12 +411,10 @@
 //         </div>
 //       )}
 
-//       {/* DELETE MODAL */}
 //       {deleteStudent && (
 //         <div className="delete-overlay">
 //           <div className="delete-modal shadow-lg">
-//             <h6>Confirm Delete</h6>
-//             <p>Delete {deleteStudent.name}?</p>
+//             <h6>Delete {deleteStudent.name}?</h6>
 //             <div className="d-flex gap-3 mt-3">
 //               <button
 //                 className="btn cancel-btn"
@@ -359,27 +431,35 @@
 //       )}
 
 //       <style>{`
-//         .class-box { padding:10px 18px; border-radius:12px; cursor:pointer; background:${darkMode ? "#1B2A35" : "#F4F6F8"}; color:${darkMode ? "#ffffff" : "#0F4C6C"}; border:1px solid ${darkMode ? "#243644" : "#E5E7EB"}; transition:0.3s ease; }
+//         .class-box { padding:10px 18px; border-radius:12px; cursor:pointer; background:${darkMode ? "#1B2A35" : "#F4F6F8"}; color:${darkMode ? "#ffffff" : "#0F4C6C"}; border:1px solid ${darkMode ? "#243644" : "#E5E7EB"}; }
 //         .active-box, .class-box:hover { background:linear-gradient(135deg,#0F4C6C,#1B5E84); color:#D4A24C; }
-//         .blue-head { background:linear-gradient(90deg,#0F4C6C,#1B5E84); color:white; }
+//         .bulk-update-btn { background: #D4A24C; color: #0F4C6C; font-weight: bold; border:none; padding:10px 20px; border-radius:12px; cursor:pointer; }
+//         .blue-head { background:#0F4C6C; color:white; }
 //         .blue-text { color:#0F4C6C; font-weight:600; }
 //         .gold-text { color:#D4A24C; font-weight:600; }
 //         .badge-complete { background:#D4A24C; color:#0F4C6C; }
 //         .badge-pending { background:#dc2626; color:white; }
-//         .edit-btn, .update-btn { background:linear-gradient(135deg,#0F4C6C,#1B5E84); color:white; border:none; }
-//         .delete-btn { background:linear-gradient(135deg,#dc2626,#991b1b); color:white; border:none; }
-//         .cancel-btn { background:${darkMode ? "#334155" : "#e5e7eb"}; color:${darkMode ? "#ffffff" : "#000000"}; border:none; }
-//         .edit-card { background:${darkMode ? "#1B2A35" : "#ffffff"}; color:${darkMode ? "#ffffff" : "#000000"}; border-radius:18px; border:1px solid ${darkMode ? "#243644" : "#E5E7EB"}; animation:fadeIn 0.3s ease; }
-//         .delete-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index: 1000; }
-//         .delete-modal { background:${darkMode ? "#1B2A35" : "#ffffff"}; color:${darkMode ? "#ffffff" : "#000000"}; padding:30px; border-radius:16px; }
-//         @keyframes fadeIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+//         .edit-btn, .update-btn { background:#0F4C6C; color:white; border:none; cursor:pointer; }
+//         .delete-btn { background:#dc2626; color:white; border:none; cursor:pointer; }
+//         .cancel-btn {
+//           background: ${darkMode ? "#475569" : "#e2e8f0"};
+//           color: ${darkMode ? "#ffffff" : "#1e293b"};
+//           border: none;
+//           padding: 8px 16px;
+//           border-radius: 8px;
+//           cursor: pointer;
+//           font-weight: 500;
+//         }
+//         .cancel-btn:hover { background: ${darkMode ? "#64748b" : "#cbd5e1"}; }
+//         .edit-card { background:${darkMode ? "#1B2A35" : "#ffffff"}; border-radius:18px; border:1px solid #243644; }
+//         .delete-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:1000; }
+//         .dark-input { background: ${darkMode ? "#0f172a" : "#ffffff"}; color: ${darkMode ? "#ffffff" : "#000000"}; border: 1px solid ${darkMode ? "#334155" : "#cccccc"}; }
 //       `}</style>
 //     </div>
 //   );
 // }
 
 // export default StudentList;
-
 import { useEffect, useState } from "react";
 import { db } from "../firebase/firebase";
 import {
@@ -387,10 +467,12 @@ import {
   getDocs,
   doc,
   updateDoc,
-  setDoc, // Naya import for fees history
+  writeBatch,
+  setDoc,
   deleteDoc,
   Timestamp,
 } from "firebase/firestore";
+import Swal from "sweetalert2"; // 🔥 Professional Popups
 
 function StudentList({ darkMode }) {
   const [students, setStudents] = useState([]);
@@ -398,6 +480,7 @@ function StudentList({ darkMode }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [editStudent, setEditStudent] = useState(null);
   const [deleteStudent, setDeleteStudent] = useState(null);
+  const [updatingAll, setUpdatingAll] = useState(false);
 
   const months = [
     "January",
@@ -427,19 +510,80 @@ function StudentList({ darkMode }) {
     loadStudents();
   }, []);
 
-  const classes = [...new Set(students.map((s) => s.class))];
+  /* ================= PROFESSIONAL BULK UPDATE ================= */
+  const handleBulkNextMonth = async () => {
+    const completedStudents = students.filter(
+      (s) => s.feeStatus === "Completed",
+    );
 
-  const filteredStudents = students.filter((s) => {
-    const matchClass = selectedClass ? s.class === selectedClass : true;
-    const matchSearch =
-      (s.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (s.fatherName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (s.rollNo || "").toString().includes(searchTerm) || // Added Roll No search
-      (s.email || "").toLowerCase().includes(searchTerm.toLowerCase());
-    return matchClass && matchSearch;
-  });
+    if (completedStudents.length === 0) {
+      Swal.fire({
+        icon: "info",
+        title: "No Students Found",
+        text: 'Filhal kisi bhi student ki fees "Completed" nahi hai.',
+        background: darkMode ? "#1e293b" : "#fff",
+        color: darkMode ? "#fff" : "#000",
+        confirmButtonColor: "#D4A24C",
+      });
+      return;
+    }
 
-  /* ================= SAFE UPDATE WITH HISTORY ================= */
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: `${completedStudents.length} students ko agle mahine par shift karein?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#0F4C6C",
+      cancelButtonColor: "#dc2626",
+      confirmButtonText: "Yes, Move Them!",
+      background: darkMode ? "#1e293b" : "#fff",
+      color: darkMode ? "#fff" : "#000",
+    });
+
+    if (result.isConfirmed) {
+      setUpdatingAll(true);
+      const batch = writeBatch(db);
+
+      completedStudents.forEach((s) => {
+        const currentIndex = months.indexOf(s.selectedMonth);
+        const nextIndex = (currentIndex + 1) % 12;
+        const nextMonthName = months[nextIndex];
+
+        const studentRef = doc(db, "students", s.id);
+        batch.update(studentRef, {
+          selectedMonth: nextMonthName,
+          paidFees: 0,
+          pendingFees: Number(s.totalFees) || 0,
+          feeStatus: "Pending",
+          updatedAt: Timestamp.now(),
+        });
+      });
+
+      try {
+        await batch.commit();
+        Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: "Saare students agle mahine par move ho gaye hain.",
+          timer: 2000,
+          showConfirmButton: false,
+          background: darkMode ? "#1e293b" : "#fff",
+          color: darkMode ? "#fff" : "#000",
+        });
+        loadStudents();
+      } catch (err) {
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "Kuch galat ho gaya!",
+        });
+      } finally {
+        setUpdatingAll(false);
+      }
+    }
+  };
+
+  /* ================= SINGLE UPDATE LOGIC ================= */
   const updateStudent = async () => {
     const total = Number(editStudent.totalFees) || 0;
     let paid = Number(editStudent.paidFees) || 0;
@@ -451,94 +595,125 @@ function StudentList({ darkMode }) {
     const status =
       pendingFees === 0 ? "Completed" : paid > 0 ? "Partial" : "Pending";
 
-    // 1. Update Main Student Document
-    const studentRef = doc(db, "students", editStudent.id);
-    await updateDoc(studentRef, {
-      ...editStudent,
-      rollNo: editStudent.rollNo || "", // Added rollNo to Firestore update
-      totalFees: total,
-      paidFees: paid,
-      pendingFees,
-      feeStatus: status,
-      feeDate: editStudent.feeDate
-        ? Timestamp.fromDate(new Date(editStudent.feeDate))
-        : null,
-      updatedAt: Timestamp.now(),
-    });
+    let finalMonth = editStudent.selectedMonth;
+    let finalPaid = paid;
+    let finalPending = pendingFees;
+    let finalStatus = status;
 
-    // 2. Update Fees History Sub-collection
-    if (editStudent.selectedMonth) {
-      const currentYear = new Date().getFullYear();
-      const monthIndex = months.indexOf(editStudent.selectedMonth) + 1;
-      const monthId = `${currentYear}-${monthIndex.toString().padStart(2, "0")}`;
-
-      const historyRef = doc(db, "students", editStudent.id, "fees", monthId);
-
-      await setDoc(
-        historyRef,
-        {
-          amount: total,
-          paid: paid,
-          status: status,
-          date: editStudent.feeDate
-            ? Timestamp.fromDate(new Date(editStudent.feeDate))
-            : Timestamp.now(),
-          updatedAt: Timestamp.now(),
-        },
-        { merge: true },
-      );
+    if (status === "Completed") {
+      const idx = months.indexOf(editStudent.selectedMonth);
+      finalMonth = months[(idx + 1) % 12];
+      finalPaid = 0;
+      finalPending = total;
+      finalStatus = "Pending";
     }
 
-    alert("Student Details & Fees History Updated!");
-    setEditStudent(null);
-    loadStudents();
+    try {
+      const studentRef = doc(db, "students", editStudent.id);
+      await updateDoc(studentRef, {
+        ...editStudent,
+        totalFees: total,
+        paidFees: finalPaid,
+        pendingFees: finalPending,
+        feeStatus: finalStatus,
+        selectedMonth: finalMonth,
+        feeDate: editStudent.feeDate
+          ? Timestamp.fromDate(new Date(editStudent.feeDate))
+          : null,
+        updatedAt: Timestamp.now(),
+      });
+
+      // Fees History Entry
+      if (editStudent.selectedMonth) {
+        const monthId = `${new Date().getFullYear()}-${(months.indexOf(editStudent.selectedMonth) + 1).toString().padStart(2, "0")}`;
+        const historyRef = doc(db, "students", editStudent.id, "fees", monthId);
+        await setDoc(
+          historyRef,
+          {
+            amount: total,
+            paid: paid,
+            status: "Completed",
+            month: editStudent.selectedMonth,
+            date: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+          },
+          { merge: true },
+        );
+      }
+
+      Swal.fire({
+        icon: "success",
+        title: "Updated",
+        text: "Details successfully save ho gayi hain.",
+        timer: 1500,
+        showConfirmButton: false,
+        background: darkMode ? "#1e293b" : "#fff",
+        color: darkMode ? "#fff" : "#000",
+      });
+      setEditStudent(null);
+      loadStudents();
+    } catch (e) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Update fail ho gaya!",
+      });
+    }
   };
 
-  const confirmDelete = async () => {
-    await deleteDoc(doc(db, "students", deleteStudent.id));
-    setDeleteStudent(null);
-    loadStudents();
-  };
+  const classes = [...new Set(students.map((s) => s.class))];
+  const filteredStudents = students.filter((s) => {
+    const matchClass = selectedClass ? s.class === selectedClass : true;
+    const matchSearch =
+      (s.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (s.rollNo || "").toString().includes(searchTerm);
+    return matchClass && matchSearch;
+  });
 
   return (
     <div className="container-fluid p-0">
-      {/* CLASS BOXES */}
-      <div className="mb-4 d-flex flex-wrap gap-3">
-        <div
-          className={`class-box ${selectedClass === null ? "active-box" : ""}`}
-          onClick={() => setSelectedClass(null)}
-        >
-          All
-        </div>
-
-        {classes.map((cls) => (
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div className="d-flex flex-wrap gap-2">
           <div
-            key={cls}
-            className={`class-box ${selectedClass === cls ? "active-box" : ""}`}
-            onClick={() => setSelectedClass(cls)}
+            className={`class-box ${selectedClass === null ? "active-box" : ""}`}
+            onClick={() => setSelectedClass(null)}
           >
-            Class {cls}
+            All
           </div>
-        ))}
+          {classes.map((cls) => (
+            <div
+              key={cls}
+              className={`class-box ${selectedClass === cls ? "active-box" : ""}`}
+              onClick={() => setSelectedClass(cls)}
+            >
+              Class {cls}
+            </div>
+          ))}
+        </div>
+        <button
+          className="btn bulk-update-btn"
+          onClick={handleBulkNextMonth}
+          disabled={updatingAll}
+        >
+          {updatingAll ? "⏳ Processing..." : " Move Completed to Next Month"}
+        </button>
       </div>
 
-      {/* SEARCH */}
       <div className="mb-4">
         <input
           type="text"
-          placeholder="🔍 Search by Roll No, name, father name..."
+          placeholder="🔍 Search Roll No, Name, Email..."
           className="form-control search-input"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
-      {/* TABLE */}
       <div className="table-responsive">
         <table className={`table ${darkMode ? "table-dark" : ""}`}>
           <thead className="blue-head">
             <tr>
-              <th>Roll No</th> {/* Changed # to Roll No */}
+              <th>Roll No</th>
               <th>Name</th>
               <th>Father Name</th>
               <th>Email</th>
@@ -552,25 +727,24 @@ function StudentList({ darkMode }) {
               <th>Delete</th>
             </tr>
           </thead>
-
           <tbody>
             {filteredStudents.map((s) => (
               <tr key={s.id}>
-                <td>{s.rollNo || "—"}</td> {/* Display Roll No */}
+                <td>{s.rollNo || "—"}</td>
                 <td>{s.name}</td>
                 <td>{s.fatherName || "—"}</td>
                 <td>{s.email || "—"}</td>
                 <td>{s.class}</td>
                 <td>
-                  <span className="text-info">{s.selectedMonth || "—"}</span>
+                  <span className="text-info">{s.selectedMonth}</span>
                 </td>
                 <td>
                   {s.feeDate
                     ? new Date(s.feeDate.seconds * 1000).toLocaleDateString()
                     : "—"}
                 </td>
-                <td className="blue-text">₹ {s.totalFees}</td>
-                <td className="gold-text">₹ {s.pendingFees}</td>
+                <td className="blue-text">₹{s.totalFees}</td>
+                <td className="gold-text">₹{s.pendingFees}</td>
                 <td>
                   <span
                     className={`badge ${s.feeStatus === "Completed" ? "badge-complete" : "badge-pending"}`}
@@ -607,17 +781,14 @@ function StudentList({ darkMode }) {
         </table>
       </div>
 
-      {/* EDIT FORM */}
       {editStudent && (
         <div className="edit-card mt-4 p-4 shadow-lg">
-          <h5 className="mb-4">✏ Edit Student & Fees History</h5>
+          <h5 className="mb-4">✏ Edit Student Details</h5>
           <div className="row g-3">
-            {/* Added Roll Number Field */}
-            <div className="col-md-12">
-              <label className="small mb-1 fw-bold">Roll Number</label>
+            <div className="col-md-4">
+              <label className="small fw-bold">Roll No</label>
               <input
                 className="form-control dark-input"
-                placeholder="Enter Roll No"
                 value={editStudent.rollNo || ""}
                 onChange={(e) =>
                   setEditStudent({ ...editStudent, rollNo: e.target.value })
@@ -625,7 +796,7 @@ function StudentList({ darkMode }) {
               />
             </div>
             <div className="col-md-4">
-              <label className="small mb-1">Name</label>
+              <label className="small fw-bold">Name</label>
               <input
                 className="form-control dark-input"
                 value={editStudent.name}
@@ -635,7 +806,7 @@ function StudentList({ darkMode }) {
               />
             </div>
             <div className="col-md-4">
-              <label className="small mb-1">Father Name</label>
+              <label className="small fw-bold">Father Name</label>
               <input
                 className="form-control dark-input"
                 value={editStudent.fatherName || ""}
@@ -645,7 +816,7 @@ function StudentList({ darkMode }) {
               />
             </div>
             <div className="col-md-4">
-              <label className="small mb-1">Email</label>
+              <label className="small fw-bold">Email</label>
               <input
                 className="form-control dark-input"
                 value={editStudent.email || ""}
@@ -655,10 +826,10 @@ function StudentList({ darkMode }) {
               />
             </div>
             <div className="col-md-4">
-              <label className="small mb-1">Fee Month (Update History)</label>
+              <label className="small fw-bold">Fee Month</label>
               <select
                 className="form-control dark-input"
-                value={editStudent.selectedMonth || ""}
+                value={editStudent.selectedMonth}
                 onChange={(e) =>
                   setEditStudent({
                     ...editStudent,
@@ -666,7 +837,6 @@ function StudentList({ darkMode }) {
                   })
                 }
               >
-                <option value="">Select Month</option>
                 {months.map((m) => (
                   <option key={m} value={m}>
                     {m}
@@ -675,7 +845,7 @@ function StudentList({ darkMode }) {
               </select>
             </div>
             <div className="col-md-4">
-              <label className="small mb-1">Fee Date</label>
+              <label className="small fw-bold">Fee Date</label>
               <input
                 type="date"
                 className="form-control dark-input"
@@ -686,7 +856,7 @@ function StudentList({ darkMode }) {
               />
             </div>
             <div className="col-md-4">
-              <label className="small mb-1">Class</label>
+              <label className="small fw-bold">Class</label>
               <input
                 className="form-control dark-input"
                 value={editStudent.class}
@@ -695,8 +865,8 @@ function StudentList({ darkMode }) {
                 }
               />
             </div>
-            <div className="col-md-6">
-              <label className="small mb-1">Total Fees</label>
+            <div className="col-md-4">
+              <label className="small fw-bold">Total Fees</label>
               <input
                 type="number"
                 className="form-control dark-input"
@@ -706,8 +876,8 @@ function StudentList({ darkMode }) {
                 }
               />
             </div>
-            <div className="col-md-6">
-              <label className="small mb-1">Paid Fees</label>
+            <div className="col-md-4">
+              <label className="small fw-bold">Paid Fees</label>
               <input
                 type="number"
                 className="form-control dark-input"
@@ -720,7 +890,7 @@ function StudentList({ darkMode }) {
           </div>
           <div className="mt-4 d-flex gap-3">
             <button className="btn update-btn" onClick={updateStudent}>
-              💾 Update Everything
+              💾 Save Changes
             </button>
             <button
               className="btn cancel-btn"
@@ -732,42 +902,21 @@ function StudentList({ darkMode }) {
         </div>
       )}
 
-      {/* DELETE MODAL */}
-      {deleteStudent && (
-        <div className="delete-overlay">
-          <div className="delete-modal shadow-lg">
-            <h6>Confirm Delete</h6>
-            <p>Delete {deleteStudent.name}?</p>
-            <div className="d-flex gap-3 mt-3">
-              <button
-                className="btn cancel-btn"
-                onClick={() => setDeleteStudent(null)}
-              >
-                Cancel
-              </button>
-              <button className="btn delete-btn" onClick={confirmDelete}>
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <style>{`
-        .class-box { padding:10px 18px; border-radius:12px; cursor:pointer; background:${darkMode ? "#1B2A35" : "#F4F6F8"}; color:${darkMode ? "#ffffff" : "#0F4C6C"}; border:1px solid ${darkMode ? "#243644" : "#E5E7EB"}; transition:0.3s ease; }
+        .class-box { padding:10px 18px; border-radius:12px; cursor:pointer; background:${darkMode ? "#1B2A35" : "#F4F6F8"}; color:${darkMode ? "#ffffff" : "#0F4C6C"}; border:1px solid ${darkMode ? "#243644" : "#E5E7EB"}; transition:0.3s; }
         .active-box, .class-box:hover { background:linear-gradient(135deg,#0F4C6C,#1B5E84); color:#D4A24C; }
-        .blue-head { background:linear-gradient(90deg,#0F4C6C,#1B5E84); color:white; }
+        .bulk-update-btn { background: #D4A24C; color: #0F4C6C; font-weight: bold; border:none; padding:12px 24px; border-radius:12px; box-shadow: 0 4px 15px rgba(212,162,76,0.3); transition: 0.3s; }
+        .bulk-update-btn:hover { transform: scale(1.05); background: #C18F2D; }
+        .blue-head { background:#0F4C6C; color:white; }
         .blue-text { color:#0F4C6C; font-weight:600; }
         .gold-text { color:#D4A24C; font-weight:600; }
         .badge-complete { background:#D4A24C; color:#0F4C6C; }
         .badge-pending { background:#dc2626; color:white; }
-        .edit-btn, .update-btn { background:linear-gradient(135deg,#0F4C6C,#1B5E84); color:white; border:none; }
-        .delete-btn { background:linear-gradient(135deg,#dc2626,#991b1b); color:white; border:none; }
-        .cancel-btn { background:${darkMode ? "#334155" : "#e5e7eb"}; color:${darkMode ? "#ffffff" : "#000000"}; border:none; }
-        .edit-card { background:${darkMode ? "#1B2A35" : "#ffffff"}; color:${darkMode ? "#ffffff" : "#000000"}; border-radius:18px; border:1px solid ${darkMode ? "#243644" : "#E5E7EB"}; animation:fadeIn 0.3s ease; }
-        .delete-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index: 1000; }
-        .delete-modal { background:${darkMode ? "#1B2A35" : "#ffffff"}; color:${darkMode ? "#ffffff" : "#000000"}; padding:30px; border-radius:16px; }
-        @keyframes fadeIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+        .edit-btn, .update-btn { background:#0F4C6C; color:white; border:none; border-radius: 8px; }
+        .delete-btn { background:#dc2626; color:white; border:none; border-radius: 8px; }
+        .cancel-btn { background: ${darkMode ? "#475569" : "#cbd5e1"}; color: ${darkMode ? "#fff" : "#1e293b"}; border:none; padding: 10px 20px; border-radius: 8px; font-weight: 600; }
+        .edit-card { background:${darkMode ? "#1B2A35" : "#ffffff"}; border-radius:20px; border:1px solid #243644; }
+        .dark-input { background: ${darkMode ? "#0f172a" : "#fff"}; color: ${darkMode ? "#fff" : "#000"}; border: 1px solid ${darkMode ? "#334155" : "#ccc"}; }
       `}</style>
     </div>
   );

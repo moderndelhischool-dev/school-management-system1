@@ -7,11 +7,14 @@
 // import AddStudent from "../components/AddStudent";
 // import StudentList from "../components/StudentList";
 // import ClassBlocks from "../components/ClassBlocks";
-// import PaymentRequests from "../components/payments/PaymentRequests";
+// // import PaymentRequests from "../components/payments/PaymentRequests"; // 👈 Commented
 // import AdminCalendar from "./AdminCalendar";
 // import AdminUniform from "../components/AdminUniform";
 // import AdminCertificate from "../components/AdminCertificate";
 // import EventManager from "./EventManager";
+
+// // 🔥 NEW IMPORT
+// import FeesHistory from "../components/FeesHistory";
 
 // function AdminDashboard() {
 //   const [page, setPage] = useState("dashboard");
@@ -151,76 +154,36 @@
 
 //             {page === "add" && <AddStudent darkMode={darkMode} />}
 //             {page === "view" && <StudentList darkMode={darkMode} />}
-//             {page === "payments" && <PaymentRequests darkMode={darkMode} />}
+
+//             {/* 👈 Commented usage below */}
+//             {/* {page === "payments" && <PaymentRequests darkMode={darkMode} />} */}
+
 //             {page === "uniform" && <AdminUniform darkMode={darkMode} />}
 //             {page === "certificate" && <AdminCertificate darkMode={darkMode} />}
 //             {page === "events" && <EventManager darkMode={darkMode} />}
+
+//             {/* 🔥 NEW PAGE */}
+//             {page === "fees-history" && <FeesHistory />}
 //           </div>
 //         </div>
 //       </div>
 
 //       <style>{`
-
-// .admin-container {
-//   min-height:100vh;
-//   transition:0.3s ease;
-// }
-
-// .mobile-sidebar {
-//   position:fixed;
-//   top:0;
-//   left:0;
-//   height:100%;
-//   width:280px;
-//   transform:translateX(-100%);
-//   transition:transform 0.4s ease;
-//   z-index:1050;
-//   box-shadow:4px 0 25px rgba(0,0,0,0.4);
-// }
-
-// .mobile-sidebar.open {
-//   transform:translateX(0);
-// }
-
-// .mobile-sidebar-content {
-//   height:100%;
-//   padding:20px;
-//   overflow-y:auto;
-// }
-
-// .mobile-overlay {
-//   position:fixed;
-//   top:0;
-//   left:0;
-//   width:100%;
-//   height:100%;
-//   background:rgba(0,0,0,0.5);
-//   z-index:1040;
-// }
-
-// .btn-gold {
-//   background:linear-gradient(135deg,#D4A24C,#C18F2D);
-//   color:white;
-//   border:none;
-// }
-
-// .btn-gold:hover {
-//   opacity:0.9;
-// }
-
-// @media (min-width:768px){
-//   .mobile-sidebar,
-//   .mobile-overlay{
-//     display:none;
-//   }
-// }
-
-// `}</style>
+//         .admin-container { min-height:100vh; transition:0.3s ease; }
+//         .mobile-sidebar { position:fixed; top:0; left:0; height:100%; width:280px; transform:translateX(-100%); transition:transform 0.4s ease; z-index:1050; box-shadow:4px 0 25px rgba(0,0,0,0.4); }
+//         .mobile-sidebar.open { transform:translateX(0); }
+//         .mobile-sidebar-content { height:100%; padding:20px; overflow-y:auto; }
+//         .mobile-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1040; }
+//         .btn-gold { background:linear-gradient(135deg,#D4A24C,#C18F2D); color:white; border:none; }
+//         .btn-gold:hover { opacity:0.9; }
+//         @media (min-width:768px){ .mobile-sidebar, .mobile-overlay{ display:none; } }
+//       `}</style>
 //     </div>
 //   );
 // }
 
 // export default AdminDashboard;
+
 import { useState } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase/firebase";
@@ -230,7 +193,7 @@ import DashboardHome from "../components/DashboardHome";
 import AddStudent from "../components/AddStudent";
 import StudentList from "../components/StudentList";
 import ClassBlocks from "../components/ClassBlocks";
-import PaymentRequests from "../components/payments/PaymentRequests";
+// import PaymentRequests from "../components/payments/PaymentRequests";
 import AdminCalendar from "./AdminCalendar";
 import AdminUniform from "../components/AdminUniform";
 import AdminCertificate from "../components/AdminCertificate";
@@ -265,15 +228,29 @@ function AdminDashboard() {
     color: "white",
   };
 
-  const pageWrapper = {
-    backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-    color: darkMode ? "#f1f5f9" : "#111827",
-    borderRadius: "22px",
-    padding: "28px",
-    boxShadow: darkMode
-      ? "0 20px 45px rgba(0,0,0,0.6)"
-      : "0 20px 45px rgba(15,76,108,0.15)",
-    minHeight: "70vh",
+  // 🔥 DYNAMIC WRAPPER: Page ke hisab se background badlega
+  const getPageWrapperStyle = () => {
+    let bgColor = darkMode ? "#1e293b" : "#ffffff";
+    let borderColor = "transparent";
+
+    // Agar Fees History page hai, toh component ke background se match karo
+    if (page === "fees-history" && darkMode) {
+      bgColor = "#111c2a";
+      borderColor = "#243644";
+    }
+
+    return {
+      backgroundColor: bgColor,
+      color: darkMode ? "#f1f5f9" : "#111827",
+      borderRadius: "22px",
+      padding: page === "fees-history" ? "10px" : "28px", // History ke liye space adjust kiya
+      boxShadow: darkMode
+        ? "0 20px 45px rgba(0,0,0,0.6)"
+        : "0 20px 45px rgba(15,76,108,0.15)",
+      minHeight: "75vh",
+      border: `1px solid ${borderColor}`,
+      transition: "0.3s ease",
+    };
   };
 
   return (
@@ -299,10 +276,10 @@ function AdminDashboard() {
                 className="btn btn-gold btn-sm"
                 onClick={() => setShowSidebar(false)}
               >
-                ✖
+                {" "}
+                ✖{" "}
               </button>
             </div>
-
             <Sidebar
               setPage={(p) => {
                 setPage(p);
@@ -332,11 +309,11 @@ function AdminDashboard() {
                 className="btn btn-gold btn-sm d-md-none"
                 onClick={() => setShowSidebar(true)}
               >
-                ☰
+                {" "}
+                ☰{" "}
               </button>
               <h4 className="mb-0 fw-semibold">Hello Admin 👋</h4>
             </div>
-
             <div className="d-flex gap-2">
               <button
                 className="btn btn-outline-light btn-sm"
@@ -345,19 +322,19 @@ function AdminDashboard() {
               >
                 {darkMode ? "☀ Light" : "🌙 Dark"}
               </button>
-
               <button
                 className="btn btn-danger btn-sm"
                 style={{ borderRadius: "12px" }}
                 onClick={logout}
               >
-                Logout
+                {" "}
+                Logout{" "}
               </button>
             </div>
           </div>
 
-          {/* Page Content */}
-          <div style={pageWrapper}>
+          {/* Page Content Container */}
+          <div style={getPageWrapperStyle()}>
             {page === "dashboard" && (
               <>
                 <div className="row g-4">
@@ -368,7 +345,6 @@ function AdminDashboard() {
                     <AdminCalendar darkMode={darkMode} />
                   </div>
                 </div>
-
                 <div className="mt-4">
                   <DashboardHome darkMode={darkMode} />
                 </div>
@@ -377,74 +353,26 @@ function AdminDashboard() {
 
             {page === "add" && <AddStudent darkMode={darkMode} />}
             {page === "view" && <StudentList darkMode={darkMode} />}
-            {page === "payments" && <PaymentRequests darkMode={darkMode} />}
             {page === "uniform" && <AdminUniform darkMode={darkMode} />}
             {page === "certificate" && <AdminCertificate darkMode={darkMode} />}
             {page === "events" && <EventManager darkMode={darkMode} />}
 
-            {/* 🔥 NEW PAGE */}
-            {page === "fees-history" && <FeesHistory />}
+            {/* 🔥 History Page */}
+            {page === "fees-history" && <FeesHistory darkMode={darkMode} />}
           </div>
         </div>
       </div>
 
       <style>{`
-
-.admin-container {
-  min-height:100vh;
-  transition:0.3s ease;
-}
-
-.mobile-sidebar {
-  position:fixed;
-  top:0;
-  left:0;
-  height:100%;
-  width:280px;
-  transform:translateX(-100%);
-  transition:transform 0.4s ease;
-  z-index:1050;
-  box-shadow:4px 0 25px rgba(0,0,0,0.4);
-}
-
-.mobile-sidebar.open {
-  transform:translateX(0);
-}
-
-.mobile-sidebar-content {
-  height:100%;
-  padding:20px;
-  overflow-y:auto;
-}
-
-.mobile-overlay {
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background:rgba(0,0,0,0.5);
-  z-index:1040;
-}
-
-.btn-gold {
-  background:linear-gradient(135deg,#D4A24C,#C18F2D);
-  color:white;
-  border:none;
-}
-
-.btn-gold:hover {
-  opacity:0.9;
-}
-
-@media (min-width:768px){
-  .mobile-sidebar,
-  .mobile-overlay{
-    display:none;
-  }
-}
-
-`}</style>
+        .admin-container { min-height:100vh; transition:0.3s ease; }
+        .mobile-sidebar { position:fixed; top:0; left:0; height:100%; width:280px; transform:translateX(-100%); transition:transform 0.4s ease; z-index:1050; box-shadow:4px 0 25px rgba(0,0,0,0.4); }
+        .mobile-sidebar.open { transform:translateX(0); }
+        .mobile-sidebar-content { height:100%; padding:20px; overflow-y:auto; }
+        .mobile-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1040; }
+        .btn-gold { background:linear-gradient(135deg,#D4A24C,#C18F2D); color:white; border:none; }
+        .btn-gold:hover { opacity:0.9; }
+        @media (min-width:768px){ .mobile-sidebar, .mobile-overlay{ display:none; } }
+      `}</style>
     </div>
   );
 }
