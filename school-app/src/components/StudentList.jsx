@@ -929,7 +929,7 @@ function StudentList({ darkMode }) {
         </div>
       )}
 
-      <style>{`
+      {/* <style>{`
         .class-box { padding:10px 18px; border-radius:12px; cursor:pointer; background:${darkMode ? "#1B2A35" : "#F4F6F8"}; color:${darkMode ? "#ffffff" : "#0F4C6C"}; border:1px solid ${darkMode ? "#243644" : "#E5E7EB"}; }
         .active-box, .class-box:hover { background:linear-gradient(135deg,#0F4C6C,#1B5E84); color:#D4A24C; }
         .bulk-update-btn { background: #D4A24C; color: #0F4C6C; font-weight: bold; border:none; padding:12px 24px; border-radius:12px; }
@@ -943,7 +943,32 @@ function StudentList({ darkMode }) {
         .dark-input { background: ${darkMode ? "#0f172a" : "#fff"}; color: ${darkMode ? "#fff" : "#000"}; border: 1px solid ${darkMode ? "#334155" : "#ccc"}; }
         .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:1000; }
         .custom-modal { background:white; padding:20px; border-radius:12px; }
-      `}</style>
+      `}</style> */}
+      <style>{`
+  .class-box { padding:10px 18px; border-radius:12px; cursor:pointer; background:${darkMode ? "#1B2A35" : "#F4F6F8"}; color:${darkMode ? "#ffffff" : "#0F4C6C"}; border:1px solid ${darkMode ? "#243644" : "#E5E7EB"}; }
+  .active-box, .class-box:hover { background:linear-gradient(135deg,#0F4C6C,#1B5E84); color:#D4A24C; }
+  .bulk-update-btn { background: #D4A24C; color: #0F4C6C; font-weight: bold; border:none; padding:12px 24px; border-radius:12px; }
+  .blue-head { background:#0F4C6C; color:white; }
+  .badge-complete { background:#D4A24C; color:#0F4C6C; }
+  .badge-pending { background:#dc2626; color:white; }
+  .edit-btn, .update-btn { background:#0F4C6C; color:white; border:none; border-radius: 8px; padding: 6px 12px; }
+  .delete-btn { background:#dc2626; color:white; border:none; border-radius: 8px; padding: 6px 12px; }
+  .cancel-btn { background: #cbd5e1; color: #1e293b; border:none; padding: 10px 20px; border-radius: 8px; font-weight: 600; }
+  .edit-card { background:${darkMode ? "#1B2A35" : "#ffffff"}; border-radius:20px; border:1px solid #243644; }
+  .dark-input { background: ${darkMode ? "#0f172a" : "#fff"}; color: ${darkMode ? "#fff" : "#000"}; border: 1px solid ${darkMode ? "#334155" : "#ccc"}; }
+  
+  /* Modal Fixes */
+  .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:1000; }
+  .custom-modal { background: white; padding: 30px; border-radius: 15px; text-align: center; min-width: 300px; color: #000; }
+  
+  /* Dark Mode specific style for the modal */
+  .custom-modal.dark { 
+    background: #1e293b; 
+    color: #ffffff; 
+    border: 1px solid #334155; 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  }
+`}</style>
     </div>
   );
 }
