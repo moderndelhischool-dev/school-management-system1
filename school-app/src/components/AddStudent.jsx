@@ -260,6 +260,8 @@ function AddStudent({ darkMode }) {
   const [fatherName, setFatherName] = useState("");
   const [cls, setCls] = useState("");
   const [gender, setGender] = useState(""); // Male, Female, Other
+  const [usesBus, setUsesBus] = useState(false);
+  const [monthlyBusFee, setMonthlyBusFee] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("");
   const [totalFees, setTotalFees] = useState("");
   const [paidFees, setPaidFees] = useState("");
@@ -299,7 +301,6 @@ function AddStudent({ darkMode }) {
       alert("Bhai, saari fields bharna zaroori hai!");
       return;
     }
-
     setLoading(true);
 
     const total = Number(totalFees);
@@ -317,6 +318,8 @@ function AddStudent({ darkMode }) {
         fatherName,
         class: cls,
         gender,
+        usesBus,
+        monthlyBusFee: usesBus ? Number(monthlyBusFee || 0) : 0,
         selectedMonth,
         totalFees: total,
         paidFees: paid,
@@ -338,6 +341,8 @@ function AddStudent({ darkMode }) {
           amount: total,
           paid: paid,
           status: status,
+          tuitionFee: total,
+          busFee: 0,
           date: Timestamp.fromDate(new Date(feesDate)),
           updatedAt: Timestamp.now(),
         },
@@ -353,6 +358,8 @@ function AddStudent({ darkMode }) {
       setFatherName("");
       setCls("");
       setGender("");
+      setUsesBus(false);
+      setMonthlyBusFee("");
       setSelectedMonth("");
       setTotalFees("");
       setPaidFees("");
@@ -475,6 +482,29 @@ function AddStudent({ darkMode }) {
               className="form-control custom-input"
               value={feesDate}
               onChange={(e) => setFeesDate(e.target.value)}
+            />
+          </div>
+
+          <div className="col-12 col-md-3">
+            <label className="label">Bus Service</label>
+            <select
+              className="form-select custom-input"
+              value={usesBus ? "yes" : "no"}
+              onChange={(e) => setUsesBus(e.target.value === "yes")}
+            >
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </select>
+          </div>
+          <div className="col-12 col-md-3">
+            <label className="label">Bus Fee </label>
+            <input
+              type="number"
+              className="form-control custom-input"
+              value={monthlyBusFee}
+              onChange={(e) => setMonthlyBusFee(e.target.value)}
+              placeholder="0"
+              disabled={!usesBus}
             />
           </div>
 

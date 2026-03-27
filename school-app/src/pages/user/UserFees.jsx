@@ -295,23 +295,98 @@
 // }
 
 // export default UserFees;
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { jsPDF } from "jspdf";
 import { db } from "../../firebase/firebase";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { applyRazorpayPaymentApproval } from "../../utils/applyRazorpayPaymentApproval";
+import {
+  catchUpStudentBillingMonth,
+  loadActiveSessionClassTuitionBusMap,
+  resolveDisplayPendingFees,
+  resolveDisplayTotalFees,
+} from "../../utils/feeBilling";
 
 function UserFees({ student, darkMode }) {
   const [payAmount, setPayAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
   const [receipt, setReceipt] = useState(null);
+  const [liveStudent, setLiveStudent] = useState(student);
+  const [feeMaps, setFeeMaps] = useState({ tuitionMap: {}, busMap: {} });
   const [displayFees, setDisplayFees] = useState(student?.pendingFees || 0);
+  const [showBreakdown, setShowBreakdown] = useState(false);
 
   useEffect(() => {
-    if (student?.pendingFees !== undefined) {
-      setDisplayFees(student.pendingFees);
-    }
-  }, [student?.pendingFees]);
+    setLiveStudent(student);
+  }, [student]);
+
+  useEffect(() => {
+    if (!student?.email) return undefined;
+    let cancelled = false;
+    loadActiveSessionClassTuitionBusMap(db).then((maps) => {
+      if (!cancelled) {
+        setFeeMaps({
+          tuitionMap: maps.tuitionMap || {},
+          busMap: maps.busMap || {},
+        });
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [student?.email]);
+
+  const resolvedPending = liveStudent
+    ? resolveDisplayPendingFees(
+        liveStudent,
+        feeMaps.tuitionMap,
+        feeMaps.busMap,
+      )
+    : 0;
+
+  const resolvedTotal = liveStudent
+    ? resolveDisplayTotalFees(
+        liveStudent,
+        feeMaps.tuitionMap,
+        feeMaps.busMap,
+      )
+    : 0;
+
+  useEffect(() => {
+    setDisplayFees(resolvedPending);
+  }, [resolvedPending]);
+
+  useEffect(() => {
+    if (!student?.email) return undefined;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        await catchUpStudentBillingMonth(db, student.email, student);
+        if (!cancelled) {
+          const snap = await getDoc(doc(db, "students", student.email));
+          if (snap.exists()) {
+            setLiveStudent({ email: student.email, ...snap.data() });
+          }
+        }
+      } catch (e) {
+        console.error("Billing sync:", e);
+      }
+    })();
+
+    const unsub = onSnapshot(doc(db, "students", student.email), (snap) => {
+      if (snap.exists()) {
+        setLiveStudent({ email: student.email, ...snap.data() });
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      unsub();
+    };
+  }, [student?.email]);
 
   const loadRazorpay = () => {
     return new Promise((resolve) => {
@@ -341,14 +416,14 @@ function UserFees({ student, darkMode }) {
       amount: amount * 100,
       currency: "INR",
       name: "School Fees Payment",
-      description: `Payment for ${student.name}`,
+      description: `Payment for ${liveStudent.name}`,
       handler: async (response) => {
         const paymentId = response.razorpay_payment_id;
         try {
           await applyRazorpayPaymentApproval(db, {
             paymentId,
             paidAmount: amount,
-            student,
+            student: liveStudent,
             razorpayResponse: response,
           });
 
@@ -405,9 +480,9 @@ function UserFees({ student, darkMode }) {
 
     docPdf.setFont("helvetica", "normal");
     docPdf.setFontSize(10);
-    docPdf.text(`Student Name:  ${student.name}`, 40, 140);
-    docPdf.text(`Roll Number:   ${student.rollNo || "N/A"}`, 40, 160);
-    docPdf.text(`Class:         ${student.class}`, 40, 180);
+    docPdf.text(`Student Name:  ${liveStudent.name}`, 40, 140);
+    docPdf.text(`Roll Number:   ${liveStudent.rollNo || "N/A"}`, 40, 160);
+    docPdf.text(`Class:         ${liveStudent.class}`, 40, 180);
     docPdf.text(`Transaction ID: ${receipt.paymentId}`, 40, 200);
     docPdf.text(`Date & Time:    ${receipt.date} | ${receipt.time}`, 40, 220);
 
@@ -433,25 +508,51 @@ function UserFees({ student, darkMode }) {
     docPdf.save(`Receipt_${receipt.paymentId}.pdf`);
   };
 
+  const carryT = Number(liveStudent?.carryForwardTuition || 0);
+  const carryB = Number(liveStudent?.carryForwardBus || 0);
+  const carryTotal = Number(liveStudent?.carryForwardTotal || carryT + carryB);
+  const curTu =
+    Number(liveStudent?.currentMonthTuition) ||
+    Number(liveStudent?.monthlyTuitionFeeApplied || 0);
+  const curBus =
+    Number(liveStudent?.currentMonthBus) ||
+    Number(liveStudent?.monthlyBusFeeApplied || 0);
+  const hasCarry = carryTotal > 0;
+
   return (
-    <div className={`payment-center-container ${darkMode ? "dark" : "light"}`}>
+    <Fragment>
+    <div
+      className={`payment-center-container ${darkMode ? "dark" : "light"}`}
+    >
       <div className="payment-wrapper shadow-lg">
         <h4 className="fw-bold mb-4 text-center">💳 Online Fees Payment</h4>
 
         <div className="student-info-card mb-4">
           <div className="info-row">
             <span>Name:</span>
-            <strong>{student.name}</strong>
+            <strong>{liveStudent?.name}</strong>
           </div>
           <div className="info-row">
             <span>Class:</span>
-            <strong>{student.class}</strong>
+            <strong>{liveStudent?.class}</strong>
+          </div>
+          <div className="info-row">
+            <span>Fee month:</span>
+            <strong>{liveStudent?.feeMonth || "—"}</strong>
           </div>
           <div className="info-row highlight">
             <span>Pending Balance:</span>
             <strong className="text-danger">₹{displayFees}</strong>
           </div>
         </div>
+
+        <button
+          type="button"
+          className="btn btn-outline-secondary w-100 mb-3 rounded-3 py-2"
+          onClick={() => setShowBreakdown(true)}
+        >
+          View fee breakdown
+        </button>
 
         <div className="input-wrapper mb-3">
           <label className="small text-muted mb-1">Enter Amount to Pay</label>
@@ -518,6 +619,176 @@ function UserFees({ student, darkMode }) {
         .error { background: #fee2e2; color: #991b1b; }
       `}</style>
     </div>
+
+    {showBreakdown && (
+      <div
+        className="fee-modal-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="fee-breakdown-title"
+        onClick={() => setShowBreakdown(false)}
+      >
+        <div
+          className={`fee-modal-box ${darkMode ? "is-dark" : ""}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="fee-modal-header">
+            <h5 id="fee-breakdown-title" className="mb-0">
+              Fee details
+            </h5>
+            <button
+              type="button"
+              className="fee-modal-x"
+              aria-label="Close"
+              onClick={() => setShowBreakdown(false)}
+            >
+              ×
+            </button>
+          </div>
+          <p className="text-muted small mb-3">
+            Breakdown of previous balance (if any) and this month&apos;s tuition
+            and bus fee.
+          </p>
+
+          <div className="fee-modal-table-wrap">
+            <table className="table table-sm fee-modal-table mb-0">
+              <thead>
+                <tr>
+                  <th>Part</th>
+                  <th className="text-end">Tuition (₹)</th>
+                  <th className="text-end">Bus (₹)</th>
+                  <th className="text-end">Total (₹)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {hasCarry && (
+                  <tr>
+                    <td>
+                      <strong>Balance from previous month</strong>
+                      <div className="small text-muted">
+                        Ref: {liveStudent?.carryFromMonth || "—"}
+                      </div>
+                    </td>
+                    <td className="text-end">{carryT}</td>
+                    <td className="text-end">{carryB}</td>
+                    <td className="text-end fw-bold">{carryTotal}</td>
+                  </tr>
+                )}
+                <tr>
+                  <td>
+                    <strong>This month</strong>
+                    <div className="small text-muted">
+                      {liveStudent?.feeMonth
+                        ? `${liveStudent.feeMonth}${liveStudent?.selectedMonth ? ` · ${liveStudent.selectedMonth}` : ""}`
+                        : liveStudent?.selectedMonth || "—"}
+                    </div>
+                  </td>
+                  <td className="text-end">{curTu}</td>
+                  <td className="text-end">
+                    {liveStudent?.usesBus ? curBus : "—"}
+                  </td>
+                  <td className="text-end fw-bold">
+                    {curTu + (liveStudent?.usesBus ? curBus : 0)}
+                  </td>
+                </tr>
+                <tr className="table-active">
+                  <td>
+                    <strong>Total bill (this cycle)</strong>
+                  </td>
+                  <td className="text-end" colSpan={2}>
+                    —
+                  </td>
+                  <td className="text-end fw-bold text-danger">
+                    ₹{resolvedTotal}
+                  </td>
+                </tr>
+                <tr>
+                  <td>Paid (this cycle)</td>
+                  <td className="text-end" colSpan={2} />
+                  <td className="text-end">
+                    ₹{Number(liveStudent?.paidFees || 0)}
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <strong>Pending</strong>
+                  </td>
+                  <td className="text-end" colSpan={2} />
+                  <td className="text-end fw-bold text-danger">
+                    ₹{displayFees}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <button
+            type="button"
+            className="pay-btn mt-3"
+            onClick={() => setShowBreakdown(false)}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    )}
+
+    <style>{`
+      .fee-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.55);
+        z-index: 1055;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+      }
+      .fee-modal-box {
+        background: #fff;
+        color: #1e293b;
+        max-width: 520px;
+        width: 100%;
+        border-radius: 18px;
+        padding: 22px;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.25);
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      .fee-modal-box.is-dark {
+        background: #1e293b;
+        color: #f1f5f9;
+      }
+      .fee-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .fee-modal-x {
+        border: none;
+        background: transparent;
+        font-size: 1.5rem;
+        line-height: 1;
+        opacity: 0.75;
+        cursor: pointer;
+        color: inherit;
+      }
+      .fee-modal-table-wrap {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.08);
+      }
+      .fee-modal-box.is-dark .fee-modal-table-wrap {
+        border-color: #334155;
+      }
+      .fee-modal-table { margin: 0; }
+      .fee-modal-box.is-dark .fee-modal-table {
+        --bs-table-bg: transparent;
+        --bs-table-color: #f1f5f9;
+      }
+    `}</style>
+    </Fragment>
   );
 }
 

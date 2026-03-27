@@ -1,4 +1,5 @@
 import { doc, runTransaction, Timestamp } from "firebase/firestore";
+import { autoRollAfterFullPayment } from "./feeBilling";
 
 export function computeFeeBalances(total, oldPaid, paidNow) {
   const t = Number(total) || 0;
@@ -75,6 +76,12 @@ export async function applyRazorpayPaymentApproval(
       updatedAt: now,
     });
 
-    return { alreadyProcessed: false };
+    return { alreadyProcessed: false, feeStatus };
+  }).then(async (result) => {
+    if (result.alreadyProcessed) return result;
+    if (result.feeStatus === "Completed") {
+      await autoRollAfterFullPayment(db, student.email);
+    }
+    return result;
   });
 }

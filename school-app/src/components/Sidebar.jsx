@@ -208,6 +208,7 @@ import { HiOutlineUsers } from "react-icons/hi";
 import { HiOutlineShoppingBag } from "react-icons/hi";
 import { HiOutlineDocumentText } from "react-icons/hi";
 import { HiOutlineClipboardList } from "react-icons/hi"; // ✅ NEW ICON
+import { HiOutlineCurrencyRupee } from "react-icons/hi";
 
 function Sidebar({ setPage, darkMode }) {
   const [active, setActive] = useState("dashboard");
@@ -256,6 +257,11 @@ function Sidebar({ setPage, darkMode }) {
             id: "certificate",
             label: "Certificate Requests",
             icon: <HiOutlineDocumentText />,
+          },
+          {
+            id: "fee-structure",
+            label: "Fee Structure",
+            icon: <HiOutlineCurrencyRupee />,
           },
         ].map((item) => (
           <button

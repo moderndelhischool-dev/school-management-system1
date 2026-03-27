@@ -474,9 +474,17 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import Swal from "sweetalert2";
+import {
+  loadActiveSessionClassTuitionBusMap,
+  resolveDisplayPendingFees,
+  resolveDisplayTotalFees,
+  autoRollAfterFullPayment,
+} from "../utils/feeBilling";
 
 function StudentList({ darkMode }) {
   const [students, setStudents] = useState([]);
+  const [classTuitionMap, setClassTuitionMap] = useState({});
+  const [classBusMap, setClassBusMap] = useState({});
   const [selectedClass, setSelectedClass] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [editStudent, setEditStudent] = useState(null);
@@ -507,8 +515,47 @@ function StudentList({ darkMode }) {
     setStudents(data);
   };
 
+  const normalizeClassKey = (cls) =>
+    String(cls || "")
+      .replace("+", "")
+      .trim()
+      .toLowerCase();
+
+  const loadFeeMaps = async () => {
+    const { tuitionMap, busMap } = await loadActiveSessionClassTuitionBusMap(db);
+    setClassTuitionMap(tuitionMap);
+    setClassBusMap(busMap);
+  };
+
+  const getClassTuition = (cls) => {
+    const classKey = normalizeClassKey(cls);
+    return Number(classTuitionMap[classKey] || 0);
+  };
+
+  const getStudentTotal = (student) =>
+    resolveDisplayTotalFees(student, classTuitionMap, classBusMap);
+
+  const getStudentPending = (student) =>
+    resolveDisplayPendingFees(student, classTuitionMap, classBusMap);
+
+  const getStudentDisplayStatus = (student) => {
+    const pending = getStudentPending(student);
+    const total = getStudentTotal(student);
+    const paid = Math.min(Math.max(Number(student.paidFees || 0), 0), total);
+    if (pending <= 0) return "Completed";
+    if (paid > 0) return "Partial";
+    return "Pending";
+  };
+
+  const getEditTuition = () => (editStudent ? getClassTuition(editStudent.class) : 0);
+  const getEditTotal = () => {
+    if (!editStudent) return 0;
+    return resolveDisplayTotalFees(editStudent, classTuitionMap, classBusMap);
+  };
+
   useEffect(() => {
     loadStudents();
+    loadFeeMaps();
   }, []);
 
   /* ================= FIXED BULK UPDATE (Dual History Entry) ================= */
@@ -612,30 +659,44 @@ function StudentList({ darkMode }) {
 
   /* ================= SINGLE UPDATE LOGIC ================= */
   const updateStudent = async () => {
-    const total = Number(editStudent.totalFees) || 0;
+    const total = getEditTotal();
     let paid = Number(editStudent.paidFees) || 0;
+    const usesBus = !!editStudent.usesBus;
     if (paid > total) paid = total;
     if (paid < 0) paid = 0;
 
     const pendingFees = Math.max(total - paid, 0);
     const status =
       pendingFees === 0 ? "Completed" : paid > 0 ? "Partial" : "Pending";
+    const now = new Date();
+    const monthIndex = months.indexOf(editStudent.selectedMonth);
+    const safeMonthNumber = monthIndex >= 0 ? monthIndex + 1 : now.getMonth() + 1;
+    const safeMonthName = monthIndex >= 0 ? editStudent.selectedMonth : months[now.getMonth()];
+    const monthId = `${now.getFullYear()}-${String(safeMonthNumber).padStart(2, "0")}`;
+    const monthLabel = `${safeMonthName} ${now.getFullYear()}`;
+    const feeDateValue = editStudent.feeDate
+      ? Timestamp.fromDate(new Date(editStudent.feeDate))
+      : Timestamp.now();
 
     try {
       const studentRef = doc(db, "students", editStudent.id);
       await updateDoc(studentRef, {
         ...editStudent,
+        usesBus,
+        monthlyBusFee: usesBus ? Number(editStudent.monthlyBusFee || 0) : 0,
+        monthlyTuitionFeeApplied: getClassTuition(editStudent.class),
         totalFees: total,
         paidFees: paid,
         pendingFees: pendingFees,
         feeStatus: status,
-        feeDate: editStudent.feeDate
-          ? Timestamp.fromDate(new Date(editStudent.feeDate))
-          : null,
+        feeMonth: monthId,
+        month: monthLabel,
+        feeDate: feeDateValue,
+        feesDate: new Date().toISOString().slice(0, 10),
+        approvedAt: status === "Completed" ? Timestamp.now() : null,
         updatedAt: Timestamp.now(),
       });
 
-      const monthId = `${new Date().getFullYear()}-${(months.indexOf(editStudent.selectedMonth) + 1).toString().padStart(2, "0")}`;
       const historyRef = doc(db, "students", editStudent.id, "fees", monthId);
       await setDoc(
         historyRef,
@@ -643,11 +704,19 @@ function StudentList({ darkMode }) {
           amount: total,
           paid: paid,
           status: status,
-          month: editStudent.selectedMonth,
-          date: Timestamp.now(),
+          month: safeMonthName,
+          feeMonth: monthId,
+          tuitionFee: getClassTuition(editStudent.class),
+          busFee: usesBus ? Number(editStudent.monthlyBusFee || 0) : 0,
+          date: feeDateValue,
+          updatedAt: Timestamp.now(),
         },
         { merge: true },
       );
+
+      if (status === "Completed") {
+        await autoRollAfterFullPayment(db, editStudent.id);
+      }
 
       Swal.fire({ icon: "success", title: "Updated!" });
       setEditStudent(null);
@@ -725,6 +794,9 @@ function StudentList({ darkMode }) {
               <th>Father Name</th>
               <th>Email</th>
               <th>Class</th>
+              <th>Class Tuition</th>
+              <th>Bus</th>
+              <th>Bus Fee</th>
               <th>Month</th>
               <th>Date</th>
               <th>Total</th>
@@ -742,6 +814,9 @@ function StudentList({ darkMode }) {
                 <td>{s.fatherName || "—"}</td>
                 <td>{s.email || "—"}</td>
                 <td>{s.class}</td>
+                <td>₹{getClassTuition(s.class)}</td>
+                <td>{s.usesBus ? "Yes" : "No"}</td>
+                <td>{s.usesBus ? `Rs ${s.monthlyBusFee || 0}` : "—"}</td>
                 <td>
                   <span className="text-info">{s.selectedMonth}</span>
                 </td>
@@ -750,13 +825,17 @@ function StudentList({ darkMode }) {
                     ? new Date(s.feeDate.seconds * 1000).toLocaleDateString()
                     : "—"}
                 </td>
-                <td className="blue-text">₹{s.totalFees}</td>
-                <td className="gold-text">₹{s.pendingFees}</td>
+                <td className="blue-text">₹{getStudentTotal(s)}</td>
+                <td className="gold-text">₹{getStudentPending(s)}</td>
                 <td>
                   <span
-                    className={`badge ${s.feeStatus === "Completed" ? "badge-complete" : "badge-pending"}`}
+                    className={`badge ${
+                      getStudentDisplayStatus(s) === "Completed"
+                        ? "badge-complete"
+                        : "badge-pending"
+                    }`}
                   >
-                    {s.feeStatus}
+                    {getStudentDisplayStatus(s)}
                   </span>
                 </td>
                 <td>
@@ -765,6 +844,8 @@ function StudentList({ darkMode }) {
                     onClick={() =>
                       setEditStudent({
                         ...s,
+                        usesBus: !!s.usesBus,
+                        monthlyBusFee: s.monthlyBusFee ?? "",
                         feeDate: s.feeDate
                           ? s.feeDate.toDate().toISOString().split("T")[0]
                           : "",
@@ -873,14 +954,52 @@ function StudentList({ darkMode }) {
               />
             </div>
             <div className="col-md-4">
-              <label className="small fw-bold">Total Fees</label>
+              <label className="small fw-bold">Bus Service</label>
+              <select
+                className="form-control dark-input"
+                value={editStudent.usesBus ? "yes" : "no"}
+                onChange={(e) =>
+                  setEditStudent({
+                    ...editStudent,
+                    usesBus: e.target.value === "yes",
+                  })
+                }
+              >
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+              </select>
+            </div>
+            <div className="col-md-4">
+              <label className="small fw-bold">Bus Fee </label>
               <input
                 type="number"
                 className="form-control dark-input"
-                value={editStudent.totalFees}
+                value={editStudent.monthlyBusFee || ""}
+                disabled={!editStudent.usesBus}
                 onChange={(e) =>
-                  setEditStudent({ ...editStudent, totalFees: e.target.value })
+                  setEditStudent({
+                    ...editStudent,
+                    monthlyBusFee: e.target.value,
+                  })
                 }
+              />
+            </div>
+            <div className="col-md-4">
+              <label className="small fw-bold">Class Tuition </label>
+              <input
+                type="number"
+                className="form-control dark-input"
+                value={getEditTuition()}
+                disabled
+              />
+            </div>
+            <div className="col-md-4">
+              <label className="small fw-bold">Total Fees </label>
+              <input
+                type="number"
+                className="form-control dark-input"
+                value={getEditTotal()}
+                disabled
               />
             </div>
             <div className="col-md-4">
@@ -892,6 +1011,15 @@ function StudentList({ darkMode }) {
                 onChange={(e) =>
                   setEditStudent({ ...editStudent, paidFees: e.target.value })
                 }
+              />
+            </div>
+            <div className="col-md-4">
+              <label className="small fw-bold">Pending </label>
+              <input
+                type="number"
+                className="form-control dark-input"
+                value={Math.max(getEditTotal() - Number(editStudent.paidFees || 0), 0)}
+                disabled
               />
             </div>
           </div>

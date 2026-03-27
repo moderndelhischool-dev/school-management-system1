@@ -151,19 +151,90 @@
 // export default UserHome;
 import { useEffect, useState } from "react";
 import { auth, db } from "../../firebase/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import {
+  autoRollAfterFullPayment,
+  catchUpStudentBillingMonth,
+  currentMonthKey,
+  loadActiveSessionClassTuitionBusMap,
+  resolveDisplayPendingFees,
+} from "../../utils/feeBilling";
 
 function UserHome() {
   const [student, setStudent] = useState(null);
+  const [tuitionMap, setTuitionMap] = useState({});
+  const [busMap, setBusMap] = useState({});
+  const [lastPaidMonth, setLastPaidMonth] = useState("");
+  const [submittedMonths, setSubmittedMonths] = useState([]);
 
   useEffect(() => {
     const load = async () => {
       const user = auth.currentUser;
       if (!user) return;
 
-      const snap = await getDoc(doc(db, "students", user.email));
-      if (snap.exists()) {
-        setStudent(snap.data());
+      const [snap, maps] = await Promise.all([
+        getDoc(doc(db, "students", user.email)),
+        loadActiveSessionClassTuitionBusMap(db),
+      ]);
+      if (!snap.exists()) return;
+
+      // Bring legacy/out-of-date student billing month to current cycle.
+      await catchUpStudentBillingMonth(db, user.email, snap.data());
+
+      let refreshed = await getDoc(doc(db, "students", user.email));
+      if (!refreshed.exists()) return;
+
+      // If full paid state is still present, roll once to next month cycle.
+      if (refreshed.data().feeStatus === "Completed") {
+        await autoRollAfterFullPayment(db, user.email);
+        refreshed = await getDoc(doc(db, "students", user.email));
+        if (!refreshed.exists()) return;
+      }
+
+      setStudent(refreshed.data());
+      setTuitionMap(maps.tuitionMap || {});
+      setBusMap(maps.busMap || {});
+
+      const feesSnap = await getDocs(collection(db, "students", user.email, "fees"));
+      let latestCompleted = "";
+      const completedMonthKeys = [];
+      const dueMonthKey = String(refreshed.data().feeMonth || currentMonthKey());
+      feesSnap.docs.forEach((d) => {
+        const row = d.data() || {};
+        const amount = Number(row.amount || 0);
+        const paid = Number(row.paid || 0);
+        const isCompleted =
+          row.status === "Completed" || (amount > 0 && paid >= amount);
+        if (!isCompleted) return;
+        const feeMonth = String(row.feeMonth || d.id || "");
+        if (!/^\d{4}-\d{2}$/.test(feeMonth)) return;
+        // Ignore invalid future/next-cycle-completed anomalies for dashboard clarity.
+        if (feeMonth >= dueMonthKey) return;
+        completedMonthKeys.push(feeMonth);
+        if (!latestCompleted || feeMonth > latestCompleted) {
+          latestCompleted = feeMonth;
+        }
+      });
+
+      completedMonthKeys.sort((a, b) => (a < b ? 1 : -1));
+      setSubmittedMonths(
+        completedMonthKeys.map((monthKey) =>
+          new Date(`${monthKey}-01`).toLocaleString("en-IN", {
+            month: "long",
+            year: "numeric",
+          }),
+        ),
+      );
+
+      if (latestCompleted) {
+        setLastPaidMonth(
+          new Date(`${latestCompleted}-01`).toLocaleString("en-IN", {
+            month: "long",
+            year: "numeric",
+          }),
+        );
+      } else {
+        setLastPaidMonth("");
       }
     };
 
@@ -172,12 +243,25 @@ function UserHome() {
 
   if (!student) return null;
 
-  const feesMonth = student.feesDate
-    ? new Date(student.feesDate).toLocaleString("en-IN", {
+  const dashboardPendingFees = resolveDisplayPendingFees(
+    student,
+    tuitionMap,
+    busMap,
+  );
+
+  const feesMonth = student.feeMonth
+    ? new Date(`${student.feeMonth}-01`).toLocaleString("en-IN", {
         month: "long",
         year: "numeric",
       })
-    : null;
+    : student.month || student.selectedMonth || null;
+
+  const dashboardStatus =
+    dashboardPendingFees <= 0
+      ? "Completed"
+      : Number(student.paidFees || 0) > 0
+        ? "Partial"
+        : "Pending";
 
   return (
     <div className="userhome-wrapper">
@@ -199,24 +283,38 @@ function UserHome() {
 
             <h5
               className={`fw-semibold mb-1 ${
-                student.feeStatus === "Completed"
+                dashboardStatus === "Completed"
                   ? "text-success"
                   : "text-danger"
               }`}
             >
-              {student.feeStatus}
+              {dashboardStatus}
             </h5>
 
             {feesMonth && (
               <small className="home-muted">
-                {student.feeStatus === "Completed"
+                {dashboardStatus === "Completed"
                   ? "Completed for"
                   : "Pending for"}{" "}
                 {feesMonth}
               </small>
             )}
 
-            {student.feeStatus === "Completed" && student.approvedAt && (
+            {lastPaidMonth && (
+              <div className="mt-1">
+                <small className="home-muted">
+                  Paid till: <strong>{lastPaidMonth}</strong>
+                </small>
+              </div>
+            )}
+
+            <div className="mt-1">
+              <small className="home-muted">
+                Current payable month: <strong>{feesMonth || "—"}</strong>
+              </small>
+            </div>
+
+            {dashboardStatus === "Completed" && student.approvedAt && (
               <div className="mt-1">
                 <small className="home-muted">
                   Approved on:{" "}
@@ -234,13 +332,35 @@ function UserHome() {
 
             <h5
               className={
-                student.pendingFees > 0
+                dashboardPendingFees > 0
                   ? "text-danger fw-semibold"
                   : "text-success fw-semibold"
               }
             >
-              ₹ {student.pendingFees}
+              ₹ {dashboardPendingFees}
             </h5>
+            <small className="home-muted">
+              Next payment due for {feesMonth || "current cycle"}
+            </small>
+          </div>
+        </div>
+
+        <div className="col-12">
+          <div className="card shadow-sm p-3 userhome-card">
+            <small className="home-muted">Submitted Months</small>
+            {submittedMonths.length > 0 ? (
+              <div className="submitted-months-wrap mt-2">
+                {submittedMonths.map((m) => (
+                  <span key={m} className="submitted-pill">
+                    {m}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <small className="home-muted d-block mt-1">
+                No fully paid month found yet.
+              </small>
+            )}
           </div>
         </div>
       </div>
@@ -280,6 +400,21 @@ function UserHome() {
   font-size: 13px;
 }
 
+.submitted-months-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.submitted-pill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #e8f3f8;
+  color: #0F4C6C;
+}
+
 /* DARK MODE */
 body.dark-mode .userhome-wrapper {
   background: linear-gradient(135deg,#0A2E42,#0F172A);
@@ -297,6 +432,11 @@ body.dark-mode .userhome-card {
 
 body.dark-mode .home-muted {
   color: #CBD5E1;
+}
+
+body.dark-mode .submitted-pill {
+  background: #243644;
+  color: #D4A24C;
 }
 
       `}</style>

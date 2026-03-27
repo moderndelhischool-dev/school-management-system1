@@ -198,6 +198,7 @@ import AdminCalendar from "./AdminCalendar";
 import AdminUniform from "../components/AdminUniform";
 import AdminCertificate from "../components/AdminCertificate";
 import EventManager from "./EventManager";
+import AdminFeeStructure from "../components/AdminFeeStructure";
 
 // 🔥 NEW IMPORT
 import FeesHistory from "../components/FeesHistory";
@@ -356,6 +357,9 @@ function AdminDashboard() {
             {page === "uniform" && <AdminUniform darkMode={darkMode} />}
             {page === "certificate" && <AdminCertificate darkMode={darkMode} />}
             {page === "events" && <EventManager darkMode={darkMode} />}
+            {page === "fee-structure" && (
+              <AdminFeeStructure darkMode={darkMode} />
+            )}
 
             {/* 🔥 History Page */}
             {page === "fees-history" && <FeesHistory darkMode={darkMode} />}
