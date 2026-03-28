@@ -127,7 +127,7 @@ function SocialSidebar() {
           {/* WhatsApp */}
           <li className="social-item">
             <a
-              href="https://wa.me/919910127966"
+              href="https://wa.me/9855106665"
               target="_blank"
               rel="noopener noreferrer"
               className="social-hover"
