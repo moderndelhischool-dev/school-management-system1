@@ -476,6 +476,9 @@ import {
 import Swal from "sweetalert2";
 import {
   loadActiveSessionClassTuitionBusMap,
+  monthlyTotalWithExam,
+  examFeeForMonth,
+  currentMonthKey,
   resolveDisplayPendingFees,
   resolveDisplayTotalFees,
   autoRollAfterFullPayment,
@@ -485,6 +488,8 @@ function StudentList({ darkMode }) {
   const [students, setStudents] = useState([]);
   const [classTuitionMap, setClassTuitionMap] = useState({});
   const [classBusMap, setClassBusMap] = useState({});
+  const [classExamFeeMap, setClassExamFeeMap] = useState({});
+  const [classExamMonthsMap, setClassExamMonthsMap] = useState({});
   const [selectedClass, setSelectedClass] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [editStudent, setEditStudent] = useState(null);
@@ -522,9 +527,12 @@ function StudentList({ darkMode }) {
       .toLowerCase();
 
   const loadFeeMaps = async () => {
-    const { tuitionMap, busMap } = await loadActiveSessionClassTuitionBusMap(db);
+    const { tuitionMap, busMap, examFeeMap, examMonthsMap } =
+      await loadActiveSessionClassTuitionBusMap(db);
     setClassTuitionMap(tuitionMap);
     setClassBusMap(busMap);
+    setClassExamFeeMap(examFeeMap || {});
+    setClassExamMonthsMap(examMonthsMap || {});
   };
 
   const getClassTuition = (cls) => {
@@ -533,10 +541,22 @@ function StudentList({ darkMode }) {
   };
 
   const getStudentTotal = (student) =>
-    resolveDisplayTotalFees(student, classTuitionMap, classBusMap);
+    resolveDisplayTotalFees(
+      student,
+      classTuitionMap,
+      classBusMap,
+      classExamFeeMap,
+      classExamMonthsMap,
+    );
 
   const getStudentPending = (student) =>
-    resolveDisplayPendingFees(student, classTuitionMap, classBusMap);
+    resolveDisplayPendingFees(
+      student,
+      classTuitionMap,
+      classBusMap,
+      classExamFeeMap,
+      classExamMonthsMap,
+    );
 
   const getStudentDisplayStatus = (student) => {
     const pending = getStudentPending(student);
@@ -548,9 +568,38 @@ function StudentList({ darkMode }) {
   };
 
   const getEditTuition = () => (editStudent ? getClassTuition(editStudent.class) : 0);
+
+  const getEditFeeMonthKey = () => {
+    if (!editStudent) return currentMonthKey();
+    const now = new Date();
+    const monthIndex = months.indexOf(editStudent.selectedMonth);
+    const safeMonthNumber =
+      monthIndex >= 0 ? monthIndex + 1 : now.getMonth() + 1;
+    return `${now.getFullYear()}-${String(safeMonthNumber).padStart(2, "0")}`;
+  };
+
+  const getEditExamLine = () =>
+    editStudent
+      ? examFeeForMonth(
+          classExamFeeMap,
+          classExamMonthsMap,
+          editStudent,
+          getEditFeeMonthKey(),
+        )
+      : 0;
+
   const getEditTotal = () => {
     if (!editStudent) return 0;
-    return resolveDisplayTotalFees(editStudent, classTuitionMap, classBusMap);
+    const { total: line } = monthlyTotalWithExam(
+      classTuitionMap,
+      classBusMap,
+      classExamFeeMap,
+      classExamMonthsMap,
+      editStudent,
+      getEditFeeMonthKey(),
+    );
+    const carry = Number(editStudent.carryForwardTotal || 0);
+    return line + carry;
   };
 
   useEffect(() => {
@@ -678,6 +727,13 @@ function StudentList({ darkMode }) {
       ? Timestamp.fromDate(new Date(editStudent.feeDate))
       : Timestamp.now();
 
+    const examLine = examFeeForMonth(
+      classExamFeeMap,
+      classExamMonthsMap,
+      editStudent,
+      monthId,
+    );
+
     try {
       const studentRef = doc(db, "students", editStudent.id);
       await updateDoc(studentRef, {
@@ -685,6 +741,7 @@ function StudentList({ darkMode }) {
         usesBus,
         monthlyBusFee: usesBus ? Number(editStudent.monthlyBusFee || 0) : 0,
         monthlyTuitionFeeApplied: getClassTuition(editStudent.class),
+        examFeeApplied: examLine,
         totalFees: total,
         paidFees: paid,
         pendingFees: pendingFees,
@@ -708,6 +765,7 @@ function StudentList({ darkMode }) {
           feeMonth: monthId,
           tuitionFee: getClassTuition(editStudent.class),
           busFee: usesBus ? Number(editStudent.monthlyBusFee || 0) : 0,
+          examFee: examLine,
           date: feeDateValue,
           updatedAt: Timestamp.now(),
         },
@@ -1002,6 +1060,16 @@ function StudentList({ darkMode }) {
                 disabled
               />
             </div>
+            {getEditExamLine() > 0 && (
+              <div className="col-12">
+                <small
+                  className={darkMode ? "text-light opacity-80" : "text-muted"}
+                >
+                  Fee structure ke mutabiq is mahine examination fee shamil: ₹
+                  {getEditExamLine()}
+                </small>
+              </div>
+            )}
             <div className="col-md-4">
               <label className="small fw-bold">Paid Fees</label>
               <input

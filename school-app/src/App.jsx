@@ -76,6 +76,7 @@ function Layout() {
             <Route path="/register" element={<Register />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/user" element={<UserDashboard />} />
+            <Route path="*" element={<Landing />} />
           </Routes>
         </Suspense>
       </div>

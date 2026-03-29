@@ -313,7 +313,12 @@ function UserFees({ student, darkMode }) {
   const [msg, setMsg] = useState("");
   const [receipt, setReceipt] = useState(null);
   const [liveStudent, setLiveStudent] = useState(student);
-  const [feeMaps, setFeeMaps] = useState({ tuitionMap: {}, busMap: {} });
+  const [feeMaps, setFeeMaps] = useState({
+    tuitionMap: {},
+    busMap: {},
+    examFeeMap: {},
+    examMonthsMap: {},
+  });
   const [displayFees, setDisplayFees] = useState(student?.pendingFees || 0);
   const [showBreakdown, setShowBreakdown] = useState(false);
 
@@ -329,6 +334,8 @@ function UserFees({ student, darkMode }) {
         setFeeMaps({
           tuitionMap: maps.tuitionMap || {},
           busMap: maps.busMap || {},
+          examFeeMap: maps.examFeeMap || {},
+          examMonthsMap: maps.examMonthsMap || {},
         });
       }
     });
@@ -342,6 +349,8 @@ function UserFees({ student, darkMode }) {
         liveStudent,
         feeMaps.tuitionMap,
         feeMaps.busMap,
+        feeMaps.examFeeMap,
+        feeMaps.examMonthsMap,
       )
     : 0;
 
@@ -350,6 +359,8 @@ function UserFees({ student, darkMode }) {
         liveStudent,
         feeMaps.tuitionMap,
         feeMaps.busMap,
+        feeMaps.examFeeMap,
+        feeMaps.examMonthsMap,
       )
     : 0;
 

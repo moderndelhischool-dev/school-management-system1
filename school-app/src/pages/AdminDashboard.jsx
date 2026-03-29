@@ -184,7 +184,7 @@
 
 // export default AdminDashboard;
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase/firebase";
 
@@ -204,9 +204,40 @@ import AdminFeeStructure from "../components/AdminFeeStructure";
 import FeesHistory from "../components/FeesHistory";
 
 function AdminDashboard() {
-  const [page, setPage] = useState("dashboard");
+  const [page, setPage] = useState(() => {
+    try {
+      return localStorage.getItem("admin.page") || "dashboard";
+    } catch {
+      return "dashboard";
+    }
+  });
   const [showSidebar, setShowSidebar] = useState(false);
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => {
+    try {
+      const raw = localStorage.getItem("admin.darkMode");
+      return raw === null ? true : raw === "true";
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("admin.page", page);
+    } catch {
+      // ignore
+    }
+  }, [page]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("admin.darkMode", String(darkMode));
+    } catch {
+      // ignore
+    }
+  }, [darkMode]);
+
+  const setPagePersist = (p) => setPage(p);
 
   const logout = async () => {
     await signOut(auth);
@@ -258,8 +289,8 @@ function AdminDashboard() {
     <div className="admin-container" style={{ background: bgMain }}>
       <div className="row g-0 m-0">
         {/* Desktop Sidebar */}
-        <div className="col-md-3 col-lg-2 p-0 d-none d-md-block">
-          <Sidebar setPage={setPage} darkMode={darkMode} />
+        <div className="col-md-3 col-lg-2 p-0 d-none d-md-flex flex-column flex-shrink-0">
+          <Sidebar setPage={setPagePersist} darkMode={darkMode} activePage={page} />
         </div>
 
         {/* Mobile Sidebar */}
@@ -283,10 +314,11 @@ function AdminDashboard() {
             </div>
             <Sidebar
               setPage={(p) => {
-                setPage(p);
+                setPagePersist(p);
                 setShowSidebar(false);
               }}
               darkMode={darkMode}
+              activePage={page}
             />
           </div>
         </div>
@@ -299,7 +331,7 @@ function AdminDashboard() {
         )}
 
         {/* Main Content */}
-        <div className="col-12 col-md-9 col-lg-10 p-3 p-md-4">
+        <div className="col-12 col-md-9 col-lg-10 p-3 p-md-4 min-w-0">
           {/* Header */}
           <div
             className="d-flex justify-content-between align-items-center mb-4"
