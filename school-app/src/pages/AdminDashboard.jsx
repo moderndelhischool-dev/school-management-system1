@@ -196,10 +196,11 @@
 // }
 
 // export default AdminDashboard;
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase/firebase";
 
+// Components Import
 import Sidebar from "../components/Sidebar";
 import DashboardHome from "../components/DashboardHome";
 import AddStudent from "../components/AddStudent";
@@ -213,15 +214,28 @@ import AdminFeeStructure from "../components/AdminFeeStructure";
 import FeesHistory from "../components/FeesHistory";
 
 function AdminDashboard() {
-  const [page, setPage] = useState("dashboard");
+  // Page persistence: Refresh karne par wahi page rahega
+  const [page, setPage] = useState(() => {
+    try {
+      return localStorage.getItem("admin.page") || "dashboard";
+    } catch {
+      return "dashboard";
+    }
+  });
+
   const [showSidebar, setShowSidebar] = useState(false);
+
+  // Sync current page with LocalStorage
+  useEffect(() => {
+    localStorage.setItem("admin.page", page);
+  }, [page]);
 
   const logout = async () => {
     await signOut(auth);
     window.location.href = "/";
   };
 
-  // Fixed Light Mode Background
+  // Fixed Light Mode Styling (Professional Blue Theme)
   const bgMain = "linear-gradient(135deg, #E6EEF4, #F8FAFC)";
 
   const headerStyle = {
@@ -247,12 +261,12 @@ function AdminDashboard() {
   return (
     <div className="admin-container" style={{ background: bgMain }}>
       <div className="row g-0 m-0">
-        {/* Desktop Sidebar */}
+        {/* 1. Desktop Sidebar */}
         <div className="col-md-3 col-lg-2 p-0 d-none d-md-block">
-          <Sidebar setPage={setPage} />
+          <Sidebar setPage={setPage} activePage={page} />
         </div>
 
-        {/* Mobile Sidebar */}
+        {/* 2. Mobile Sidebar */}
         <div
           className={`mobile-sidebar ${showSidebar ? "open" : ""}`}
           style={{ background: "linear-gradient(180deg, #0F4C6C, #1B5E84)" }}
@@ -271,10 +285,12 @@ function AdminDashboard() {
                 setPage(p);
                 setShowSidebar(false);
               }}
+              activePage={page}
             />
           </div>
         </div>
 
+        {/* Mobile Overlay */}
         {showSidebar && (
           <div
             className="mobile-overlay"
@@ -282,9 +298,9 @@ function AdminDashboard() {
           />
         )}
 
-        {/* Main Content */}
-        <div className="col-12 col-md-9 col-lg-10 p-3 p-md-4">
-          {/* Header */}
+        {/* 3. Main Content Area */}
+        <div className="col-12 col-md-9 col-lg-10 p-3 p-md-4 min-w-0">
+          {/* Top Header */}
           <div
             className="d-flex justify-content-between align-items-center mb-4"
             style={headerStyle}
@@ -299,7 +315,6 @@ function AdminDashboard() {
               <h4 className="mb-0 fw-semibold">Hello Admin 👋</h4>
             </div>
             <div className="d-flex gap-2">
-              {/* Dark Mode Toggle Button Removed */}
               <button
                 className="btn btn-danger btn-sm"
                 style={{ borderRadius: "12px" }}
@@ -310,7 +325,7 @@ function AdminDashboard() {
             </div>
           </div>
 
-          {/* Page Content Container */}
+          {/* Dynamic Page Container */}
           <div style={getPageWrapperStyle()}>
             {page === "dashboard" && (
               <>
@@ -340,14 +355,32 @@ function AdminDashboard() {
       </div>
 
       <style>{`
-        .admin-container { min-height: 100vh; transition: 0.3s ease; }
-        .mobile-sidebar { position: fixed; top: 0; left: 0; height: 100%; width: 280px; transform: translateX(-100%); transition: transform 0.4s ease; z-index: 1050; box-shadow: 4px 0 25px rgba(0,0,0,0.4); }
+        .admin-container { 
+          min-height: 100vh; 
+          transition: 0.3s ease; 
+          overflow-x: hidden; 
+        }
+        .mobile-sidebar { 
+          position: fixed; top: 0; left: 0; height: 100%; width: 280px; 
+          transform: translateX(-100%); transition: transform 0.4s ease; 
+          z-index: 1050; box-shadow: 4px 0 25px rgba(0,0,0,0.4); 
+        }
         .mobile-sidebar.open { transform: translateX(0); }
         .mobile-sidebar-content { height: 100%; padding: 20px; overflow-y: auto; }
-        .mobile-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1040; }
-        .btn-gold { background: linear-gradient(135deg, #D4A24C, #C18F2D); color: white; border: none; }
+        .mobile-overlay { 
+          position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+          background: rgba(0,0,0,0.5); z-index: 1040; 
+        }
+        .btn-gold { 
+          background: linear-gradient(135deg, #D4A24C, #C18F2D); 
+          color: white; border: none; 
+        }
         .btn-gold:hover { opacity: 0.9; }
-        @media (min-width: 768px) { .mobile-sidebar, .mobile-overlay { display: none; } }
+        
+        /* Sidebar container handling */
+        @media (min-width: 768px) { 
+          .mobile-sidebar, .mobile-overlay { display: none; } 
+        }
       `}</style>
     </div>
   );

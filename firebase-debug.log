@@ -1,0 +1,19 @@
+[debug] [2026-03-27T08:01:32.901Z] ----------------------------------------------------------------------
+[debug] [2026-03-27T08:01:32.925Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\win 10\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js init
+[debug] [2026-03-27T08:01:32.926Z] CLI Version:   15.11.0
+[debug] [2026-03-27T08:01:32.926Z] Platform:      win32
+[debug] [2026-03-27T08:01:32.926Z] Node Version:  v22.13.1
+[debug] [2026-03-27T08:01:32.927Z] Time:          Fri Mar 27 2026 13:31:32 GMT+0530 (India Standard Time)
+[debug] [2026-03-27T08:01:32.927Z] ----------------------------------------------------------------------
+[debug] 
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  D:\new\school-management-system1
+

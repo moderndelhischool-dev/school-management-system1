@@ -166,6 +166,8 @@ function UserHome() {
   const [student, setStudent] = useState(null);
   const [tuitionMap, setTuitionMap] = useState({});
   const [busMap, setBusMap] = useState({});
+  const [examFeeMap, setExamFeeMap] = useState({});
+  const [examMonthsMap, setExamMonthsMap] = useState({});
   const [lastPaidMonth, setLastPaidMonth] = useState("");
   const [submittedMonths, setSubmittedMonths] = useState([]);
 
@@ -196,6 +198,8 @@ function UserHome() {
       setStudent(refreshed.data());
       setTuitionMap(maps.tuitionMap || {});
       setBusMap(maps.busMap || {});
+      setExamFeeMap(maps.examFeeMap || {});
+      setExamMonthsMap(maps.examMonthsMap || {});
 
       const feesSnap = await getDocs(collection(db, "students", user.email, "fees"));
       let latestCompleted = "";
@@ -249,6 +253,8 @@ function UserHome() {
     student,
     tuitionMap,
     busMap,
+    examFeeMap,
+    examMonthsMap,
   );
 
   const feesMonth = student.feeMonth

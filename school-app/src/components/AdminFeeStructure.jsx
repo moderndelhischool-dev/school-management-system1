@@ -9,7 +9,83 @@ import {
   query,
   where,
   writeBatch,
+  deleteField,
 } from "firebase/firestore";
+
+/** Firestore Timestamp, plain seconds, or Date → readable string */
+function formatSessionDate(value) {
+  if (value === null || value === undefined) return "—";
+  try {
+    if (typeof value?.toDate === "function") {
+      return value.toDate().toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
+    }
+    if (typeof value?.seconds === "number") {
+      return new Date(value.seconds * 1000).toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
+    }
+    if (value instanceof Date) {
+      return value.toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
+    }
+    return String(value);
+  } catch {
+    return "—";
+  }
+}
+
+/** Calendar date only — e.g. Monday, 1 April 2025 */
+function formatSessionDateCalendar(value) {
+  if (value === null || value === undefined) return "—";
+  try {
+    let d;
+    if (typeof value?.toDate === "function") d = value.toDate();
+    else if (typeof value?.seconds === "number") {
+      d = new Date(value.seconds * 1000);
+    } else return "—";
+    return d.toLocaleDateString(undefined, {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  } catch {
+    return "—";
+  }
+}
+
+/** Firestore value → YYYY-MM-DD for <input type="date" /> */
+function dateInputFromFirestore(value) {
+  if (value === null || value === undefined) return "";
+  try {
+    let d;
+    if (typeof value?.toDate === "function") d = value.toDate();
+    else if (typeof value?.seconds === "number") {
+      d = new Date(value.seconds * 1000);
+    } else return "";
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  } catch {
+    return "";
+  }
+}
+
+function timestampFromDateInput(isoDateString) {
+  if (!isoDateString || !/^\d{4}-\d{2}-\d{2}$/.test(isoDateString)) {
+    return null;
+  }
+  const d = new Date(`${isoDateString}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return null;
+  return Timestamp.fromDate(d);
+}
 
 const CLASS_OPTIONS = [
   "ukg",
@@ -35,7 +111,33 @@ function AdminFeeStructure({ darkMode }) {
   const [monthlyTuitionFee, setMonthlyTuitionFee] = useState("");
   const [monthlyBusFee, setMonthlyBusFee] = useState("");
   const [examFee, setExamFee] = useState("");
+  const [examFeeMonths, setExamFeeMonths] = useState([]);
   const [admissionFee, setAdmissionFee] = useState("");
+  const [newSessionStartDate, setNewSessionStartDate] = useState("");
+  const [newSessionEndDate, setNewSessionEndDate] = useState("");
+  const [sessionStartInput, setSessionStartInput] = useState("");
+  const [sessionEndInput, setSessionEndInput] = useState("");
+
+  const MONTH_CHECKBOXES = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  const toggleExamMonth = (name) => {
+    setExamFeeMonths((prev) =>
+      prev.includes(name) ? prev.filter((m) => m !== name) : [...prev, name],
+    );
+  };
   const [saving, setSaving] = useState(false);
   const [applying, setApplying] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -48,6 +150,9 @@ function AdminFeeStructure({ darkMode }) {
 
   const yearlyTuitionPreview = (Number(monthlyTuitionFee) || 0) * 12;
   const yearlyBusPreview = (Number(monthlyBusFee) || 0) * 12;
+
+  const selectedSessionRow = sessions.find((s) => s.id === selectedSession);
+  const isSelectedSessionExpired = !!selectedSessionRow?.isExpired;
 
   const showMessage = (text, type = "success") => {
     setMsg(text);
@@ -63,7 +168,7 @@ function AdminFeeStructure({ darkMode }) {
     setSessions(data);
 
     if (!selectedSession && data.length) {
-      const active = data.find((s) => s.isActive);
+      const active = data.find((s) => s.isActive && !s.isExpired);
       setSelectedSession(active?.id || data[data.length - 1].id);
     }
   };
@@ -83,6 +188,7 @@ function AdminFeeStructure({ darkMode }) {
         setMonthlyTuitionFee("");
         setMonthlyBusFee("");
         setExamFee("");
+        setExamFeeMonths([]);
         setAdmissionFee("");
         return;
       }
@@ -106,6 +212,9 @@ function AdminFeeStructure({ darkMode }) {
         );
       }
       setExamFee(String(data.examFee ?? ""));
+      setExamFeeMonths(
+        Array.isArray(data.examFeeMonths) ? data.examFeeMonths : [],
+      );
       setAdmissionFee(String(data.admissionFee ?? ""));
     } finally {
       setLoading(false);
@@ -120,30 +229,105 @@ function AdminFeeStructure({ darkMode }) {
     loadFeeConfig(selectedSession, selectedClass);
   }, [selectedSession, selectedClass]);
 
+  useEffect(() => {
+    const row = sessions.find((s) => s.id === selectedSession);
+    if (!row) {
+      setSessionStartInput("");
+      setSessionEndInput("");
+      return;
+    }
+    setSessionStartInput(dateInputFromFirestore(row.sessionStartDate));
+    setSessionEndInput(dateInputFromFirestore(row.sessionEndDate));
+  }, [selectedSession, sessions]);
+
+  const saveSessionCalendarDates = async () => {
+    if (!selectedSession) {
+      showMessage("Select a session first.", "error");
+      return;
+    }
+    const startTs = timestampFromDateInput(sessionStartInput);
+    const endTs = timestampFromDateInput(sessionEndInput);
+    if (sessionStartInput && !startTs) {
+      showMessage("Invalid start date.", "error");
+      return;
+    }
+    if (sessionEndInput && !endTs) {
+      showMessage("Invalid end date.", "error");
+      return;
+    }
+    if (startTs && endTs && startTs.seconds > endTs.seconds) {
+      showMessage("End date must be on or after the start date.", "error");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const calPayload = {
+        updatedAt: Timestamp.now(),
+      };
+      calPayload.sessionStartDate = startTs
+        ? startTs
+        : deleteField();
+      calPayload.sessionEndDate = endTs ? endTs : deleteField();
+
+      await setDoc(
+        doc(db, "academicSessions", selectedSession),
+        calPayload,
+        { merge: true },
+      );
+      await loadSessions();
+      showMessage("Session start / end dates saved.");
+    } catch (error) {
+      console.error(error);
+      showMessage("Could not save session dates.", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const createSession = async () => {
     const trimmed = newSession.trim();
     if (!trimmed) {
-      showMessage("Please enter session name (e.g. 2026-27).", "error");
+      showMessage("Enter a session identifier (e.g. 2026–2027).", "error");
       return;
     }
 
     const id = trimmed;
+    const startTs = timestampFromDateInput(newSessionStartDate);
+    const endTs = timestampFromDateInput(newSessionEndDate);
+    if (newSessionStartDate && !startTs) {
+      showMessage("Invalid planned start date.", "error");
+      return;
+    }
+    if (newSessionEndDate && !endTs) {
+      showMessage("Invalid planned end date.", "error");
+      return;
+    }
+    if (startTs && endTs && startTs.seconds > endTs.seconds) {
+      showMessage("End date must be on or after the start date.", "error");
+      return;
+    }
+
     setSaving(true);
     try {
-      await setDoc(
-        doc(db, "academicSessions", id),
-        {
-          name: trimmed,
-          isActive: false,
-          updatedAt: Timestamp.now(),
-          createdAt: Timestamp.now(),
-        },
-        { merge: true },
-      );
+      const sessionDoc = {
+        name: trimmed,
+        isActive: false,
+        isExpired: false,
+        expiredAt: null,
+        updatedAt: Timestamp.now(),
+        createdAt: Timestamp.now(),
+      };
+      if (startTs) sessionDoc.sessionStartDate = startTs;
+      if (endTs) sessionDoc.sessionEndDate = endTs;
+
+      await setDoc(doc(db, "academicSessions", id), sessionDoc, { merge: true });
       setNewSession("");
+      setNewSessionStartDate("");
+      setNewSessionEndDate("");
       await loadSessions();
       setSelectedSession(id);
-      showMessage("Session created successfully.");
+      showMessage("Session created.");
     } catch (error) {
       console.error(error);
       showMessage("Failed to create session.", "error");
@@ -154,7 +338,15 @@ function AdminFeeStructure({ darkMode }) {
 
   const saveFeeStructure = async () => {
     if (!canSave) {
-      showMessage("Please fill all fee fields.", "error");
+      showMessage("Select session, class, and enter monthly tuition.", "error");
+      return;
+    }
+    const sel = sessions.find((s) => s.id === selectedSession);
+    if (sel?.isExpired) {
+      showMessage(
+        "This session has ended. You cannot save changes; select an active session.",
+        "error",
+      );
       return;
     }
 
@@ -168,6 +360,7 @@ function AdminFeeStructure({ darkMode }) {
         tuitionFee: yearlyTuitionPreview,
         busFee: yearlyBusPreview,
         examFee: Number(examFee) || 0,
+        examFeeMonths,
         admissionFee: Number(admissionFee) || 0,
         updatedAt: Timestamp.now(),
       };
@@ -182,7 +375,7 @@ function AdminFeeStructure({ darkMode }) {
         { merge: true },
       );
 
-      showMessage("Fee structure saved.");
+      showMessage("Fee structure saved successfully.");
     } catch (error) {
       console.error(error);
       showMessage("Failed to save fee structure.", "error");
@@ -193,7 +386,13 @@ function AdminFeeStructure({ darkMode }) {
 
   const markActiveSession = async () => {
     if (!selectedSession) {
-      showMessage("Please select a session first.", "error");
+      showMessage("Select an academic session first.", "error");
+      return;
+    }
+
+    const picked = sessions.find((s) => s.id === selectedSession);
+    if (picked?.isExpired) {
+      showMessage("This session has ended. Activate a different session.", "error");
       return;
     }
 
@@ -205,7 +404,7 @@ function AdminFeeStructure({ darkMode }) {
             doc(db, "academicSessions", session.id),
             {
               name: session.name || session.id,
-              isActive: session.id === selectedSession,
+              isActive: session.id === selectedSession && !session.isExpired,
               updatedAt: Timestamp.now(),
             },
             { merge: true },
@@ -214,7 +413,7 @@ function AdminFeeStructure({ darkMode }) {
       );
 
       await loadSessions();
-      showMessage("Active session updated.");
+      showMessage("Active session has been updated.");
     } catch (error) {
       console.error(error);
       showMessage("Failed to update active session.", "error");
@@ -223,9 +422,57 @@ function AdminFeeStructure({ darkMode }) {
     }
   };
 
+  const expireSelectedSession = async () => {
+    if (!selectedSession) {
+      showMessage("Select an academic session first.", "error");
+      return;
+    }
+    const picked = sessions.find((s) => s.id === selectedSession);
+    if (picked?.isExpired) {
+      showMessage("This session is already ended.", "error");
+      return;
+    }
+    const ok = window.confirm(
+      "Mark this academic session as ended? It will be removed as the active session. You can still open it to view saved fee settings, but saving or applying fees will be disabled.",
+    );
+    if (!ok) return;
+
+    setSaving(true);
+    try {
+      await setDoc(
+        doc(db, "academicSessions", selectedSession),
+        {
+          isExpired: true,
+          expiredAt: Timestamp.now(),
+          isActive: false,
+          updatedAt: Timestamp.now(),
+        },
+        { merge: true },
+      );
+      await loadSessions();
+      showMessage("Session has been marked as ended.");
+    } catch (error) {
+      console.error(error);
+      showMessage("Could not update session.", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const applyFeesToExistingStudents = async () => {
     if (!selectedSession || !selectedClass || monthlyTuitionFee === "") {
-      showMessage("Select session/class and set monthly tuition first.", "error");
+      showMessage(
+        "Select a session and class, and enter monthly tuition first.",
+        "error",
+      );
+      return;
+    }
+    const selApply = sessions.find((s) => s.id === selectedSession);
+    if (selApply?.isExpired) {
+      showMessage(
+        "This session has ended. Fee application is disabled for ended sessions.",
+        "error",
+      );
       return;
     }
 
@@ -237,6 +484,10 @@ function AdminFeeStructure({ darkMode }) {
     const monthLabel = `${monthName} ${now.getFullYear()}`;
     const monthId = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     const dateOnly = now.toISOString().slice(0, 10);
+    const includeExam =
+      exam > 0 &&
+      examFeeMonths.some((m) => String(m).trim() === monthName);
+    const examApplied = includeExam ? exam : 0;
 
     setApplying(true);
     try {
@@ -247,7 +498,7 @@ function AdminFeeStructure({ darkMode }) {
       });
 
       if (!students.length) {
-        showMessage("No students found in selected class.", "error");
+        showMessage("No students found for this class.", "error");
         return;
       }
 
@@ -269,7 +520,7 @@ function AdminFeeStructure({ darkMode }) {
         const studentBusFee = Number(student.monthlyBusFee || 0);
         const defaultBus = Number(monthlyBusFee) || 0;
         const busApplied = usesBus ? (studentBusFee > 0 ? studentBusFee : defaultBus) : 0;
-        const total = tuition + busApplied;
+        const total = tuition + busApplied + examApplied;
         const paidExisting = Number(student.paidFees || 0);
         const paid = Math.min(Math.max(paidExisting, 0), total);
         const pending = Math.max(total - paid, 0);
@@ -284,7 +535,7 @@ function AdminFeeStructure({ darkMode }) {
             month: monthLabel,
             monthlyTuitionFeeApplied: tuition,
             monthlyBusFeeApplied: busApplied,
-            examFeeApplied: exam,
+            examFeeApplied: examApplied,
             admissionFeeApplied: admission,
             totalFees: total,
             paidFees: paid,
@@ -313,7 +564,7 @@ function AdminFeeStructure({ darkMode }) {
             status,
             tuitionFee: tuition,
             busFee: busApplied,
-            examFee: 0,
+            examFee: examApplied,
             admissionFee: 0,
             usesBus,
             date: Timestamp.now(),
@@ -328,7 +579,7 @@ function AdminFeeStructure({ darkMode }) {
       }
 
       await commitBatchIfNeeded(true);
-      showMessage(`Mapped fees for ${processed} students.`);
+      showMessage(`Fees applied to ${processed} student(s).`);
     } catch (error) {
       console.error(error);
       showMessage("Failed to apply fees to students.", "error");
@@ -345,10 +596,12 @@ function AdminFeeStructure({ darkMode }) {
         color: darkMode ? "#f1f5f9" : "#111827",
       }}
     >
-      <h4 className="fw-bold mb-3">Fee Structure (Session + Class)</h4>
+      <h4 className="fw-bold mb-2 page-title">Fee structure by session and class</h4>
       <p className="mb-4 sub-text">
-        Set monthly tuition and direct monthly bus fee per class. Student-wise
-        bus fee override is also supported.
+        Define standard monthly tuition and default transport charges for each
+        grade. Individual student records can still override the bus amount when
+        needed. After you pick an <strong>Academic session</strong>, session
+        details (status, dates) show in the panel directly under the session row.
       </p>
 
       {msg && (
@@ -359,28 +612,28 @@ function AdminFeeStructure({ darkMode }) {
 
       <div className="row g-3 mb-4">
         <div className="col-md-4">
-          <label className="field-label">Academic Session</label>
+          <label className="field-label">Academic session</label>
           <select
             className="form-select custom-input"
             value={selectedSession}
             onChange={(e) => setSelectedSession(e.target.value)}
           >
-            <option value="">Select Session</option>
+            <option value="">Select session</option>
             {sessions.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name || s.id}
-                {s.isActive ? " (Active)" : ""}
+                {s.isExpired ? " (Ended)" : s.isActive ? " (Active)" : ""}
               </option>
             ))}
           </select>
         </div>
 
         <div className="col-md-4">
-          <label className="field-label">Create New Session</label>
+          <label className="field-label">New session</label>
           <div className="d-flex gap-2">
             <input
               className="form-control custom-input"
-              placeholder="2026-27"
+              placeholder="e.g. 2026–27"
               value={newSession}
               onChange={(e) => setNewSession(e.target.value)}
             />
@@ -389,26 +642,231 @@ function AdminFeeStructure({ darkMode }) {
               onClick={createSession}
               disabled={saving}
             >
-              Add
+              Create
             </button>
           </div>
         </div>
 
-        <div className="col-md-4 d-flex align-items-end">
-          <button
-            className="btn btn-sm btn-outline-light active-btn-wrap"
-            onClick={markActiveSession}
-            disabled={saving || !selectedSession}
-          >
-            Mark Selected Session Active
-          </button>
+        <div className="col-md-4 d-flex flex-column justify-content-end gap-2">
+          <div className="d-flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-light active-btn-wrap flex-grow-1"
+              onClick={markActiveSession}
+              disabled={
+                saving ||
+                !selectedSession ||
+                sessions.find((x) => x.id === selectedSession)?.isExpired
+              }
+            >
+              Set as active
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm expire-session-btn"
+              onClick={expireSelectedSession}
+              disabled={
+                saving ||
+                !selectedSession ||
+                sessions.find((x) => x.id === selectedSession)?.isExpired
+              }
+            >
+              End session
+            </button>
+          </div>
+          <small className="session-help">
+            When a session is over, use &quot;End session&quot; to archive it.
+            Fee edits and bulk apply are blocked for ended sessions.
+          </small>
         </div>
       </div>
 
+      <div className="row g-3 mb-3">
+        <div className="col-12">
+          <span className="field-label">
+            Optional — dates applied when you create a new session (above)
+          </span>
+        </div>
+        <div className="col-md-4">
+          <label className="field-label" htmlFor="new-sess-start">
+            Planned start date
+          </label>
+          <input
+            id="new-sess-start"
+            type="date"
+            className="form-control custom-input"
+            value={newSessionStartDate}
+            onChange={(e) => setNewSessionStartDate(e.target.value)}
+          />
+        </div>
+        <div className="col-md-4">
+          <label className="field-label" htmlFor="new-sess-end">
+            Planned end date
+          </label>
+          <input
+            id="new-sess-end"
+            type="date"
+            className="form-control custom-input"
+            value={newSessionEndDate}
+            onChange={(e) => setNewSessionEndDate(e.target.value)}
+          />
+        </div>
+        <div className="col-md-4 d-flex align-items-end">
+          <small className="preview-text mb-1">
+            If set, these are stored on the new session document as the official
+            calendar range. You can edit them later under Session details.
+          </small>
+        </div>
+      </div>
+
+      {selectedSession && selectedSessionRow && (
+        <div
+          className="session-details-panel mb-4"
+          aria-labelledby="session-details-heading"
+        >
+          <h5 id="session-details-heading" className="session-details-title">
+            Session details
+          </h5>
+          <p className="session-details-sub mb-3">
+            Information for the session currently selected above. Switch the
+            dropdown to view another session.
+          </p>
+          <div className="row g-2 g-md-3 session-details-grid">
+            <div className="col-sm-6 col-lg-4">
+              <div className="session-detail-k">Session ID</div>
+              <div className="session-detail-v">{selectedSessionRow.id}</div>
+            </div>
+            <div className="col-sm-6 col-lg-4">
+              <div className="session-detail-k">Display name</div>
+              <div className="session-detail-v">
+                {selectedSessionRow.name || selectedSessionRow.id}
+              </div>
+            </div>
+            <div className="col-sm-6 col-lg-4">
+              <div className="session-detail-k">Status</div>
+              <div className="session-detail-v">
+                {selectedSessionRow.isExpired ? (
+                  <span className="badge-status ended">Ended</span>
+                ) : selectedSessionRow.isActive ? (
+                  <span className="badge-status active">Active</span>
+                ) : (
+                  <span className="badge-status inactive">Inactive</span>
+                )}
+              </div>
+            </div>
+            <div className="col-sm-6 col-lg-4">
+              <div className="session-detail-k">Session begins (calendar)</div>
+              <div className="session-detail-v">
+                {formatSessionDateCalendar(selectedSessionRow.sessionStartDate)}
+              </div>
+            </div>
+            <div className="col-sm-6 col-lg-4">
+              <div className="session-detail-k">Session ends (planned)</div>
+              <div className="session-detail-v">
+                {formatSessionDateCalendar(selectedSessionRow.sessionEndDate)}
+              </div>
+            </div>
+            <div className="col-sm-6 col-lg-4">
+              <div className="session-detail-k">Created</div>
+              <div className="session-detail-v">
+                {formatSessionDate(selectedSessionRow.createdAt)}
+              </div>
+            </div>
+            <div className="col-sm-6 col-lg-4">
+              <div className="session-detail-k">Last updated</div>
+              <div className="session-detail-v">
+                {formatSessionDate(selectedSessionRow.updatedAt)}
+              </div>
+            </div>
+            <div className="col-sm-6 col-lg-4">
+              <div className="session-detail-k">Ended on (archived)</div>
+              <div className="session-detail-v">
+                {selectedSessionRow.isExpired
+                  ? formatSessionDate(selectedSessionRow.expiredAt)
+                  : "—"}
+              </div>
+            </div>
+          </div>
+
+          <div className="session-calendar-edit mt-3 pt-3">
+            <div className="session-detail-k mb-2">Set academic calendar dates</div>
+            <p className="session-details-sub mb-2">
+              Full day, month, and year for when this session is planned to
+              start and finish. You can change these anytime (including after the
+              session is ended, for accurate records).
+            </p>
+            <div className="row g-2 align-items-end">
+              <div className="col-md-4">
+                <label className="field-label" htmlFor="sess-start">
+                  Start date
+                </label>
+                <input
+                  id="sess-start"
+                  type="date"
+                  className="form-control custom-input"
+                  value={sessionStartInput}
+                  onChange={(e) => setSessionStartInput(e.target.value)}
+                />
+              </div>
+              <div className="col-md-4">
+                <label className="field-label" htmlFor="sess-end">
+                  End date
+                </label>
+                <input
+                  id="sess-end"
+                  type="date"
+                  className="form-control custom-input"
+                  value={sessionEndInput}
+                  onChange={(e) => setSessionEndInput(e.target.value)}
+                />
+              </div>
+              <div className="col-md-4">
+                <button
+                  type="button"
+                  className="btn save-btn w-100"
+                  onClick={saveSessionCalendarDates}
+                  disabled={saving || !selectedSession}
+                >
+                  {saving ? "Saving…" : "Save calendar dates"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="card section-card">
+        {isSelectedSessionExpired && (
+          <div
+            className="ended-session-banner"
+            role="status"
+          >
+            This academic session has ended. You can review the values below;
+            use &quot;Save&quot; or &quot;Apply&quot; only after you select an
+            active session.
+          </div>
+        )}
+        <fieldset
+          className="fee-structure-fieldset"
+          disabled={isSelectedSessionExpired}
+        >
         <div className="row g-3">
-          <div className="col-md-3">
-            <label className="field-label">Class</label>
+          <div className="col-md-4">
+            <label className="field-label">Monthly tuition fee (₹)</label>
+            <input
+              type="number"
+              className="form-control custom-input"
+              placeholder="0"
+              value={monthlyTuitionFee}
+              onChange={(e) => setMonthlyTuitionFee(e.target.value)}
+            />
+            <small className="preview-text">
+              Annual equivalent: ₹{yearlyTuitionPreview}
+            </small>
+          </div>
+
+          <div className="col-md-4">
+            <label className="field-label">Class / grade</label>
             <select
               className="form-select custom-input"
               value={selectedClass}
@@ -422,20 +880,8 @@ function AdminFeeStructure({ darkMode }) {
             </select>
           </div>
 
-          <div className="col-md-3">
-            <label className="field-label">Tuition Fee (Monthly)</label>
-            <input
-              type="number"
-              className="form-control custom-input"
-              placeholder="0"
-              value={monthlyTuitionFee}
-              onChange={(e) => setMonthlyTuitionFee(e.target.value)}
-            />
-            <small className="preview-text">Yearly: Rs {yearlyTuitionPreview}</small>
-          </div>
-
-          <div className="col-md-3">
-            <label className="field-label">Bus Fee (Monthly Default)</label>
+          <div className="col-md-4">
+            <label className="field-label">Default monthly bus fee (₹)</label>
             <input
               type="number"
               className="form-control custom-input"
@@ -443,11 +889,13 @@ function AdminFeeStructure({ darkMode }) {
               value={monthlyBusFee}
               onChange={(e) => setMonthlyBusFee(e.target.value)}
             />
-            <small className="preview-text">Yearly: Rs {yearlyBusPreview}</small>
+            <small className="preview-text">
+              Annual equivalent: ₹{yearlyBusPreview}
+            </small>
           </div>
 
-          <div className="col-md-3">
-            <label className="field-label">Examination Fee (Optional)</label>
+          <div className="col-md-4">
+            <label className="field-label">Examination fee (optional, ₹)</label>
             <input
               type="number"
               className="form-control custom-input"
@@ -455,11 +903,39 @@ function AdminFeeStructure({ darkMode }) {
               value={examFee}
               onChange={(e) => setExamFee(e.target.value)}
             />
-            <small className="preview-text">Optional: update anytime</small>
+            <small className="preview-text">
+              Included in the monthly total only for the months selected below.
+            </small>
           </div>
 
-          <div className="col-md-3">
-            <label className="field-label">Admission Fee (Optional)</label>
+          <div className="col-12">
+            <label className="field-label">
+              Months when examination fee applies
+            </label>
+            <p className="field-hint mb-2">
+              Select one or more months. For all other months, this examination
+              amount is not added to the fee bill.
+            </p>
+            <div className="d-flex flex-wrap gap-2 exam-month-pills">
+              {MONTH_CHECKBOXES.map((m) => (
+                <label
+                  key={m}
+                  className={`exam-month-chip ${examFeeMonths.includes(m) ? "on" : ""}`}
+                >
+                  <input
+                    type="checkbox"
+                    className="d-none"
+                    checked={examFeeMonths.includes(m)}
+                    onChange={() => toggleExamMonth(m)}
+                  />
+                  {m.slice(0, 3)}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="col-md-4">
+            <label className="field-label">Admission fee (optional, ₹)</label>
             <input
               type="number"
               className="form-control custom-input"
@@ -467,24 +943,27 @@ function AdminFeeStructure({ darkMode }) {
               value={admissionFee}
               onChange={(e) => setAdmissionFee(e.target.value)}
             />
-            <small className="preview-text">Optional: update anytime</small>
+            <small className="preview-text">
+              One-time charge where applicable; stored for reference.
+            </small>
           </div>
         </div>
+        </fieldset>
 
         <div className="d-flex justify-content-end mt-4">
           <button
             className="btn apply-btn me-2"
             onClick={applyFeesToExistingStudents}
-            disabled={applying || saving || loading}
+            disabled={applying || saving || loading || isSelectedSessionExpired}
           >
-            {applying ? "Applying..." : "Apply to Existing Students"}
+            {applying ? "Applying…" : "Apply to students in this class"}
           </button>
           <button
             className="btn save-btn"
             onClick={saveFeeStructure}
-            disabled={saving || loading}
+            disabled={saving || loading || isSelectedSessionExpired}
           >
-            {saving ? "Saving..." : "Save Fee Structure"}
+            {saving ? "Saving…" : "Save fee structure"}
           </button>
         </div>
       </div>
@@ -494,9 +973,100 @@ function AdminFeeStructure({ darkMode }) {
           padding: 24px;
           border-radius: 18px;
         }
-        .sub-text {
-          opacity: 0.82;
+        .fee-structure-fieldset {
+          border: none;
+          margin: 0;
+          padding: 0;
+          min-width: 0;
+        }
+        .ended-session-banner {
+          border-radius: 10px;
+          padding: 10px 14px;
+          margin-bottom: 16px;
+          font-size: 13px;
+          line-height: 1.45;
+          background: ${darkMode ? "rgba(127, 29, 29, 0.35)" : "#fef2f2"};
+          color: ${darkMode ? "#fecaca" : "#991b1b"};
+          border: 1px solid ${darkMode ? "rgba(248, 113, 113, 0.35)" : "#fecaca"};
+        }
+        .session-help {
+          font-size: 11px;
+          line-height: 1.4;
+          color: ${darkMode ? "#94a3b8" : "#64748b"};
+        }
+        .expire-session-btn {
+          border-radius: 10px;
+          font-weight: 600;
+          border: 1px solid ${darkMode ? "#f87171" : "#dc2626"};
+          color: ${darkMode ? "#fecaca" : "#b91c1c"};
+          background: ${darkMode ? "rgba(127, 29, 29, 0.25)" : "#fff1f2"};
+        }
+        .expire-session-btn:hover:not(:disabled) {
+          background: ${darkMode ? "rgba(127, 29, 29, 0.45)" : "#ffe4e6"};
+        }
+        .expire-session-btn:disabled {
+          opacity: 0.45;
+        }
+        .session-details-panel {
+          border-radius: 14px;
+          padding: 16px 18px;
+          border: 1px solid ${darkMode ? "#334155" : "#e2e8f0"};
+          background: ${darkMode ? "#1e293b" : "#ffffff"};
+          box-shadow: ${darkMode ? "0 8px 24px rgba(0,0,0,0.2)" : "0 8px 24px rgba(15,76,108,0.08)"};
+        }
+        .session-details-title {
+          font-size: 15px;
+          font-weight: 700;
+          margin: 0 0 4px 0;
+          color: ${darkMode ? "#f8fafc" : "#0f172a"};
+        }
+        .session-details-sub {
+          font-size: 12px;
+          margin: 0;
+          color: ${darkMode ? "#94a3b8" : "#64748b"};
+        }
+        .session-detail-k {
+          font-size: 11px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          color: ${darkMode ? "#94a3b8" : "#64748b"};
+          margin-bottom: 4px;
+        }
+        .session-detail-v {
           font-size: 14px;
+          font-weight: 600;
+          color: ${darkMode ? "#f1f5f9" : "#0f172a"};
+          word-break: break-word;
+        }
+        .badge-status {
+          display: inline-block;
+          padding: 4px 10px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 700;
+        }
+        .badge-status.active {
+          background: ${darkMode ? "rgba(34, 197, 94, 0.2)" : "#dcfce7"};
+          color: ${darkMode ? "#86efac" : "#166534"};
+        }
+        .badge-status.ended {
+          background: ${darkMode ? "rgba(248, 113, 113, 0.2)" : "#fee2e2"};
+          color: ${darkMode ? "#fca5a5" : "#991b1b"};
+        }
+        .badge-status.inactive {
+          background: ${darkMode ? "rgba(148, 163, 184, 0.2)" : "#f1f5f9"};
+          color: ${darkMode ? "#cbd5e1" : "#475569"};
+        }
+        .page-title {
+          color: ${darkMode ? "#f8fafc" : "#0f172a"};
+          letter-spacing: -0.02em;
+        }
+        .sub-text {
+          font-size: 14px;
+          line-height: 1.55;
+          color: ${darkMode ? "#cbd5e1" : "#334155"};
+          max-width: 52rem;
         }
         .custom-msg {
           border-radius: 10px;
@@ -528,6 +1098,13 @@ function AdminFeeStructure({ darkMode }) {
           font-weight: 600;
           margin-bottom: 6px;
           display: block;
+          color: ${darkMode ? "#f1f5f9" : "#0f172a"};
+        }
+        .field-hint {
+          font-size: 12px;
+          line-height: 1.5;
+          color: ${darkMode ? "#94a3b8" : "#475569"};
+          margin-bottom: 0;
         }
         .custom-input {
           border-radius: 10px;
@@ -536,20 +1113,20 @@ function AdminFeeStructure({ darkMode }) {
           border: 1px solid ${darkMode ? "#475569" : "#ced4da"};
         }
         .custom-input:focus {
-          border-color: #d4a24c;
-          box-shadow: 0 0 0 0.15rem rgba(212, 162, 76, 0.25);
+          border-color: #3d8ba8;
+          box-shadow: 0 0 0 0.2rem rgba(14, 76, 108, 0.22);
         }
         .btn-gold {
-          background: #d4a24c;
-          color: #0f4c6c;
+          background: linear-gradient(135deg, #0f4c6c, #1a6f8a);
+          color: #f8fafc;
           border: none;
           padding: 0 14px;
           border-radius: 10px;
           font-weight: 600;
         }
         .btn-gold:hover {
-          background: #c18f2d;
-          color: #0f4c6c;
+          background: linear-gradient(135deg, #0c3f56, #155a72);
+          color: #fff;
         }
         .active-btn-wrap {
           border-radius: 10px;
@@ -575,9 +1152,34 @@ function AdminFeeStructure({ darkMode }) {
         }
         .preview-text {
           font-size: 12px;
-          opacity: 0.8;
           margin-top: 4px;
           display: inline-block;
+          color: ${darkMode ? "#94a3b8" : "#64748b"};
+        }
+        .exam-month-pills {
+          margin-top: 6px;
+        }
+        .exam-month-chip {
+          cursor: pointer;
+          font-size: 12px;
+          padding: 7px 12px;
+          border-radius: 999px;
+          border: 2px solid ${darkMode ? "#475569" : "#cbd5e1"};
+          background: ${darkMode ? "#1e293b" : "#ffffff"};
+          color: ${darkMode ? "#e2e8f0" : "#334155"};
+          user-select: none;
+          font-weight: 500;
+          transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+        }
+        .exam-month-chip:hover {
+          border-color: ${darkMode ? "#94a3b8" : "#64748b"};
+        }
+        .exam-month-chip.on {
+          border: 2px solid #0f4c6c;
+          background: ${darkMode ? "rgba(14, 76, 108, 0.45)" : "#eff6ff"};
+          color: ${darkMode ? "#f8fafc" : "#0f172a"};
+          font-weight: 700;
+          box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
         }
       `}</style>
     </div>
