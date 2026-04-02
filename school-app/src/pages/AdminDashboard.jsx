@@ -7,11 +7,12 @@
 // import AddStudent from "../components/AddStudent";
 // import StudentList from "../components/StudentList";
 // import ClassBlocks from "../components/ClassBlocks";
-// // import PaymentRequests from "../components/payments/PaymentRequests"; // 👈 Commented
+// // import PaymentRequests from "../components/payments/PaymentRequests";
 // import AdminCalendar from "./AdminCalendar";
 // import AdminUniform from "../components/AdminUniform";
 // import AdminCertificate from "../components/AdminCertificate";
 // import EventManager from "./EventManager";
+// import AdminFeeStructure from "../components/AdminFeeStructure";
 
 // // 🔥 NEW IMPORT
 // import FeesHistory from "../components/FeesHistory";
@@ -42,15 +43,29 @@
 //     color: "white",
 //   };
 
-//   const pageWrapper = {
-//     backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-//     color: darkMode ? "#f1f5f9" : "#111827",
-//     borderRadius: "22px",
-//     padding: "28px",
-//     boxShadow: darkMode
-//       ? "0 20px 45px rgba(0,0,0,0.6)"
-//       : "0 20px 45px rgba(15,76,108,0.15)",
-//     minHeight: "70vh",
+//   // 🔥 DYNAMIC WRAPPER: Page ke hisab se background badlega
+//   const getPageWrapperStyle = () => {
+//     let bgColor = darkMode ? "#1e293b" : "#ffffff";
+//     let borderColor = "transparent";
+
+//     // Agar Fees History page hai, toh component ke background se match karo
+//     if (page === "fees-history" && darkMode) {
+//       bgColor = "#111c2a";
+//       borderColor = "#243644";
+//     }
+
+//     return {
+//       backgroundColor: bgColor,
+//       color: darkMode ? "#f1f5f9" : "#111827",
+//       borderRadius: "22px",
+//       padding: page === "fees-history" ? "10px" : "28px", // History ke liye space adjust kiya
+//       boxShadow: darkMode
+//         ? "0 20px 45px rgba(0,0,0,0.6)"
+//         : "0 20px 45px rgba(15,76,108,0.15)",
+//       minHeight: "75vh",
+//       border: `1px solid ${borderColor}`,
+//       transition: "0.3s ease",
+//     };
 //   };
 
 //   return (
@@ -76,10 +91,10 @@
 //                 className="btn btn-gold btn-sm"
 //                 onClick={() => setShowSidebar(false)}
 //               >
-//                 ✖
+//                 {" "}
+//                 ✖{" "}
 //               </button>
 //             </div>
-
 //             <Sidebar
 //               setPage={(p) => {
 //                 setPage(p);
@@ -109,11 +124,11 @@
 //                 className="btn btn-gold btn-sm d-md-none"
 //                 onClick={() => setShowSidebar(true)}
 //               >
-//                 ☰
+//                 {" "}
+//                 ☰{" "}
 //               </button>
 //               <h4 className="mb-0 fw-semibold">Hello Admin 👋</h4>
 //             </div>
-
 //             <div className="d-flex gap-2">
 //               <button
 //                 className="btn btn-outline-light btn-sm"
@@ -122,19 +137,19 @@
 //               >
 //                 {darkMode ? "☀ Light" : "🌙 Dark"}
 //               </button>
-
 //               <button
 //                 className="btn btn-danger btn-sm"
 //                 style={{ borderRadius: "12px" }}
 //                 onClick={logout}
 //               >
-//                 Logout
+//                 {" "}
+//                 Logout{" "}
 //               </button>
 //             </div>
 //           </div>
 
-//           {/* Page Content */}
-//           <div style={pageWrapper}>
+//           {/* Page Content Container */}
+//           <div style={getPageWrapperStyle()}>
 //             {page === "dashboard" && (
 //               <>
 //                 <div className="row g-4">
@@ -145,7 +160,6 @@
 //                     <AdminCalendar darkMode={darkMode} />
 //                   </div>
 //                 </div>
-
 //                 <div className="mt-4">
 //                   <DashboardHome darkMode={darkMode} />
 //                 </div>
@@ -154,16 +168,15 @@
 
 //             {page === "add" && <AddStudent darkMode={darkMode} />}
 //             {page === "view" && <StudentList darkMode={darkMode} />}
-
-//             {/* 👈 Commented usage below */}
-//             {/* {page === "payments" && <PaymentRequests darkMode={darkMode} />} */}
-
 //             {page === "uniform" && <AdminUniform darkMode={darkMode} />}
 //             {page === "certificate" && <AdminCertificate darkMode={darkMode} />}
 //             {page === "events" && <EventManager darkMode={darkMode} />}
+//             {page === "fee-structure" && (
+//               <AdminFeeStructure darkMode={darkMode} />
+//             )}
 
-//             {/* 🔥 NEW PAGE */}
-//             {page === "fees-history" && <FeesHistory />}
+//             {/* 🔥 History Page */}
+//             {page === "fees-history" && <FeesHistory darkMode={darkMode} />}
 //           </div>
 //         </div>
 //       </div>
@@ -183,18 +196,17 @@
 // }
 
 // export default AdminDashboard;
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase/firebase";
 
+// Components Import
 import Sidebar from "../components/Sidebar";
 import DashboardHome from "../components/DashboardHome";
 import AddStudent from "../components/AddStudent";
 import StudentList from "../components/StudentList";
 import ClassBlocks from "../components/ClassBlocks";
-// import PaymentRequests from "../components/payments/PaymentRequests";
 import AdminCalendar from "./AdminCalendar";
 import AdminUniform from "../components/AdminUniform";
 import AdminCertificate from "../components/AdminCertificate";
@@ -227,9 +239,13 @@ const PAGE_TO_SECTION = {
 };
 
 function AdminDashboard() {
+<<<<<<< HEAD
   const { section } = useParams();
   const navigate = useNavigate();
 
+=======
+  // Page persistence: Refresh karne par wahi page rahega
+>>>>>>> e1345f7a0d5a95c064ab346d6f1fbf309139beb8
   const [page, setPage] = useState(() => {
     const fromUrl = section ? SECTION_TO_PAGE[section] : null;
     if (fromUrl) return fromUrl;
@@ -239,17 +255,12 @@ function AdminDashboard() {
       return "dashboard";
     }
   });
-  const [showSidebar, setShowSidebar] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => {
-    try {
-      const raw = localStorage.getItem("admin.darkMode");
-      return raw === null ? true : raw === "true";
-    } catch {
-      return true;
-    }
-  });
 
+  const [showSidebar, setShowSidebar] = useState(false);
+
+  // Sync current page with LocalStorage
   useEffect(() => {
+<<<<<<< HEAD
     if (!section) return;
     const p = SECTION_TO_PAGE[section];
     if (!p) {
@@ -283,48 +294,35 @@ function AdminDashboard() {
     navigate(`/admin/${seg}`, { replace: true });
   };
 
+=======
+    localStorage.setItem("admin.page", page);
+  }, [page]);
+
+>>>>>>> e1345f7a0d5a95c064ab346d6f1fbf309139beb8
   const logout = async () => {
     await signOut(auth);
     window.location.href = "/";
   };
 
-  const bgMain = darkMode
-    ? "linear-gradient(135deg,#0f172a,#111827)"
-    : "linear-gradient(135deg,#E6EEF4,#F8FAFC)";
+  // Fixed Light Mode Styling (Professional Blue Theme)
+  const bgMain = "linear-gradient(135deg, #E6EEF4, #F8FAFC)";
 
   const headerStyle = {
-    background: darkMode
-      ? "linear-gradient(90deg,#0a2e42,#1e293b)"
-      : "linear-gradient(90deg,#0F4C6C,#1B5E84)",
+    background: "linear-gradient(90deg, #0F4C6C, #1B5E84)",
     borderRadius: "18px",
     padding: "18px 24px",
-    boxShadow: darkMode
-      ? "0 12px 30px rgba(0,0,0,0.6)"
-      : "0 12px 30px rgba(15,76,108,0.35)",
+    boxShadow: "0 12px 30px rgba(15,76,108,0.25)",
     color: "white",
   };
 
-  // 🔥 DYNAMIC WRAPPER: Page ke hisab se background badlega
   const getPageWrapperStyle = () => {
-    let bgColor = darkMode ? "#1e293b" : "#ffffff";
-    let borderColor = "transparent";
-
-    // Agar Fees History page hai, toh component ke background se match karo
-    if (page === "fees-history" && darkMode) {
-      bgColor = "#111c2a";
-      borderColor = "#243644";
-    }
-
     return {
-      backgroundColor: bgColor,
-      color: darkMode ? "#f1f5f9" : "#111827",
+      backgroundColor: "#ffffff",
+      color: "#111827",
       borderRadius: "22px",
-      padding: page === "fees-history" ? "10px" : "28px", // History ke liye space adjust kiya
-      boxShadow: darkMode
-        ? "0 20px 45px rgba(0,0,0,0.6)"
-        : "0 20px 45px rgba(15,76,108,0.15)",
+      padding: page === "fees-history" ? "10px" : "28px",
+      boxShadow: "0 20px 45px rgba(15,76,108,0.15)",
       minHeight: "75vh",
-      border: `1px solid ${borderColor}`,
       transition: "0.3s ease",
     };
   };
@@ -332,19 +330,15 @@ function AdminDashboard() {
   return (
     <div className="admin-container" style={{ background: bgMain }}>
       <div className="row g-0 m-0">
-        {/* Desktop Sidebar */}
-        <div className="col-md-3 col-lg-2 p-0 d-none d-md-flex flex-column flex-shrink-0">
-          <Sidebar setPage={setPagePersist} darkMode={darkMode} activePage={page} />
+        {/* 1. Desktop Sidebar */}
+        <div className="col-md-3 col-lg-2 p-0 d-none d-md-block">
+          <Sidebar setPage={setPage} activePage={page} />
         </div>
 
-        {/* Mobile Sidebar */}
+        {/* 2. Mobile Sidebar */}
         <div
           className={`mobile-sidebar ${showSidebar ? "open" : ""}`}
-          style={{
-            background: darkMode
-              ? "linear-gradient(180deg,#0f172a,#1e293b)"
-              : "linear-gradient(180deg,#0F4C6C,#1B5E84)",
-          }}
+          style={{ background: "linear-gradient(180deg, #0F4C6C, #1B5E84)" }}
         >
           <div className="mobile-sidebar-content">
             <div className="text-end mb-3">
@@ -352,21 +346,20 @@ function AdminDashboard() {
                 className="btn btn-gold btn-sm"
                 onClick={() => setShowSidebar(false)}
               >
-                {" "}
-                ✖{" "}
+                ✖
               </button>
             </div>
             <Sidebar
               setPage={(p) => {
-                setPagePersist(p);
+                setPage(p);
                 setShowSidebar(false);
               }}
-              darkMode={darkMode}
               activePage={page}
             />
           </div>
         </div>
 
+        {/* Mobile Overlay */}
         {showSidebar && (
           <div
             className="mobile-overlay"
@@ -374,9 +367,9 @@ function AdminDashboard() {
           />
         )}
 
-        {/* Main Content */}
+        {/* 3. Main Content Area */}
         <div className="col-12 col-md-9 col-lg-10 p-3 p-md-4 min-w-0">
-          {/* Header */}
+          {/* Top Header */}
           <div
             className="d-flex justify-content-between align-items-center mb-4"
             style={headerStyle}
@@ -388,12 +381,17 @@ function AdminDashboard() {
                 onClick={() => setShowSidebar(true)}
                 aria-label="Open menu"
               >
+<<<<<<< HEAD
                 <HiOutlineMenu size={22} />
+=======
+                ☰
+>>>>>>> e1345f7a0d5a95c064ab346d6f1fbf309139beb8
               </button>
               <h4 className="mb-0 fw-semibold">Administrator</h4>
             </div>
             <div className="d-flex gap-2">
               <button
+<<<<<<< HEAD
                 className="btn btn-outline-light btn-sm"
                 style={{ borderRadius: "12px" }}
                 onClick={() => setDarkMode(!darkMode)}
@@ -401,58 +399,73 @@ function AdminDashboard() {
                 {darkMode ? "Light mode" : "Dark mode"}
               </button>
               <button
+=======
+>>>>>>> e1345f7a0d5a95c064ab346d6f1fbf309139beb8
                 className="btn btn-danger btn-sm"
                 style={{ borderRadius: "12px" }}
                 onClick={logout}
               >
-                {" "}
-                Logout{" "}
+                Logout
               </button>
             </div>
           </div>
 
-          {/* Page Content Container */}
+          {/* Dynamic Page Container */}
           <div style={getPageWrapperStyle()}>
             {page === "dashboard" && (
               <>
                 <div className="row g-4">
                   <div className="col-lg-5">
-                    <ClassBlocks darkMode={darkMode} />
+                    <ClassBlocks darkMode={false} />
                   </div>
                   <div className="col-lg-7">
-                    <AdminCalendar darkMode={darkMode} />
+                    <AdminCalendar darkMode={false} />
                   </div>
                 </div>
                 <div className="mt-4">
-                  <DashboardHome darkMode={darkMode} />
+                  <DashboardHome darkMode={false} />
                 </div>
               </>
             )}
 
-            {page === "add" && <AddStudent darkMode={darkMode} />}
-            {page === "view" && <StudentList darkMode={darkMode} />}
-            {page === "uniform" && <AdminUniform darkMode={darkMode} />}
-            {page === "certificate" && <AdminCertificate darkMode={darkMode} />}
-            {page === "events" && <EventManager darkMode={darkMode} />}
-            {page === "fee-structure" && (
-              <AdminFeeStructure darkMode={darkMode} />
-            )}
-
-            {/* 🔥 History Page */}
-            {page === "fees-history" && <FeesHistory darkMode={darkMode} />}
+            {page === "add" && <AddStudent darkMode={false} />}
+            {page === "view" && <StudentList darkMode={false} />}
+            {page === "uniform" && <AdminUniform darkMode={false} />}
+            {page === "certificate" && <AdminCertificate darkMode={false} />}
+            {page === "events" && <EventManager darkMode={false} />}
+            {page === "fee-structure" && <AdminFeeStructure darkMode={false} />}
+            {page === "fees-history" && <FeesHistory darkMode={false} />}
           </div>
         </div>
       </div>
 
       <style>{`
-        .admin-container { min-height:100vh; transition:0.3s ease; }
-        .mobile-sidebar { position:fixed; top:0; left:0; height:100%; width:280px; transform:translateX(-100%); transition:transform 0.4s ease; z-index:1050; box-shadow:4px 0 25px rgba(0,0,0,0.4); }
-        .mobile-sidebar.open { transform:translateX(0); }
-        .mobile-sidebar-content { height:100%; padding:20px; overflow-y:auto; }
-        .mobile-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1040; }
-        .btn-gold { background:linear-gradient(135deg,#D4A24C,#C18F2D); color:white; border:none; }
-        .btn-gold:hover { opacity:0.9; }
-        @media (min-width:768px){ .mobile-sidebar, .mobile-overlay{ display:none; } }
+        .admin-container { 
+          min-height: 100vh; 
+          transition: 0.3s ease; 
+          overflow-x: hidden; 
+        }
+        .mobile-sidebar { 
+          position: fixed; top: 0; left: 0; height: 100%; width: 280px; 
+          transform: translateX(-100%); transition: transform 0.4s ease; 
+          z-index: 1050; box-shadow: 4px 0 25px rgba(0,0,0,0.4); 
+        }
+        .mobile-sidebar.open { transform: translateX(0); }
+        .mobile-sidebar-content { height: 100%; padding: 20px; overflow-y: auto; }
+        .mobile-overlay { 
+          position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+          background: rgba(0,0,0,0.5); z-index: 1040; 
+        }
+        .btn-gold { 
+          background: linear-gradient(135deg, #D4A24C, #C18F2D); 
+          color: white; border: none; 
+        }
+        .btn-gold:hover { opacity: 0.9; }
+        
+        /* Sidebar container handling */
+        @media (min-width: 768px) { 
+          .mobile-sidebar, .mobile-overlay { display: none; } 
+        }
       `}</style>
     </div>
   );
