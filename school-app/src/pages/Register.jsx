@@ -263,11 +263,12 @@ function Register() {
 
   const getErrorMessage = (error) => {
     if (error.code === "auth/email-already-in-use")
-      return "❌ Email already registered";
+      return "This email is already registered.";
     if (error.code === "auth/weak-password")
-      return "❌ Password should be at least 6 characters";
-    if (error.code === "auth/invalid-email") return "❌ Invalid email format";
-    return "❌ Something went wrong";
+      return "Password must be at least 6 characters.";
+    if (error.code === "auth/invalid-email")
+      return "Please enter a valid email address.";
+    return "Registration could not be completed. Please try again.";
   };
 
   const handleRegister = async (e) => {
@@ -275,7 +276,7 @@ function Register() {
 
     if (!name || !email || !password) {
       setMsgType("error");
-      setMsg("❌ All fields are required");
+      setMsg("All fields are required.");
       return;
     }
 
@@ -297,7 +298,7 @@ function Register() {
       });
 
       setMsgType("success");
-      setMsg("✅ Registration successful! Redirecting...");
+      setMsg("Registration successful. Redirecting to sign in…");
 
       await auth.signOut();
       setTimeout(() => navigate("/login"), 1800);
@@ -314,7 +315,7 @@ function Register() {
       <div className="register-box">
         {/* LEFT SIDE */}
         <div className="register-left">
-          <h2>Create Account 🚀</h2>
+          <h2>Create an account</h2>
           <p>
             Join Modern New Delhi Public High School portal and start managing
             your academic journey today.
@@ -324,7 +325,7 @@ function Register() {
         {/* RIGHT SIDE */}
         <div className="register-right">
           <div className="register-card p-4">
-            <h3 className="text-center mb-3">School Registration</h3>
+            <h3 className="text-center mb-3">New user registration</h3>
 
             {msg && <div className={`custom-alert ${msgType}`}>{msg}</div>}
 
@@ -332,7 +333,7 @@ function Register() {
               <input
                 type="text"
                 className="form-control mb-3"
-                placeholder="Full Name"
+                placeholder="Full name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -349,7 +350,7 @@ function Register() {
               <input
                 type="email"
                 className="form-control mb-3"
-                placeholder="Email"
+                placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -363,14 +364,14 @@ function Register() {
               />
 
               <button className="btn-primary-custom w-100" disabled={loading}>
-                {loading ? "Creating..." : "Sign Up"}
+                {loading ? "Creating account…" : "Register"}
               </button>
             </form>
 
             <p className="text-center mt-3 mb-0">
               Already have an account?{" "}
               <Link to="/login" className="login-link">
-                Login
+                Sign in
               </Link>
             </p>
           </div>

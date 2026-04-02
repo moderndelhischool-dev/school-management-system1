@@ -86,8 +86,14 @@ export function monthlyTotalWithExam(
   examMonthsMap,
   student,
   feeMonthKey,
+  busRatePerKmMap = {},
 ) {
-  const base = monthlyBaseForStudent(tuitionMap, busMap, student);
+  const base = monthlyBaseForStudent(
+    tuitionMap,
+    busMap,
+    student,
+    busRatePerKmMap,
+  );
   const exam = examFeeForMonth(
     examFeeMap || {},
     examMonthsMap || {},
@@ -108,8 +114,10 @@ export async function loadActiveSessionClassTuitionBusMap(db) {
   const feeSnap = await getDocs(collection(db, "feeStructures"));
   const tuitionMap = {};
   const busMap = {};
+  const busRatePerKmMap = {};
   const examFeeMap = {};
   const examMonthsMap = {};
+  const scholarshipMap = {};
 
   feeSnap.docs.forEach((d) => {
     const data = d.data() || {};
@@ -127,30 +135,99 @@ export async function loadActiveSessionClassTuitionBusMap(db) {
 
     tuitionMap[classKey] = monthlyTuition;
     busMap[classKey] = monthlyBus;
+    busRatePerKmMap[classKey] = Number(data.busFeePerKm) || 0;
     examFeeMap[classKey] = Number(data.examFee) || 0;
     examMonthsMap[classKey] = normalizeExamMonthNames(data.examFeeMonths);
+    scholarshipMap[classKey] =
+      Number(data.defaultScholarshipAmount ?? data.scholarshipAmount ?? 0) || 0;
   });
 
-  return { activeSessionId, tuitionMap, busMap, examFeeMap, examMonthsMap };
+  return {
+    activeSessionId,
+    tuitionMap,
+    busMap,
+    busRatePerKmMap,
+    examFeeMap,
+    examMonthsMap,
+    scholarshipMap,
+  };
 }
 
-export function monthlyBaseForStudent(tuitionMap, busMap, student) {
+
+export function scholarshipAppliesForCurrentSession(student) {
+  const grant = student.scholarshipSessionId;
+  const cur = student.sessionId;
+  if (grant === undefined || grant === null || grant === "") return true;
+  if (cur === undefined || cur === null || cur === "") return true;
+  return String(grant) === String(cur);
+}
+
+
+export function monthlyBaseForStudent(
+  tuitionMap,
+  busMap,
+  student,
+  busRatePerKmMap = {},
+) {
   const ck = normalizeClassKey(student.class);
-  const tuition = Number(tuitionMap[ck] || 0);
+  const rawTuition = Number(tuitionMap[ck] || 0);
+  const sessionOk = scholarshipAppliesForCurrentSession(student);
+  let scholarshipAmt = Math.max(
+    0,
+    Number(student.scholarshipAmount ?? student.scholarshipMonthly ?? 0),
+  );
+  let sp = Math.min(
+    100,
+    Math.max(0, Number(student.scholarshipPercent ?? student.scholarship ?? 0)),
+  );
+  if (!sessionOk) {
+    scholarshipAmt = 0;
+    sp = 0;
+  }
+  let tuition;
+  if (scholarshipAmt > 0) {
+    tuition =
+      Math.max(0, Math.round((rawTuition - scholarshipAmt) * 100) / 100);
+  } else {
+    tuition = Math.round(rawTuition * (1 - sp / 100) * 100) / 100;
+  }
   const defaultBus = Number(busMap[ck] || 0);
+  const ratePerKm = Number(busRatePerKmMap[ck] || 0);
+  const km = Number(student.busDistanceKm ?? student.busKm ?? 0);
   const usesBus = !!student.usesBus;
-  const busOverride = Number(student.monthlyBusFee || 0);
-  const bus = usesBus ? (busOverride > 0 ? busOverride : defaultBus) : 0;
-  return { tuition, bus, total: tuition + bus };
+  const manualBus = Number(student.monthlyBusFee || 0);
+
+  let bus = 0;
+  if (!usesBus) {
+    bus = 0;
+  } else if (ratePerKm > 0 && km > 0) {
+    bus = Math.round(km * ratePerKm * 100) / 100;
+  } else if (manualBus > 0) {
+    bus = manualBus;
+  } else {
+    bus = defaultBus;
+  }
+
+  return {
+    tuition,
+    bus,
+    total: tuition + bus,
+    tuitionBeforeScholarship: rawTuition,
+    scholarshipPercentApplied: sp,
+    scholarshipAmountApplied:
+      sessionOk && scholarshipAmt > 0
+        ? Math.min(scholarshipAmt, rawTuition)
+        : 0,
+  };
 }
 
-/** Active fee structure + carry-forward — expected cycle total for display/sync checks */
 export function scheduleCycleTotalForStudent(
   tuitionMap,
   busMap,
   student,
   examFeeMap = {},
   examMonthsMap = {},
+  busRatePerKmMap = {},
 ) {
   const feeMonthKey = student.feeMonth || currentMonthKey();
   const { total } = monthlyTotalWithExam(
@@ -160,21 +237,20 @@ export function scheduleCycleTotalForStudent(
     examMonthsMap,
     student,
     feeMonthKey,
+    busRatePerKmMap,
   );
   const carry = Number(student.carryForwardTotal || 0);
   return total + carry;
 }
 
-/**
- * When Firestore totalFees is far below the fee-structure total, treat as stale
- * (e.g. ₹200 saved vs ₹6000 tuition) and show the schedule-based total.
- */
+
 export function resolveDisplayTotalFees(
   student,
   tuitionMap,
   busMap,
   examFeeMap = {},
   examMonthsMap = {},
+  busRatePerKmMap = {},
 ) {
   const schedule = scheduleCycleTotalForStudent(
     tuitionMap,
@@ -182,6 +258,7 @@ export function resolveDisplayTotalFees(
     student,
     examFeeMap,
     examMonthsMap,
+    busRatePerKmMap,
   );
   const hasStored =
     student.totalFees !== undefined &&
@@ -203,6 +280,7 @@ export function resolveDisplayPendingFees(
   busMap,
   examFeeMap = {},
   examMonthsMap = {},
+  busRatePerKmMap = {},
 ) {
   const total = resolveDisplayTotalFees(
     student,
@@ -210,6 +288,7 @@ export function resolveDisplayPendingFees(
     busMap,
     examFeeMap,
     examMonthsMap,
+    busRatePerKmMap,
   );
   const paid = Number(student.paidFees || 0);
   return Math.max(total - paid, 0);
@@ -257,8 +336,14 @@ export function proportionalPendingSplit(
 }
 
 export async function rollStudentToNextMonthClean(db, studentId, student) {
-  const { tuitionMap, busMap, examFeeMap, examMonthsMap, activeSessionId } =
-    await loadActiveSessionClassTuitionBusMap(db);
+  const {
+    tuitionMap,
+    busMap,
+    busRatePerKmMap,
+    examFeeMap,
+    examMonthsMap,
+    activeSessionId,
+  } = await loadActiveSessionClassTuitionBusMap(db);
   const prevFeeMonth = student.feeMonth || currentMonthKey();
   const nextId = nextMonthKey(prevFeeMonth);
   const nextName = monthNameFromKey(nextId);
@@ -269,6 +354,7 @@ export async function rollStudentToNextMonthClean(db, studentId, student) {
     examMonthsMap,
     student,
     nextId,
+    busRatePerKmMap || {},
   );
   const now = Timestamp.now();
   const y = Number(nextId.split("-")[0]);
@@ -286,7 +372,8 @@ export async function rollStudentToNextMonthClean(db, studentId, student) {
       month: student.selectedMonth || monthNameFromKey(prevFeeMonth),
       tuitionFee:
         Number(student.monthlyTuitionFeeApplied) ||
-        monthlyBaseForStudent(tuitionMap, busMap, student).tuition,
+        monthlyBaseForStudent(tuitionMap, busMap, student, busRatePerKmMap || {})
+          .tuition,
       busFee: student.usesBus
         ? Number(student.monthlyBusFeeApplied ?? student.monthlyBusFee ?? 0)
         : 0,
@@ -344,8 +431,14 @@ export async function rollStudentToNextMonthClean(db, studentId, student) {
 }
 
 export async function advanceOneMonthWithCarryForward(db, studentId, student) {
-  const { tuitionMap, busMap, examFeeMap, examMonthsMap, activeSessionId } =
-    await loadActiveSessionClassTuitionBusMap(db);
+  const {
+    tuitionMap,
+    busMap,
+    busRatePerKmMap,
+    examFeeMap,
+    examMonthsMap,
+    activeSessionId,
+  } = await loadActiveSessionClassTuitionBusMap(db);
 
   const feeMonth = student.feeMonth || currentMonthKey();
   const feeSnap = await getDoc(doc(db, "students", studentId, "fees", feeMonth));
@@ -356,7 +449,8 @@ export async function advanceOneMonthWithCarryForward(db, studentId, student) {
   const tPart = Number(
     feeData.tuitionFee ??
       student.monthlyTuitionFeeApplied ??
-      monthlyBaseForStudent(tuitionMap, busMap, student).tuition,
+      monthlyBaseForStudent(tuitionMap, busMap, student, busRatePerKmMap || {})
+        .tuition,
   );
   const bPart = Number(
     feeData.busFee ??
@@ -379,6 +473,7 @@ export async function advanceOneMonthWithCarryForward(db, studentId, student) {
       examMonthsMap,
       student,
       nextId,
+      busRatePerKmMap || {},
     );
 
   const grandTotal = Math.round((totalPending + newTotal) * 100) / 100;

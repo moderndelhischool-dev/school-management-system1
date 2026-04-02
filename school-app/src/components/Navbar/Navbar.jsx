@@ -353,6 +353,7 @@
 
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { HiOutlineMoon, HiOutlineSun } from "react-icons/hi";
 
 function Navbar() {
   const navigate = useNavigate();
@@ -461,22 +462,26 @@ function Navbar() {
 
               <li className="nav-item">
                 <Link className="btn nav-login-btn" to="/login">
-                  Login
+                  Sign in
                 </Link>
               </li>
 
               <li className="nav-item">
                 <Link className="btn nav-signup-btn" to="/register">
-                  Signup
+                  Register
                 </Link>
               </li>
 
               <li className="nav-item">
                 <button
+                  type="button"
+                  aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
                   className={`theme-circle ${darkMode ? "dark" : "light"}`}
                   onClick={toggleTheme}
                 >
-                  <span className="icon">{darkMode ? "🌙" : "☀"}</span>
+                  <span className="icon">
+                    {darkMode ? <HiOutlineSun size={18} /> : <HiOutlineMoon size={18} />}
+                  </span>
                 </button>
               </li>
             </ul>

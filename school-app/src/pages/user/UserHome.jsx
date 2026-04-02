@@ -166,6 +166,7 @@ function UserHome() {
   const [student, setStudent] = useState(null);
   const [tuitionMap, setTuitionMap] = useState({});
   const [busMap, setBusMap] = useState({});
+  const [busRatePerKmMap, setBusRatePerKmMap] = useState({});
   const [examFeeMap, setExamFeeMap] = useState({});
   const [examMonthsMap, setExamMonthsMap] = useState({});
   const [lastPaidMonth, setLastPaidMonth] = useState("");
@@ -198,6 +199,7 @@ function UserHome() {
       setStudent(refreshed.data());
       setTuitionMap(maps.tuitionMap || {});
       setBusMap(maps.busMap || {});
+      setBusRatePerKmMap(maps.busRatePerKmMap || {});
       setExamFeeMap(maps.examFeeMap || {});
       setExamMonthsMap(maps.examMonthsMap || {});
 
@@ -255,6 +257,7 @@ function UserHome() {
     busMap,
     examFeeMap,
     examMonthsMap,
+    busRatePerKmMap,
   );
 
   const feesMonth = student.feeMonth

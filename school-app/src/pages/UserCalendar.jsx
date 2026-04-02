@@ -162,7 +162,7 @@ function UserCalendar({ darkMode }) {
 
   return (
     <div className={`calendar-wrapper ${darkMode ? "dark" : "light"}`}>
-      <h6 className="calendar-title">📅 School Calendar</h6>
+      <h6 className="calendar-title">School calendar</h6>
 
       <FullCalendar
         plugins={[dayGridPlugin]}

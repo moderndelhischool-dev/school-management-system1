@@ -311,11 +311,13 @@ function UserFees({ student, darkMode }) {
   const [payAmount, setPayAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
+  const [msgTone, setMsgTone] = useState("success");
   const [receipt, setReceipt] = useState(null);
   const [liveStudent, setLiveStudent] = useState(student);
   const [feeMaps, setFeeMaps] = useState({
     tuitionMap: {},
     busMap: {},
+    busRatePerKmMap: {},
     examFeeMap: {},
     examMonthsMap: {},
   });
@@ -334,6 +336,7 @@ function UserFees({ student, darkMode }) {
         setFeeMaps({
           tuitionMap: maps.tuitionMap || {},
           busMap: maps.busMap || {},
+          busRatePerKmMap: maps.busRatePerKmMap || {},
           examFeeMap: maps.examFeeMap || {},
           examMonthsMap: maps.examMonthsMap || {},
         });
@@ -351,6 +354,7 @@ function UserFees({ student, darkMode }) {
         feeMaps.busMap,
         feeMaps.examFeeMap,
         feeMaps.examMonthsMap,
+        feeMaps.busRatePerKmMap,
       )
     : 0;
 
@@ -361,6 +365,7 @@ function UserFees({ student, darkMode }) {
         feeMaps.busMap,
         feeMaps.examFeeMap,
         feeMaps.examMonthsMap,
+        feeMaps.busRatePerKmMap,
       )
     : 0;
 
@@ -415,7 +420,8 @@ function UserFees({ student, darkMode }) {
   const handleOnlinePayment = async () => {
     const amount = Number(payAmount);
     if (!amount || amount <= 0 || amount > displayFees) {
-      setMsg("❌ Please enter a valid amount.");
+      setMsgTone("error");
+      setMsg("Please enter a valid amount that does not exceed your pending balance.");
       return;
     }
 
@@ -426,7 +432,7 @@ function UserFees({ student, darkMode }) {
       key: "rzp_test_SUzzQGk1TXuGhi",
       amount: amount * 100,
       currency: "INR",
-      name: "School Fees Payment",
+      name: "School fee payment",
       description: `Payment for ${liveStudent.name}`,
       handler: async (response) => {
         const paymentId = response.razorpay_payment_id;
@@ -449,17 +455,22 @@ function UserFees({ student, darkMode }) {
             time: new Date().toLocaleTimeString("en-IN"),
           });
 
-          setMsg("✅ Payment Successful!");
+          setMsgTone("success");
+          setMsg("Payment recorded successfully.");
 
-          // 🔥 AUTO REFRESH LOGIC: Agar fees 0 ho gayi toh 3 seconds baad refresh
           if (newBalance <= 0) {
-            setMsg("✅ Fees Fully Paid! Refreshing dashboard...");
+            setMsg("All fees for this period are paid. Refreshing…");
             setTimeout(() => {
               window.location.reload();
             }, 3000);
           }
         } catch (err) {
-          setMsg("❌ Saving failed. ID: " + paymentId);
+          setMsgTone("error");
+          setMsg(
+            "Payment was processed but your record could not be updated. Reference ID: " +
+              paymentId +
+              ". Please contact the school office.",
+          );
         } finally {
           setLoading(false);
         }
@@ -536,7 +547,7 @@ function UserFees({ student, darkMode }) {
       className={`payment-center-container ${darkMode ? "dark" : "light"}`}
     >
       <div className="payment-wrapper shadow-lg">
-        <h4 className="fw-bold mb-4 text-center">💳 Online Fees Payment</h4>
+        <h4 className="fw-bold mb-4 text-center">Online fee payment</h4>
 
         <div className="student-info-card mb-4">
           <div className="info-row">
@@ -547,12 +558,26 @@ function UserFees({ student, darkMode }) {
             <span>Class:</span>
             <strong>{liveStudent?.class}</strong>
           </div>
+          {(Number(liveStudent?.scholarshipAmount) > 0 ||
+            Number(liveStudent?.scholarshipPercent) > 0) && (
+            <div className="info-row">
+              <span>Scholarship:</span>
+              <strong>
+                {Number(liveStudent?.scholarshipAmount) > 0
+                  ? `₹${liveStudent.scholarshipAmount}/month off tuition (this session)`
+                  : `${liveStudent.scholarshipPercent}% on tuition (legacy)`}
+                {liveStudent.scholarshipNote
+                  ? ` · ${liveStudent.scholarshipNote}`
+                  : ""}
+              </strong>
+            </div>
+          )}
           <div className="info-row">
-            <span>Fee month:</span>
+            <span>Billing month:</span>
             <strong>{liveStudent?.feeMonth || "—"}</strong>
           </div>
           <div className="info-row highlight">
-            <span>Pending Balance:</span>
+            <span>Outstanding balance:</span>
             <strong className="text-danger">₹{displayFees}</strong>
           </div>
         </div>
@@ -566,7 +591,7 @@ function UserFees({ student, darkMode }) {
         </button>
 
         <div className="input-wrapper mb-3">
-          <label className="small text-muted mb-1">Enter Amount to Pay</label>
+          <label className="small text-muted mb-1">Amount to pay (₹)</label>
           <div className="position-relative">
             <input
               type="number"
@@ -583,13 +608,13 @@ function UserFees({ student, darkMode }) {
           onClick={handleOnlinePayment}
           disabled={loading}
         >
-          {loading ? "Processing..." : `Pay ₹${payAmount || "0"}`}
+          {loading ? "Processing…" : `Pay ₹${payAmount || "0"}`}
         </button>
 
         {receipt && (
           <div className="mt-4 d-grid gap-2">
             <div className="p-3 border rounded-3 text-center bg-light-success mb-2">
-              <p className="text-success fw-bold mb-2">🎉 Payment Success!</p>
+              <p className="text-success fw-bold mb-2">Payment successful</p>
               <button className="submit-btn" onClick={downloadReceiptPdf}>
                 Download Receipt (PDF)
               </button>
@@ -598,14 +623,14 @@ function UserFees({ student, darkMode }) {
               className="btn btn-outline-secondary btn-sm rounded-3 py-2"
               onClick={() => window.location.reload()}
             >
-              Done / Refresh Page
+              Refresh page
             </button>
           </div>
         )}
 
         {msg && (
           <div
-            className={`msg-toast mt-4 ${msg.includes("❌") ? "error" : "success"}`}
+            className={`msg-toast mt-4 ${msgTone === "error" ? "error" : "success"}`}
           >
             {msg}
           </div>
@@ -659,6 +684,25 @@ function UserFees({ student, darkMode }) {
           <p className="text-muted small mb-3">
             Breakdown of previous balance (if any) and this month&apos;s tuition
             and bus fee.
+            {(Number(liveStudent?.scholarshipAmount) > 0 ||
+              Number(liveStudent?.scholarshipPercent) > 0) && (
+              <>
+                {" "}
+                Tuition shown is after{" "}
+                {Number(liveStudent?.scholarshipAmount) > 0 ? (
+                  <>
+                    <strong>₹{liveStudent.scholarshipAmount}</strong> monthly
+                    waiver
+                  </>
+                ) : (
+                  <>
+                    <strong>{liveStudent.scholarshipPercent}%</strong>{" "}
+                    scholarship (legacy)
+                  </>
+                )}
+                .
+              </>
+            )}
           </p>
 
           <div className="fee-modal-table-wrap">

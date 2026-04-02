@@ -310,6 +310,83 @@ import {
   query,
   orderBy,
 } from "firebase/firestore";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+
+function sanitizeFilenamePart(s) {
+  return String(s || "x")
+    .replace(/[<>:"/\\|?*]/g, "_")
+    .replace(/\s+/g, "_")
+    .slice(0, 48);
+}
+
+function downloadAdminFeeSlipPdf(student, row) {
+  try {
+    const docPdf = new jsPDF();
+    docPdf.setFontSize(18);
+    docPdf.setTextColor(15, 76, 108);
+    docPdf.text("FEE PAYMENT RECEIPT", 105, 20, { align: "center" });
+
+    docPdf.setFontSize(11);
+    docPdf.setTextColor(0, 0, 0);
+    let y = 34;
+    docPdf.text(`Student Name: ${student.name || "N/A"}`, 14, y);
+    y += 7;
+    docPdf.text(`Father's Name: ${student.fatherName || "N/A"}`, 14, y);
+    y += 7;
+    docPdf.text(
+      `Class: ${student.class ?? "N/A"}  |  Roll: ${student.rollNo ?? "N/A"}`,
+      14,
+      y,
+    );
+    y += 7;
+    docPdf.text(`Email: ${student.email || "N/A"}`, 14, y);
+    y += 7;
+    docPdf.text(`Receipt generated: ${new Date().toLocaleString()}`, 14, y);
+
+    const modeLabel = row.mode || "Admin panel";
+    const receivedBy = row.receivedBy || "Admin";
+
+    autoTable(docPdf, {
+      startY: y + 10,
+      head: [["Description", "Details"]],
+      body: [
+        ["Billing month", row.monthDisplay || row.id || "N/A"],
+        ["Amount due (month)", `INR ${row.amount}`],
+        ["Amount paid", `INR ${row.paid}`],
+        ["Balance", `INR ${Math.max(0, (Number(row.amount) || 0) - (Number(row.paid) || 0))}`],
+        ["Status", String(row.status || "—")],
+        [
+          "Payment / record date",
+          row.date?.seconds
+            ? new Date(row.date.seconds * 1000).toLocaleString()
+            : "—",
+        ],
+        ["Payment mode", modeLabel],
+        ["Received / recorded by", receivedBy],
+      ],
+      theme: "striped",
+      headStyles: { fillColor: [15, 76, 108] },
+    });
+
+    const finalY = docPdf.lastAutoTable.finalY + 15;
+    docPdf.setFontSize(10);
+    docPdf.setTextColor(150);
+    docPdf.text(
+      "This is a computer-generated receipt and requires no signature.",
+      105,
+      finalY,
+      { align: "center" },
+    );
+
+    const base = sanitizeFilenamePart(
+      `${student.name || "Student"}_${row.id || "month"}`,
+    );
+    docPdf.save(`FeeReceipt_${base}.pdf`);
+  } catch (err) {
+    console.error("PDF slip failed:", err);
+  }
+}
 
 function FeesHistory({ darkMode }) {
   const [students, setStudents] = useState([]);
@@ -343,6 +420,8 @@ function FeesHistory({ darkMode }) {
               paid: Number(d.paid) || 0,
               status: d.status || "Pending",
               date: d.date || null,
+              mode: d.mode || "",
+              receivedBy: d.receivedBy || "",
             };
           });
           return { id: docSnap.id, ...student, feesHistory: feesArray };
@@ -545,6 +624,7 @@ function FeesTable({ student, darkMode }) {
               <th className="p-3">Balance</th>
               <th className="p-3">Status</th>
               <th className="p-3">Date</th>
+              <th className="p-3">Slip</th>
             </tr>
           </thead>
           <tbody>
@@ -564,6 +644,22 @@ function FeesTable({ student, darkMode }) {
                     ? new Date(f.date.seconds * 1000).toLocaleDateString()
                     : "-"}
                 </td>
+                <td className="p-3">
+                  {Number(f.paid) > 0 ? (
+                    <button
+                      type="button"
+                      className="btn btn-sm fees-slip-download-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        downloadAdminFeeSlipPdf(student, f);
+                      }}
+                    >
+                      Download
+                    </button>
+                  ) : (
+                    <span className="opacity-50 small">—</span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -580,6 +676,15 @@ function FeesTable({ student, darkMode }) {
         .fees-status-tag.completed { background: #16a34a !important; }
         .fees-status-tag.partial { background: #f59e0b !important; }
         .fees-status-tag.pending { background: #dc2626 !important; }
+        .fees-slip-download-btn {
+          background: #D4A24C !important;
+          color: #0f172a !important;
+          border: none !important;
+          font-weight: 700;
+          border-radius: 8px;
+          padding: 4px 10px;
+        }
+        .fees-slip-download-btn:hover { filter: brightness(1.08); }
       `}</style>
     </div>
   );

@@ -42,12 +42,12 @@
 //     if (!file) return;
 
 //     if (file.type !== "application/pdf") {
-//       setMessage("❌ Only PDF file allowed.");
+//       setMessage("Only PDF files are allowed.");
 //       return;
 //     }
 
 //     if (file.size > MAX_SIZE) {
-//       setMessage("❌ File must be under 1MB.");
+//       setMessage("File size must be under 1 MB.");
 //       return;
 //     }
 
@@ -76,7 +76,7 @@
 //         createdAt: Timestamp.now(),
 //       });
 
-//       setMessage("✅ Certificate uploaded successfully.");
+//       setMessage("Certificate uploaded successfully.");
 //       setPdfData("");
 //       setFileName("");
 //       fetchCertificates();
@@ -318,12 +318,12 @@ function AdminCertificate({ darkMode }) {
     if (!file) return;
 
     if (file.type !== "application/pdf") {
-      setMessage("❌ Only PDF file allowed.");
+      setMessage("Only PDF files are allowed.");
       return;
     }
 
     if (file.size > MAX_SIZE) {
-      setMessage("❌ File must be under 1MB.");
+      setMessage("File size must be under 1 MB.");
       return;
     }
 
@@ -352,7 +352,7 @@ function AdminCertificate({ darkMode }) {
         createdAt: Timestamp.now(),
       });
 
-      setMessage("✅ Certificate uploaded successfully.");
+      setMessage("Certificate uploaded successfully.");
       setPdfData("");
       setFileName("");
       fetchCertificates();

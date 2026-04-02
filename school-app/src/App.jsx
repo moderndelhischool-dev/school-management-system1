@@ -1,4 +1,10 @@
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+  Navigate,
+} from "react-router-dom";
 import { useEffect, Suspense, lazy } from "react";
 
 import Navbar from "./components/Navbar/Navbar";
@@ -74,7 +80,8 @@ function Layout() {
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="/admin/:section" element={<AdminDashboard />} />
             <Route path="/user" element={<UserDashboard />} />
             <Route path="*" element={<Landing />} />
           </Routes>

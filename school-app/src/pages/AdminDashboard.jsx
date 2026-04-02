@@ -185,6 +185,7 @@
 // export default AdminDashboard;
 
 import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase/firebase";
 
@@ -199,12 +200,39 @@ import AdminUniform from "../components/AdminUniform";
 import AdminCertificate from "../components/AdminCertificate";
 import EventManager from "./EventManager";
 import AdminFeeStructure from "../components/AdminFeeStructure";
-
-// 🔥 NEW IMPORT
 import FeesHistory from "../components/FeesHistory";
+import { HiOutlineMenu } from "react-icons/hi";
+
+/** URL segment → internal `page` id (see Sidebar menu ids). */
+const SECTION_TO_PAGE = {
+  dashboard: "dashboard",
+  events: "events",
+  "add-student": "add",
+  students: "view",
+  "fees-history": "fees-history",
+  uniform: "uniform",
+  certificate: "certificate",
+  "fee-structure": "fee-structure",
+};
+
+const PAGE_TO_SECTION = {
+  dashboard: "dashboard",
+  events: "events",
+  add: "add-student",
+  view: "students",
+  "fees-history": "fees-history",
+  uniform: "uniform",
+  certificate: "certificate",
+  "fee-structure": "fee-structure",
+};
 
 function AdminDashboard() {
+  const { section } = useParams();
+  const navigate = useNavigate();
+
   const [page, setPage] = useState(() => {
+    const fromUrl = section ? SECTION_TO_PAGE[section] : null;
+    if (fromUrl) return fromUrl;
     try {
       return localStorage.getItem("admin.page") || "dashboard";
     } catch {
@@ -222,12 +250,19 @@ function AdminDashboard() {
   });
 
   useEffect(() => {
+    if (!section) return;
+    const p = SECTION_TO_PAGE[section];
+    if (!p) {
+      navigate("/admin/dashboard", { replace: true });
+      return;
+    }
+    setPage(p);
     try {
-      localStorage.setItem("admin.page", page);
+      localStorage.setItem("admin.page", p);
     } catch {
       // ignore
     }
-  }, [page]);
+  }, [section, navigate]);
 
   useEffect(() => {
     try {
@@ -237,7 +272,16 @@ function AdminDashboard() {
     }
   }, [darkMode]);
 
-  const setPagePersist = (p) => setPage(p);
+  const setPagePersist = (p) => {
+    setPage(p);
+    try {
+      localStorage.setItem("admin.page", p);
+    } catch {
+      // ignore
+    }
+    const seg = PAGE_TO_SECTION[p] || "dashboard";
+    navigate(`/admin/${seg}`, { replace: true });
+  };
 
   const logout = async () => {
     await signOut(auth);
@@ -339,13 +383,14 @@ function AdminDashboard() {
           >
             <div className="d-flex align-items-center gap-3">
               <button
-                className="btn btn-gold btn-sm d-md-none"
+                type="button"
+                className="btn btn-gold btn-sm d-md-none d-inline-flex align-items-center justify-content-center"
                 onClick={() => setShowSidebar(true)}
+                aria-label="Open menu"
               >
-                {" "}
-                ☰{" "}
+                <HiOutlineMenu size={22} />
               </button>
-              <h4 className="mb-0 fw-semibold">Hello Admin 👋</h4>
+              <h4 className="mb-0 fw-semibold">Administrator</h4>
             </div>
             <div className="d-flex gap-2">
               <button
@@ -353,7 +398,7 @@ function AdminDashboard() {
                 style={{ borderRadius: "12px" }}
                 onClick={() => setDarkMode(!darkMode)}
               >
-                {darkMode ? "☀ Light" : "🌙 Dark"}
+                {darkMode ? "Light mode" : "Dark mode"}
               </button>
               <button
                 className="btn btn-danger btn-sm"

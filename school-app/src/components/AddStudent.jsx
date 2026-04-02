@@ -249,9 +249,28 @@
 // }
 
 // export default AddStudent;
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { db } from "../firebase/firebase";
 import { doc, setDoc, Timestamp } from "firebase/firestore";
+import {
+  loadActiveSessionClassTuitionBusMap,
+  scheduleCycleTotalForStudent,
+  monthlyTotalWithExam,
+  normalizeClassKey,
+  currentMonthKey,
+} from "../utils/feeBilling";
+
+function feeMonthFromForm(selectedMonth, feesDate, months) {
+  let y = new Date().getFullYear();
+  if (feesDate && /^\d{4}-\d{2}-\d{2}$/.test(feesDate)) {
+    y = new Date(`${feesDate}T12:00:00`).getFullYear();
+  }
+  if (selectedMonth && months.includes(selectedMonth)) {
+    const mi = months.indexOf(selectedMonth) + 1;
+    return `${y}-${String(mi).padStart(2, "0")}`;
+  }
+  return currentMonthKey(new Date(y, new Date().getMonth(), 1));
+}
 
 function AddStudent({ darkMode }) {
   const [rollNo, setRollNo] = useState("");
@@ -262,6 +281,10 @@ function AddStudent({ darkMode }) {
   const [gender, setGender] = useState(""); // Male, Female, Other
   const [usesBus, setUsesBus] = useState(false);
   const [monthlyBusFee, setMonthlyBusFee] = useState("");
+  const [busDistanceKm, setBusDistanceKm] = useState("");
+  const [scholarshipYes, setScholarshipYes] = useState(false);
+  const [scholarshipNote, setScholarshipNote] = useState("");
+  const [feeMaps, setFeeMaps] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState("");
   const [totalFees, setTotalFees] = useState("");
   const [paidFees, setPaidFees] = useState("");
@@ -284,6 +307,46 @@ function AddStudent({ darkMode }) {
     "December",
   ];
 
+  useEffect(() => {
+    loadActiveSessionClassTuitionBusMap(db).then(setFeeMaps);
+  }, []);
+
+  useEffect(() => {
+    if (!feeMaps?.tuitionMap || !String(cls || "").trim()) return;
+    const ck = normalizeClassKey(cls);
+    const schFrom = Number(feeMaps.scholarshipMap?.[ck] ?? 0);
+    const feeMonthKey = feeMonthFromForm(selectedMonth, feesDate, months);
+    const stub = {
+      class: cls,
+      usesBus,
+      busDistanceKm: usesBus ? Number(busDistanceKm || 0) : 0,
+      monthlyBusFee: usesBus ? Number(monthlyBusFee || 0) : 0,
+      scholarshipAmount: scholarshipYes ? schFrom : 0,
+      scholarshipPercent: 0,
+      scholarshipSessionId:
+        scholarshipYes && schFrom > 0 ? feeMaps.activeSessionId || "" : "",
+      feeMonth: feeMonthKey,
+    };
+    const net = scheduleCycleTotalForStudent(
+      feeMaps.tuitionMap,
+      feeMaps.busMap,
+      stub,
+      feeMaps.examFeeMap,
+      feeMaps.examMonthsMap,
+      feeMaps.busRatePerKmMap || {},
+    );
+    setTotalFees(String(Math.round(net * 100) / 100));
+  }, [
+    feeMaps,
+    cls,
+    usesBus,
+    busDistanceKm,
+    monthlyBusFee,
+    scholarshipYes,
+    selectedMonth,
+    feesDate,
+  ]);
+
   const saveStudent = async () => {
     // Basic Validation
     if (
@@ -294,22 +357,49 @@ function AddStudent({ darkMode }) {
       !cls ||
       !gender ||
       !selectedMonth ||
-      !totalFees ||
       !paidFees ||
       !feesDate
     ) {
-      alert("Bhai, saari fields bharna zaroori hai!");
+      alert("Please complete all required fields.");
       return;
     }
     setLoading(true);
 
-    const total = Number(totalFees);
-    const paid = Number(paidFees);
-    const pending = total - paid;
-    const status =
-      pending === 0 ? "Completed" : paid > 0 ? "Partial" : "Pending";
-
     try {
+      const maps = await loadActiveSessionClassTuitionBusMap(db);
+      const sid = maps.activeSessionId || "";
+      const ck = normalizeClassKey(cls);
+      const schFrom = Number(maps.scholarshipMap?.[ck] ?? 0);
+      const schAmt = scholarshipYes ? schFrom : 0;
+      const monthId = feeMonthFromForm(selectedMonth, feesDate, months);
+
+      const stub = {
+        class: cls,
+        usesBus,
+        busDistanceKm: usesBus ? Number(busDistanceKm || 0) : 0,
+        monthlyBusFee: usesBus ? Number(monthlyBusFee || 0) : 0,
+        scholarshipAmount: schAmt,
+        scholarshipPercent: 0,
+        scholarshipSessionId:
+          schAmt > 0 && scholarshipYes ? sid : "",
+        feeMonth: monthId,
+      };
+      const line = monthlyTotalWithExam(
+        maps.tuitionMap,
+        maps.busMap,
+        maps.examFeeMap,
+        maps.examMonthsMap,
+        stub,
+        monthId,
+        maps.busRatePerKmMap || {},
+      );
+
+      const total = Math.round(line.total * 100) / 100;
+      const paid = Math.min(Math.max(Number(paidFees) || 0, 0), total);
+      const pending = Math.max(total - paid, 0);
+      const status =
+        pending === 0 ? "Completed" : paid > 0 ? "Partial" : "Pending";
+
       // 1. Main Student Record
       await setDoc(doc(db, "students", email), {
         rollNo,
@@ -320,6 +410,16 @@ function AddStudent({ darkMode }) {
         gender,
         usesBus,
         monthlyBusFee: usesBus ? Number(monthlyBusFee || 0) : 0,
+        busDistanceKm: usesBus ? Number(busDistanceKm || 0) : 0,
+        scholarshipAmount: schAmt,
+        scholarshipPercent: 0,
+        scholarshipSessionId: schAmt > 0 ? sid : "",
+        scholarshipNote: String(scholarshipNote || "").slice(0, 240),
+        sessionId: sid || "",
+        feeMonth: monthId,
+        monthlyTuitionFeeApplied: line.tuition,
+        monthlyBusFeeApplied: line.bus,
+        examFeeApplied: line.exam,
         selectedMonth,
         totalFees: total,
         paidFees: paid,
@@ -330,9 +430,6 @@ function AddStudent({ darkMode }) {
       });
 
       // 2. Fees History Entry
-      const currentYear = new Date().getFullYear();
-      const monthIndex = months.indexOf(selectedMonth) + 1;
-      const monthId = `${currentYear}-${monthIndex.toString().padStart(2, "0")}`;
       const historyRef = doc(db, "students", email, "fees", monthId);
 
       await setDoc(
@@ -341,15 +438,16 @@ function AddStudent({ darkMode }) {
           amount: total,
           paid: paid,
           status: status,
-          tuitionFee: total,
-          busFee: 0,
+          tuitionFee: line.tuition,
+          busFee: line.bus,
+          examFee: line.exam,
           date: Timestamp.fromDate(new Date(feesDate)),
           updatedAt: Timestamp.now(),
         },
         { merge: true },
       );
 
-      setSuccessMsg("✅ Student Record Saved Successfully!");
+      setSuccessMsg("Student record saved successfully.");
 
       // Form Reset
       setRollNo("");
@@ -360,13 +458,16 @@ function AddStudent({ darkMode }) {
       setGender("");
       setUsesBus(false);
       setMonthlyBusFee("");
+      setBusDistanceKm("");
+      setScholarshipYes(false);
+      setScholarshipNote("");
       setSelectedMonth("");
       setTotalFees("");
       setPaidFees("");
       setFeesDate("");
     } catch (error) {
       console.error("Error:", error);
-      alert("Database error! Check console.");
+      alert("Could not save. Please try again or contact support.");
     }
 
     setLoading(false);
@@ -383,7 +484,7 @@ function AddStudent({ darkMode }) {
         borderRadius: "20px",
       }}
     >
-      <h4 className="heading mb-4">➕ Add New Student Entry</h4>
+      <h4 className="heading mb-4">Register new student</h4>
 
       {successMsg && (
         <div
@@ -404,7 +505,7 @@ function AddStudent({ darkMode }) {
         {/* Grid: 5 rows (md+): row1–2 = 4 cols each, row3 = 4 cols (2 fields + spacers), row4 = divider, row5 = submit */}
         <div className="row g-3">
           <div className="col-12 col-md-3">
-            <label className="label">Roll Number</label>
+            <label className="label">Roll number</label>
             <input
               className="form-control custom-input"
               value={rollNo}
@@ -413,16 +514,16 @@ function AddStudent({ darkMode }) {
             />
           </div>
           <div className="col-12 col-md-3">
-            <label className="label">Student Name</label>
+            <label className="label">Student name</label>
             <input
               className="form-control custom-input"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Full Name"
+              placeholder="Full name"
             />
           </div>
           <div className="col-12 col-md-3">
-            <label className="label">Gmail / ID</label>
+            <label className="label">Email address</label>
             <input
               className="form-control custom-input"
               value={email}
@@ -431,7 +532,7 @@ function AddStudent({ darkMode }) {
             />
           </div>
           <div className="col-12 col-md-3">
-            <label className="label">Father's Name</label>
+            <label className="label">Father's name</label>
             <input
               className="form-control custom-input"
               value={fatherName}
@@ -440,11 +541,41 @@ function AddStudent({ darkMode }) {
           </div>
 
           <div className="col-12 col-md-3">
-            <label className="label">Class</label>
+            <label className="label">Grade / class</label>
             <input
               className="form-control custom-input"
               value={cls}
               onChange={(e) => setCls(e.target.value)}
+            />
+          </div>
+          <div className="col-12 col-md-3">
+            <label className="label">Apply default scholarship</label>
+            <select
+              className="form-select custom-input"
+              value={scholarshipYes ? "yes" : "no"}
+              onChange={(e) => setScholarshipYes(e.target.value === "yes")}
+            >
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </select>
+            {feeMaps && String(cls || "").trim() ? (
+              <small className="text-muted d-block mt-1">
+                Class default: ₹
+                {Number(
+                  feeMaps.scholarshipMap?.[normalizeClassKey(cls)] ?? 0,
+                )}{" "}
+                per month (tuition only). Configure under Fee structure.
+              </small>
+            ) : null}
+          </div>
+          <div className="col-12 col-md-3">
+            <label className="label">Scholarship remarks (optional)</label>
+            <input
+              className="form-control custom-input"
+              value={scholarshipNote}
+              onChange={(e) => setScholarshipNote(e.target.value)}
+              placeholder="Optional"
+              maxLength={240}
             />
           </div>
           <div className="col-12 col-md-3">
@@ -454,20 +585,20 @@ function AddStudent({ darkMode }) {
               value={gender}
               onChange={(e) => setGender(e.target.value)}
             >
-              <option value="">Select Gender</option>
+              <option value="">Select gender</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
               <option value="Other">Other</option>
             </select>
           </div>
           <div className="col-12 col-md-3">
-            <label className="label">Fee Month</label>
+            <label className="label">Billing month</label>
             <select
               className="form-select custom-input"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
             >
-              <option value="">Select Month</option>
+              <option value="">Select month</option>
               {months.map((m) => (
                 <option key={m} value={m}>
                   {m}
@@ -476,7 +607,7 @@ function AddStudent({ darkMode }) {
             </select>
           </div>
           <div className="col-12 col-md-3">
-            <label className="label">Payment Date</label>
+            <label className="label">Payment date</label>
             <input
               type="date"
               className="form-control custom-input"
@@ -486,7 +617,7 @@ function AddStudent({ darkMode }) {
           </div>
 
           <div className="col-12 col-md-3">
-            <label className="label">Bus Service</label>
+            <label className="label">School transport</label>
             <select
               className="form-select custom-input"
               value={usesBus ? "yes" : "no"}
@@ -497,7 +628,20 @@ function AddStudent({ darkMode }) {
             </select>
           </div>
           <div className="col-12 col-md-3">
-            <label className="label">Bus Fee </label>
+            <label className="label">One-way distance (km)</label>
+            <input
+              type="number"
+              min="0"
+              step="0.1"
+              className="form-control custom-input"
+              value={busDistanceKm}
+              onChange={(e) => setBusDistanceKm(e.target.value)}
+              placeholder="e.g. 5"
+              disabled={!usesBus}
+            />
+          </div>
+          <div className="col-12 col-md-3">
+            <label className="label">Manual transport fee (₹/month)</label>
             <input
               type="number"
               className="form-control custom-input"
@@ -506,19 +650,27 @@ function AddStudent({ darkMode }) {
               placeholder="0"
               disabled={!usesBus}
             />
+            <small className="text-muted">
+              Use when per-km rate does not apply; otherwise leave blank.
+            </small>
           </div>
 
           <div className="col-12 col-md-3">
-            <label className="label text-primary">Total Amount (₹)</label>
+            <label className="label text-primary">Net fee payable (₹)</label>
             <input
               type="number"
               className="form-control custom-input border-primary"
+              readOnly
               value={totalFees}
-              onChange={(e) => setTotalFees(e.target.value)}
+              title="Calculated from fee schedule (tuition, transport, exams, scholarship)"
             />
+            <small className="text-muted">
+              Sum of tuition, transport, and examination components, after any
+              scholarship.
+            </small>
           </div>
           <div className="col-12 col-md-3">
-            <label className="label text-success">Paid Amount (₹)</label>
+            <label className="label text-success">Amount paid (₹)</label>
             <input
               type="number"
               className="form-control custom-input border-success"
@@ -543,7 +695,7 @@ function AddStudent({ darkMode }) {
               disabled={loading}
               onClick={saveStudent}
             >
-              {loading ? "Saving Data..." : "💾 Save Student Record"}
+              {loading ? "Saving…" : "Save record"}
             </button>
           </div>
         </div>

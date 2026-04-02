@@ -207,6 +207,7 @@
 
 // export default UserLayout;
 import { useState, useEffect } from "react";
+import { HiOutlineMenu, HiOutlineMoon, HiOutlineSun } from "react-icons/hi";
 import UserSidebar from "../../components/UserSidebar";
 
 function UserLayout({ children, onChangePassword }) {
@@ -269,12 +270,22 @@ function UserLayout({ children, onChangePassword }) {
         {/* MAIN CONTENT */}
         <div className="main-content">
           <div className="mobile-topbar">
-            <button className="menu-btn" onClick={() => setShowSidebar(true)}>
-              ☰
+            <button
+              type="button"
+              className="menu-btn"
+              aria-label="Open menu"
+              onClick={() => setShowSidebar(true)}
+            >
+              <HiOutlineMenu size={22} />
             </button>
 
-            <button className="theme-btn" onClick={toggleTheme}>
-              {darkMode ? "🌙" : "☀"}
+            <button
+              type="button"
+              className="theme-btn"
+              aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+              onClick={toggleTheme}
+            >
+              {darkMode ? <HiOutlineSun size={20} /> : <HiOutlineMoon size={20} />}
             </button>
           </div>
 

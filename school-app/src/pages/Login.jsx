@@ -84,7 +84,7 @@
 
 //       setMsgType("success");
 //       setMsg("👑 Admin login successful");
-//       setTimeout(() => navigate("/admin"), 1200);
+//       setTimeout(() => navigate("/admin/dashboard"), 1200);
 //     } catch (error) {
 //       setMsgType("error");
 //       setMsg(getErrorMessage(error));
@@ -308,16 +308,16 @@ function Login() {
   const [loading, setLoading] = useState(false);
 
   const getErrorMessage = (error) => {
-    if (error.code === "auth/user-not-found") return "❌ User not found";
-    if (error.code === "auth/wrong-password") return "❌ Wrong password";
-    if (error.code === "auth/invalid-email") return "❌ Invalid email";
-    return "❌ Something went wrong";
+    if (error.code === "auth/user-not-found") return "No account found for this email.";
+    if (error.code === "auth/wrong-password") return "Incorrect password.";
+    if (error.code === "auth/invalid-email") return "Please enter a valid email address.";
+    return "Sign-in failed. Please try again.";
   };
 
   const handleLogin = async () => {
     if (!email || !password) {
       setMsgType("error");
-      setMsg("❌ Email aur Password dono bharo");
+      setMsg("Please enter both email and password.");
       return;
     }
 
@@ -331,18 +331,18 @@ function Login() {
 
       if (!snap.exists()) {
         setMsgType("error");
-        setMsg("❌ User record nahi mila");
+        setMsg("No user profile found. Contact the school office.");
         return;
       }
 
       if (snap.data().role === "admin") {
         setMsgType("error");
-        setMsg("❌ Admin ke liye Admin Login use karo");
+        setMsg("Use “Administrator sign-in” for staff accounts.");
         return;
       }
 
       setMsgType("success");
-      setMsg("✅ Login successful");
+      setMsg("Signed in successfully.");
       setTimeout(() => navigate("/user"), 1200);
     } catch (error) {
       setMsgType("error");
@@ -355,7 +355,7 @@ function Login() {
   const handleAdminLogin = async () => {
     if (!email || !password) {
       setMsgType("error");
-      setMsg("❌ Email aur Password dono bharo");
+      setMsg("Please enter both email and password.");
       return;
     }
 
@@ -369,13 +369,13 @@ function Login() {
 
       if (!snap.exists() || snap.data().role !== "admin") {
         setMsgType("error");
-        setMsg("❌ Admin account nahi hai");
+        setMsg("This account is not authorized for administrator access.");
         return;
       }
 
       setMsgType("success");
-      setMsg("👑 Admin login successful");
-      setTimeout(() => navigate("/admin"), 1200);
+      setMsg("Administrator signed in.");
+      setTimeout(() => navigate("/admin/dashboard"), 1200);
     } catch (error) {
       setMsgType("error");
       setMsg(getErrorMessage(error));
@@ -387,14 +387,14 @@ function Login() {
   const handleResetPassword = async () => {
     if (!email) {
       setMsgType("error");
-      setMsg("❌ Please enter email first");
+      setMsg("Enter your email address to receive a reset link.");
       return;
     }
 
     try {
       await sendPasswordResetEmail(auth, email);
       setMsgType("success");
-      setMsg("📩 Password reset link sent");
+      setMsg("If an account exists, a password reset link has been sent.");
     } catch (error) {
       setMsgType("error");
       setMsg(getErrorMessage(error));
@@ -406,7 +406,7 @@ function Login() {
       <div className="login-box">
         {/* LEFT SIDE */}
         <div className="login-left">
-          <h2>Welcome Back 👋</h2>
+          <h2>Welcome back</h2>
           <p>
             Modern New Delhi Public High School portal. Access your dashboard
             and manage your academic journey.
@@ -416,14 +416,14 @@ function Login() {
         {/* RIGHT SIDE */}
         <div className="login-right">
           <div className="login-card p-4">
-            <h3 className="text-center mb-3">School Login</h3>
+            <h3 className="text-center mb-3">Sign in</h3>
 
             {msg && <div className={`custom-alert ${msgType}`}>{msg}</div>}
 
             <input
               type="email"
               className="form-control mb-3"
-              placeholder="Email"
+              placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -448,7 +448,7 @@ function Login() {
               onClick={handleLogin}
               disabled={loading}
             >
-              {loading ? "Logging..." : "Login"}
+              {loading ? "Signing in…" : "Sign in"}
             </button>
 
             <button
@@ -456,13 +456,13 @@ function Login() {
               onClick={handleAdminLogin}
               disabled={loading}
             >
-              {loading ? "Checking..." : "Admin Login"}
+              {loading ? "Signing in…" : "Administrator sign-in"}
             </button>
 
             <p className="text-center mt-3 mb-0">
               New user?{" "}
               <Link to="/register" className="signup-link">
-                Signup
+                Create an account
               </Link>
             </p>
           </div>

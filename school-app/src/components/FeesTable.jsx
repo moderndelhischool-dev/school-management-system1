@@ -366,7 +366,7 @@ function FeesTable({ students, darkMode }) {
                               : "prev-pending"
                           }
                         >
-                          {prev.status === "Completed" ? "✅" : "❌"}
+                          {prev.status === "Completed" ? "Paid" : "Due"}
                         </span>
                       ) : (
                         "—"

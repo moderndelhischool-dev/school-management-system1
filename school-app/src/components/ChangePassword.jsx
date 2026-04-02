@@ -97,7 +97,7 @@
 
 //         <input
 //           type="password"
-//           placeholder="Confirm Password"
+//           placeholder="Confirm new password"
 //           value={confirmPassword}
 //           onChange={(e) => setConfirmPassword(e.target.value)}
 //         />
@@ -256,19 +256,19 @@ function ChangePassword({ onClose }) {
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
       setMsgType("error");
-      setMsg("❌ All fields are required");
+      setMsg("All fields are required.");
       return;
     }
 
     if (newPassword.length < 6) {
       setMsgType("error");
-      setMsg("❌ Password must be at least 6 characters");
+      setMsg("Password must be at least 6 characters.");
       return;
     }
 
     if (newPassword !== confirmPassword) {
       setMsgType("error");
-      setMsg("❌ Passwords do not match");
+      setMsg("Passwords do not match.");
       return;
     }
 
@@ -279,7 +279,7 @@ function ChangePassword({ onClose }) {
       const user = auth.currentUser;
       if (!user) {
         setMsgType("error");
-        setMsg("❌ User not logged in");
+        setMsg("You are not signed in.");
         return;
       }
 
@@ -292,7 +292,7 @@ function ChangePassword({ onClose }) {
       await updatePassword(user, newPassword);
 
       setMsgType("success");
-      setMsg("✅ Password updated successfully");
+      setMsg("Password updated successfully.");
 
       setCurrentPassword("");
       setNewPassword("");
@@ -302,9 +302,9 @@ function ChangePassword({ onClose }) {
         onClose();
       }, 1500);
     } catch (error) {
-      let errorMsg = "❌ Something went wrong";
+      let errorMsg = "Something went wrong. Please try again.";
       if (error.code === "auth/wrong-password") {
-        errorMsg = "❌ Current password incorrect";
+        errorMsg = "Current password is incorrect.";
       }
       setMsgType("error");
       setMsg(errorMsg);
@@ -316,27 +316,27 @@ function ChangePassword({ onClose }) {
   return (
     <div className="overlay">
       <div className="glass-card">
-        <h5 className="title">🔐 Change Password</h5>
+        <h5 className="title">Change password</h5>
 
         {msg && <div className={`alert-box ${msgType}`}>{msg}</div>}
 
         <input
           type="password"
-          placeholder="Current Password"
+          placeholder="Current password"
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
         />
 
         <input
           type="password"
-          placeholder="New Password"
+          placeholder="New password"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
         />
 
         <input
           type="password"
-          placeholder="Confirm Password"
+          placeholder="Confirm new password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
         />

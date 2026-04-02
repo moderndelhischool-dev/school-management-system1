@@ -11,6 +11,11 @@ import {
   writeBatch,
   deleteField,
 } from "firebase/firestore";
+import {
+  normalizeClassKey,
+  monthlyTotalWithExam,
+  normalizeExamMonthNames,
+} from "../utils/feeBilling";
 
 /** Firestore Timestamp, plain seconds, or Date → readable string */
 function formatSessionDate(value) {
@@ -109,7 +114,8 @@ function AdminFeeStructure({ darkMode }) {
   const [selectedSession, setSelectedSession] = useState("");
   const [selectedClass, setSelectedClass] = useState("1");
   const [monthlyTuitionFee, setMonthlyTuitionFee] = useState("");
-  const [monthlyBusFee, setMonthlyBusFee] = useState("");
+  const [defaultScholarshipAmount, setDefaultScholarshipAmount] = useState("");
+  const [busFeePerKm, setBusFeePerKm] = useState("");
   const [examFee, setExamFee] = useState("");
   const [examFeeMonths, setExamFeeMonths] = useState([]);
   const [admissionFee, setAdmissionFee] = useState("");
@@ -149,7 +155,6 @@ function AdminFeeStructure({ darkMode }) {
   }, [selectedSession, selectedClass, monthlyTuitionFee]);
 
   const yearlyTuitionPreview = (Number(monthlyTuitionFee) || 0) * 12;
-  const yearlyBusPreview = (Number(monthlyBusFee) || 0) * 12;
 
   const selectedSessionRow = sessions.find((s) => s.id === selectedSession);
   const isSelectedSessionExpired = !!selectedSessionRow?.isExpired;
@@ -186,7 +191,8 @@ function AdminFeeStructure({ darkMode }) {
 
       if (snap.empty) {
         setMonthlyTuitionFee("");
-        setMonthlyBusFee("");
+        setDefaultScholarshipAmount("");
+        setBusFeePerKm("");
         setExamFee("");
         setExamFeeMonths([]);
         setAdmissionFee("");
@@ -204,12 +210,15 @@ function AdminFeeStructure({ darkMode }) {
         );
       }
 
-      if (data.monthlyBusFee !== undefined) {
-        setMonthlyBusFee(String(data.monthlyBusFee));
+      if (data.busFeePerKm !== undefined && data.busFeePerKm !== null) {
+        setBusFeePerKm(String(data.busFeePerKm));
       } else {
-        setMonthlyBusFee(
-          String(Math.round((Number(data.busFee || 0) / 12) * 100) / 100),
-        );
+        setBusFeePerKm("");
+      }
+      if (data.defaultScholarshipAmount !== undefined && data.defaultScholarshipAmount !== null) {
+        setDefaultScholarshipAmount(String(data.defaultScholarshipAmount));
+      } else {
+        setDefaultScholarshipAmount("");
       }
       setExamFee(String(data.examFee ?? ""));
       setExamFeeMonths(
@@ -356,9 +365,14 @@ function AdminFeeStructure({ darkMode }) {
         sessionId: selectedSession,
         className: selectedClass,
         monthlyTuitionFee: Number(monthlyTuitionFee) || 0,
-        monthlyBusFee: Number(monthlyBusFee) || 0,
+        defaultScholarshipAmount: Math.max(
+          0,
+          Number(defaultScholarshipAmount) || 0,
+        ),
+        monthlyBusFee: 0,
+        busFeePerKm: Number(busFeePerKm) || 0,
         tuitionFee: yearlyTuitionPreview,
-        busFee: yearlyBusPreview,
+        busFee: 0,
         examFee: Number(examFee) || 0,
         examFeeMonths,
         admissionFee: Number(admissionFee) || 0,
@@ -484,11 +498,6 @@ function AdminFeeStructure({ darkMode }) {
     const monthLabel = `${monthName} ${now.getFullYear()}`;
     const monthId = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     const dateOnly = now.toISOString().slice(0, 10);
-    const includeExam =
-      exam > 0 &&
-      examFeeMonths.some((m) => String(m).trim() === monthName);
-    const examApplied = includeExam ? exam : 0;
-
     setApplying(true);
     try {
       const studentsSnap = await getDocs(collection(db, "students"));
@@ -514,28 +523,57 @@ function AdminFeeStructure({ darkMode }) {
         }
       };
 
+      const ckApply = normalizeClassKey(selectedClass);
+      const tuitionMapApply = { [ckApply]: tuition };
+      const busMapApply = { [ckApply]: 0 };
+      const busRatePerKmApply = { [ckApply]: Number(busFeePerKm) || 0 };
+      const examFeeMapApply = { [ckApply]: Number(examFee) || 0 };
+      const examMonthsMapApply = {
+        [ckApply]: normalizeExamMonthNames(examFeeMonths),
+      };
+
       for (const studentDoc of students) {
         const student = studentDoc.data();
         const usesBus = !!student.usesBus;
-        const studentBusFee = Number(student.monthlyBusFee || 0);
-        const defaultBus = Number(monthlyBusFee) || 0;
-        const busApplied = usesBus ? (studentBusFee > 0 ? studentBusFee : defaultBus) : 0;
-        const total = tuition + busApplied + examApplied;
+        const merged = {
+          ...student,
+          class: student.class || selectedClass,
+          usesBus,
+        };
+        const line = monthlyTotalWithExam(
+          tuitionMapApply,
+          busMapApply,
+          examFeeMapApply,
+          examMonthsMapApply,
+          merged,
+          monthId,
+          busRatePerKmApply,
+        );
+        const total = line.total;
+        const effTuition = line.tuition;
+        const busApplied = line.bus;
+        const examLine = line.exam;
         const paidExisting = Number(student.paidFees || 0);
         const paid = Math.min(Math.max(paidExisting, 0), total);
         const pending = Math.max(total - paid, 0);
         const status = pending === 0 ? "Completed" : paid > 0 ? "Partial" : "Pending";
 
         const studentRef = doc(db, "students", studentDoc.id);
+        const grantSch = Number(student.scholarshipAmount || 0) > 0;
+        const needsGrant =
+          grantSch &&
+          (!student.scholarshipSessionId ||
+            String(student.scholarshipSessionId).trim() === "");
+
         batch.set(
           studentRef,
           {
             sessionId: selectedSession,
             feeMonth: monthId,
             month: monthLabel,
-            monthlyTuitionFeeApplied: tuition,
+            monthlyTuitionFeeApplied: effTuition,
             monthlyBusFeeApplied: busApplied,
-            examFeeApplied: examApplied,
+            examFeeApplied: examLine,
             admissionFeeApplied: admission,
             totalFees: total,
             paidFees: paid,
@@ -546,6 +584,7 @@ function AdminFeeStructure({ darkMode }) {
             feesDate: dateOnly,
             approvedAt: status === "Completed" ? Timestamp.now() : null,
             updatedAt: Timestamp.now(),
+            ...(needsGrant ? { scholarshipSessionId: selectedSession } : {}),
           },
           { merge: true },
         );
@@ -562,9 +601,9 @@ function AdminFeeStructure({ darkMode }) {
             amount: total,
             paid,
             status,
-            tuitionFee: tuition,
+            tuitionFee: effTuition,
             busFee: busApplied,
-            examFee: examApplied,
+            examFee: examLine,
             admissionFee: 0,
             usesBus,
             date: Timestamp.now(),
@@ -596,12 +635,13 @@ function AdminFeeStructure({ darkMode }) {
         color: darkMode ? "#f1f5f9" : "#111827",
       }}
     >
-      <h4 className="fw-bold mb-2 page-title">Fee structure by session and class</h4>
+      <h4 className="fw-bold mb-2 page-title">Session and class fee structure</h4>
       <p className="mb-4 sub-text">
-        Define standard monthly tuition and default transport charges for each
-        grade. Individual student records can still override the bus amount when
-        needed. After you pick an <strong>Academic session</strong>, session
-        details (status, dates) show in the panel directly under the session row.
+        Set monthly tuition and <strong>bus fee per km</strong> (one-way distance ×
+        rate from Student list). There is no class-wide flat bus fee here. After
+        you pick an <strong>Academic session</strong>,
+        session details (status, dates) show in the panel directly under the
+        session row.
       </p>
 
       {msg && (
@@ -629,8 +669,8 @@ function AdminFeeStructure({ darkMode }) {
         </div>
 
         <div className="col-md-4">
-          <label className="field-label">New session</label>
-          <div className="d-flex gap-2">
+          <label className="field-label">Create new session</label>
+            <div className="d-flex gap-2">
             <input
               className="form-control custom-input"
               placeholder="e.g. 2026–27"
@@ -866,6 +906,24 @@ function AdminFeeStructure({ darkMode }) {
           </div>
 
           <div className="col-md-4">
+            <label className="field-label">
+              Default scholarship (₹ / month off tuition)
+            </label>
+            <input
+              type="number"
+              min="0"
+              className="form-control custom-input"
+              placeholder="0"
+              value={defaultScholarshipAmount}
+              onChange={(e) => setDefaultScholarshipAmount(e.target.value)}
+            />
+            <small className="preview-text">
+              Copied when adding a student with Scholarship = Yes. Reduces
+              tuition only; bus and exam unchanged.
+            </small>
+          </div>
+
+          <div className="col-md-4">
             <label className="field-label">Class / grade</label>
             <select
               className="form-select custom-input"
@@ -881,16 +939,17 @@ function AdminFeeStructure({ darkMode }) {
           </div>
 
           <div className="col-md-4">
-            <label className="field-label">Default monthly bus fee (₹)</label>
+            <label className="field-label">Bus fee per km (₹ / km / month)</label>
             <input
               type="number"
               className="form-control custom-input"
-              placeholder="0"
-              value={monthlyBusFee}
-              onChange={(e) => setMonthlyBusFee(e.target.value)}
+              placeholder="e.g. 50"
+              value={busFeePerKm}
+              onChange={(e) => setBusFeePerKm(e.target.value)}
             />
             <small className="preview-text">
-              Annual equivalent: ₹{yearlyBusPreview}
+              Monthly bus ≈ one-way km × this rate (see Student list). If 0, bus
+              fee is 0 unless the student has a manual bus amount there.
             </small>
           </div>
 

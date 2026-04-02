@@ -123,7 +123,6 @@ function EventManager({ darkMode }) {
                     </div>
                     <div className="event-meta">
                       <small className="opacity-75">
-                        📅{" "}
                         {new Date(event.start).toLocaleDateString("en-IN", {
                           day: "numeric",
                           month: "short",

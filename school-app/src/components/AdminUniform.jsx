@@ -96,7 +96,7 @@
 //         createdAt: Timestamp.now(),
 //       });
 
-//       setMessage("Uniform uploaded successfully ✅");
+//       setMessage("Uniform uploaded successfully.");
 //       setPreview("");
 //       setImageData(null);
 //     } catch {
@@ -417,7 +417,7 @@ function AdminUniform({ darkMode }) {
         createdAt: Timestamp.now(),
       });
 
-      setMessage("Uniform uploaded successfully ✅");
+      setMessage("Uniform uploaded successfully.");
       setPreview("");
       setImageData(null);
     } catch {

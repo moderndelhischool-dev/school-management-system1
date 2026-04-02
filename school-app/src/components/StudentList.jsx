@@ -471,12 +471,14 @@ import {
   writeBatch,
   setDoc,
   deleteDoc,
+  deleteField,
   Timestamp,
 } from "firebase/firestore";
 import Swal from "sweetalert2";
 import {
   loadActiveSessionClassTuitionBusMap,
   monthlyTotalWithExam,
+  monthlyBaseForStudent,
   examFeeForMonth,
   currentMonthKey,
   resolveDisplayPendingFees,
@@ -488,8 +490,10 @@ function StudentList({ darkMode }) {
   const [students, setStudents] = useState([]);
   const [classTuitionMap, setClassTuitionMap] = useState({});
   const [classBusMap, setClassBusMap] = useState({});
+  const [classBusRatePerKmMap, setClassBusRatePerKmMap] = useState({});
   const [classExamFeeMap, setClassExamFeeMap] = useState({});
   const [classExamMonthsMap, setClassExamMonthsMap] = useState({});
+  const [activeSessionId, setActiveSessionId] = useState("");
   const [selectedClass, setSelectedClass] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [editStudent, setEditStudent] = useState(null);
@@ -527,12 +531,20 @@ function StudentList({ darkMode }) {
       .toLowerCase();
 
   const loadFeeMaps = async () => {
-    const { tuitionMap, busMap, examFeeMap, examMonthsMap } =
-      await loadActiveSessionClassTuitionBusMap(db);
+    const {
+      tuitionMap,
+      busMap,
+      busRatePerKmMap,
+      examFeeMap,
+      examMonthsMap,
+      activeSessionId: sid,
+    } = await loadActiveSessionClassTuitionBusMap(db);
     setClassTuitionMap(tuitionMap);
     setClassBusMap(busMap);
+    setClassBusRatePerKmMap(busRatePerKmMap || {});
     setClassExamFeeMap(examFeeMap || {});
     setClassExamMonthsMap(examMonthsMap || {});
+    setActiveSessionId(sid || "");
   };
 
   const getClassTuition = (cls) => {
@@ -547,6 +559,7 @@ function StudentList({ darkMode }) {
       classBusMap,
       classExamFeeMap,
       classExamMonthsMap,
+      classBusRatePerKmMap,
     );
 
   const getStudentPending = (student) =>
@@ -556,7 +569,16 @@ function StudentList({ darkMode }) {
       classBusMap,
       classExamFeeMap,
       classExamMonthsMap,
+      classBusRatePerKmMap,
     );
+
+  const getStudentMonthlyBus = (s) =>
+    monthlyBaseForStudent(
+      classTuitionMap,
+      classBusMap,
+      s,
+      classBusRatePerKmMap,
+    ).bus;
 
   const getStudentDisplayStatus = (student) => {
     const pending = getStudentPending(student);
@@ -597,6 +619,7 @@ function StudentList({ darkMode }) {
       classExamMonthsMap,
       editStudent,
       getEditFeeMonthKey(),
+      classBusRatePerKmMap,
     );
     const carry = Number(editStudent.carryForwardTotal || 0);
     return line + carry;
@@ -616,8 +639,8 @@ function StudentList({ darkMode }) {
     if (completedStudents.length === 0) {
       Swal.fire({
         icon: "info",
-        title: "No Students Found",
-        text: 'Filhal kisi bhi student ki fees "Completed" nahi hai.',
+        title: "No eligible students",
+        text: 'No student currently has fee status "Completed".',
         background: darkMode ? "#1e293b" : "#fff",
         color: darkMode ? "#fff" : "#000",
       });
@@ -625,12 +648,12 @@ function StudentList({ darkMode }) {
     }
 
     const result = await Swal.fire({
-      title: "Are you sure?",
-      text: `${completedStudents.length} students ko agle mahine shift karein aur History update karein?`,
+      title: "Confirm bulk month advance",
+      text: `Move ${completedStudents.length} student(s) whose fees are completed to the next billing month and update fee history?`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#0F4C6C",
-      confirmButtonText: "Yes, Move Them!",
+      confirmButtonText: "Yes, advance month",
       background: darkMode ? "#1e293b" : "#fff",
       color: darkMode ? "#fff" : "#000",
     });
@@ -690,15 +713,15 @@ function StudentList({ darkMode }) {
         await batch.commit();
         Swal.fire({
           icon: "success",
-          title: "History Updated!",
-          text: "Purani fees Complete aur naye mahine ki Pending show ho jayegi.",
+          title: "Fee history updated",
+          text: "Completed months are recorded; the next month is now pending for those students.",
         });
         loadStudents();
       } catch (err) {
         Swal.fire({
           icon: "error",
-          title: "Error",
-          text: "Process fail ho gaya!",
+          title: "Update failed",
+          text: "The bulk update could not be completed. Please try again.",
         });
       } finally {
         setUpdatingAll(false);
@@ -734,13 +757,41 @@ function StudentList({ darkMode }) {
       monthId,
     );
 
+    const {
+      bus: resolvedMonthlyBus,
+      tuition: effectiveTuition,
+    } = monthlyBaseForStudent(
+      classTuitionMap,
+      classBusMap,
+      editStudent,
+      classBusRatePerKmMap,
+    );
+    const scholarshipAmt = Math.max(
+      0,
+      Number(editStudent.scholarshipAmount ?? 0),
+    );
+
     try {
       const studentRef = doc(db, "students", editStudent.id);
       await updateDoc(studentRef, {
         ...editStudent,
         usesBus,
-        monthlyBusFee: usesBus ? Number(editStudent.monthlyBusFee || 0) : 0,
-        monthlyTuitionFeeApplied: getClassTuition(editStudent.class),
+        busDistanceKm: usesBus ? Number(editStudent.busDistanceKm || 0) : 0,
+        monthlyBusFee: usesBus ? resolvedMonthlyBus : 0,
+        scholarshipAmount: scholarshipAmt,
+        scholarshipSessionId:
+          scholarshipAmt > 0
+            ? activeSessionId || editStudent.sessionId || ""
+            : deleteField(),
+        scholarshipPercent:
+          scholarshipAmt > 0
+            ? 0
+            : Math.min(
+                100,
+                Math.max(0, Number(editStudent.scholarshipPercent || 0)),
+              ),
+        scholarshipNote: String(editStudent.scholarshipNote || "").slice(0, 240),
+        monthlyTuitionFeeApplied: effectiveTuition,
         examFeeApplied: examLine,
         totalFees: total,
         paidFees: paid,
@@ -763,8 +814,8 @@ function StudentList({ darkMode }) {
           status: status,
           month: safeMonthName,
           feeMonth: monthId,
-          tuitionFee: getClassTuition(editStudent.class),
-          busFee: usesBus ? Number(editStudent.monthlyBusFee || 0) : 0,
+          tuitionFee: effectiveTuition,
+          busFee: usesBus ? resolvedMonthlyBus : 0,
           examFee: examLine,
           date: feeDateValue,
           updatedAt: Timestamp.now(),
@@ -776,11 +827,11 @@ function StudentList({ darkMode }) {
         await autoRollAfterFullPayment(db, editStudent.id);
       }
 
-      Swal.fire({ icon: "success", title: "Updated!" });
+      Swal.fire({ icon: "success", title: "Student updated" });
       setEditStudent(null);
       loadStudents();
     } catch (e) {
-      Swal.fire({ icon: "error", title: "Update failed!" });
+      Swal.fire({ icon: "error", title: "Could not save changes" });
     }
   };
 
@@ -789,9 +840,13 @@ function StudentList({ darkMode }) {
       await deleteDoc(doc(db, "students", deleteStudent.id));
       setDeleteStudent(null);
       loadStudents();
-      Swal.fire("Deleted!", "", "success");
+      Swal.fire({ icon: "success", title: "Student removed" });
     } catch (e) {
-      Swal.fire("Error", "Delete failed", "error");
+      Swal.fire({
+        icon: "error",
+        title: "Could not delete",
+        text: "Please try again or contact support.",
+      });
     }
   };
 
@@ -829,14 +884,14 @@ function StudentList({ darkMode }) {
           onClick={handleBulkNextMonth}
           disabled={updatingAll}
         >
-          {updatingAll ? "⏳ Processing..." : "Move Completed to Next Month"}
+          {updatingAll ? "Processing…" : "Advance completed fees to next month"}
         </button>
       </div>
 
       <div className="mb-4">
         <input
           type="text"
-          placeholder="🔍 Search..."
+          placeholder="Search by name or roll number…"
           className="form-control search-input"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -847,18 +902,20 @@ function StudentList({ darkMode }) {
         <table className={`table ${darkMode ? "table-dark" : ""}`}>
           <thead className="blue-head">
             <tr>
-              <th>Roll No</th>
-              <th>Name</th>
-              <th>Father Name</th>
+              <th>Roll number</th>
+              <th>Student name</th>
+              <th>Father&apos;s name</th>
               <th>Email</th>
               <th>Class</th>
-              <th>Class Tuition</th>
+              <th>Monthly tuition</th>
+              <th>Scholarship</th>
               <th>Bus</th>
-              <th>Bus Fee</th>
-              <th>Month</th>
-              <th>Date</th>
-              <th>Total</th>
-              <th>Pending</th>
+              <th>Distance (km)</th>
+              <th>Monthly bus fee</th>
+              <th>Billing month</th>
+              <th>Fee date</th>
+              <th>Total due</th>
+              <th>Balance</th>
               <th>Status</th>
               <th>Edit</th>
               <th>Delete</th>
@@ -873,8 +930,23 @@ function StudentList({ darkMode }) {
                 <td>{s.email || "—"}</td>
                 <td>{s.class}</td>
                 <td>₹{getClassTuition(s.class)}</td>
+                <td>
+                  {Number(s.scholarshipAmount) > 0
+                    ? `₹${s.scholarshipAmount}`
+                    : Number(s.scholarshipPercent) > 0
+                      ? `${s.scholarshipPercent}% (legacy)`
+                      : "—"}
+                </td>
                 <td>{s.usesBus ? "Yes" : "No"}</td>
-                <td>{s.usesBus ? `Rs ${s.monthlyBusFee || 0}` : "—"}</td>
+                <td>
+                  {s.usesBus
+                    ? s.busDistanceKm != null &&
+                      String(s.busDistanceKm).trim() !== ""
+                      ? s.busDistanceKm
+                      : "—"
+                    : "—"}
+                </td>
+                <td>{s.usesBus ? `₹${getStudentMonthlyBus(s)}` : "—"}</td>
                 <td>
                   <span className="text-info">{s.selectedMonth}</span>
                 </td>
@@ -904,13 +976,23 @@ function StudentList({ darkMode }) {
                         ...s,
                         usesBus: !!s.usesBus,
                         monthlyBusFee: s.monthlyBusFee ?? "",
+                        busDistanceKm:
+                          s.busDistanceKm !== undefined && s.busDistanceKm !== null
+                            ? s.busDistanceKm
+                            : "",
+                        scholarshipAmount:
+                          s.scholarshipAmount !== undefined &&
+                          s.scholarshipAmount !== null
+                            ? s.scholarshipAmount
+                            : "",
+                        scholarshipNote: s.scholarshipNote ?? "",
                         feeDate: s.feeDate
                           ? s.feeDate.toDate().toISOString().split("T")[0]
                           : "",
                       })
                     }
                   >
-                    ✏ Edit
+                    Edit
                   </button>
                 </td>
                 <td>
@@ -929,10 +1011,10 @@ function StudentList({ darkMode }) {
 
       {editStudent && (
         <div className="edit-card mt-4 p-4 shadow-lg">
-          <h5 className="mb-4">✏ Edit Student Details</h5>
+          <h5 className="mb-4">Edit student</h5>
           <div className="row g-3">
             <div className="col-md-4">
-              <label className="small fw-bold">Roll No</label>
+              <label className="small fw-bold">Roll number</label>
               <input
                 className="form-control dark-input"
                 value={editStudent.rollNo || ""}
@@ -942,7 +1024,7 @@ function StudentList({ darkMode }) {
               />
             </div>
             <div className="col-md-4">
-              <label className="small fw-bold">Name</label>
+              <label className="small fw-bold">Student name</label>
               <input
                 className="form-control dark-input"
                 value={editStudent.name}
@@ -952,7 +1034,7 @@ function StudentList({ darkMode }) {
               />
             </div>
             <div className="col-md-4">
-              <label className="small fw-bold">Father Name</label>
+              <label className="small fw-bold">Father&apos;s name</label>
               <input
                 className="form-control dark-input"
                 value={editStudent.fatherName || ""}
@@ -982,7 +1064,7 @@ function StudentList({ darkMode }) {
               />
             </div>
             <div className="col-md-4">
-              <label className="small fw-bold">Fee Month</label>
+              <label className="small fw-bold">Billing month</label>
               <select
                 className="form-control dark-input"
                 value={editStudent.selectedMonth}
@@ -1001,7 +1083,7 @@ function StudentList({ darkMode }) {
               </select>
             </div>
             <div className="col-md-4">
-              <label className="small fw-bold">Fee Date</label>
+              <label className="small fw-bold">Fee date</label>
               <input
                 type="date"
                 className="form-control dark-input"
@@ -1012,7 +1094,56 @@ function StudentList({ darkMode }) {
               />
             </div>
             <div className="col-md-4">
-              <label className="small fw-bold">Bus Service</label>
+              <label className="small fw-bold">
+                Scholarship (₹ per month, deducted from tuition)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                className="form-control dark-input"
+                value={editStudent.scholarshipAmount ?? ""}
+                placeholder="0"
+                onChange={(e) =>
+                  setEditStudent({
+                    ...editStudent,
+                    scholarshipAmount: e.target.value,
+                  })
+                }
+              />
+              <small className="text-muted d-block mt-1">
+                This amount reduces tuition each month; bus and examination fees
+                are unchanged. It applies for the active academic session—when a
+                new session starts, save again or set the amount to zero.
+                {Number(editStudent.scholarshipPercent) > 0 &&
+                !Number(editStudent.scholarshipAmount) ? (
+                  <span className="d-block text-warning mt-1">
+                    Legacy percentage on file (
+                    {editStudent.scholarshipPercent}%); enter a rupee amount
+                    above to use a fixed monthly scholarship (stored as rupees
+                    only).
+                  </span>
+                ) : null}
+              </small>
+            </div>
+            <div className="col-md-8">
+              <label className="small fw-bold">Scholarship reference (optional)</label>
+              <input
+                type="text"
+                className="form-control dark-input"
+                value={editStudent.scholarshipNote || ""}
+                placeholder="e.g. Merit scholarship 2026"
+                maxLength={240}
+                onChange={(e) =>
+                  setEditStudent({
+                    ...editStudent,
+                    scholarshipNote: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div className="col-md-4">
+              <label className="small fw-bold">School bus</label>
               <select
                 className="form-control dark-input"
                 value={editStudent.usesBus ? "yes" : "no"}
@@ -1028,12 +1159,35 @@ function StudentList({ darkMode }) {
               </select>
             </div>
             <div className="col-md-4">
-              <label className="small fw-bold">Bus Fee </label>
+              <label className="small fw-bold">One-way distance (km)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                className="form-control dark-input"
+                value={editStudent.busDistanceKm ?? ""}
+                disabled={!editStudent.usesBus}
+                placeholder="e.g. 4.5"
+                onChange={(e) =>
+                  setEditStudent({
+                    ...editStudent,
+                    busDistanceKm: e.target.value,
+                  })
+                }
+              />
+              <small className="text-muted d-block mt-1">
+                If fee structure has ₹/km, bus = distance × rate. Otherwise use
+                manual fee below or class default.
+              </small>
+            </div>
+            <div className="col-md-4">
+              <label className="small fw-bold">Manual monthly bus fee (₹)</label>
               <input
                 type="number"
                 className="form-control dark-input"
                 value={editStudent.monthlyBusFee || ""}
                 disabled={!editStudent.usesBus}
+                placeholder="Use when no per-km rate"
                 onChange={(e) =>
                   setEditStudent({
                     ...editStudent,
@@ -1041,9 +1195,21 @@ function StudentList({ darkMode }) {
                   })
                 }
               />
+              {editStudent.usesBus &&
+                Number(
+                  classBusRatePerKmMap[normalizeClassKey(editStudent.class)] ||
+                    0,
+                ) > 0 && (
+                  <small className="text-info d-block mt-1">
+                    Class ₹/km: ₹
+                    {classBusRatePerKmMap[normalizeClassKey(editStudent.class)]}{" "}
+                    → effective bus this month: ₹
+                    {getStudentMonthlyBus(editStudent)}
+                  </small>
+                )}
             </div>
             <div className="col-md-4">
-              <label className="small fw-bold">Class Tuition </label>
+              <label className="small fw-bold">Class tuition (monthly)</label>
               <input
                 type="number"
                 className="form-control dark-input"
@@ -1052,7 +1218,7 @@ function StudentList({ darkMode }) {
               />
             </div>
             <div className="col-md-4">
-              <label className="small fw-bold">Total Fees </label>
+              <label className="small fw-bold">Monthly total due</label>
               <input
                 type="number"
                 className="form-control dark-input"
@@ -1065,13 +1231,13 @@ function StudentList({ darkMode }) {
                 <small
                   className={darkMode ? "text-light opacity-80" : "text-muted"}
                 >
-                  Fee structure ke mutabiq is mahine examination fee shamil: ₹
+                  Examination fee for this month (per fee structure): ₹
                   {getEditExamLine()}
                 </small>
               </div>
             )}
             <div className="col-md-4">
-              <label className="small fw-bold">Paid Fees</label>
+              <label className="small fw-bold">Amount paid</label>
               <input
                 type="number"
                 className="form-control dark-input"
@@ -1082,7 +1248,7 @@ function StudentList({ darkMode }) {
               />
             </div>
             <div className="col-md-4">
-              <label className="small fw-bold">Pending </label>
+              <label className="small fw-bold">Outstanding balance</label>
               <input
                 type="number"
                 className="form-control dark-input"
@@ -1093,7 +1259,7 @@ function StudentList({ darkMode }) {
           </div>
           <div className="mt-4 d-flex gap-3">
             <button className="btn update-btn" onClick={updateStudent}>
-              💾 Save Changes
+              Save changes
             </button>
             <button
               className="btn cancel-btn"

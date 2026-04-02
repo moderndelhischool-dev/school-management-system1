@@ -120,25 +120,25 @@ function UserContact() {
   return (
     <div className="contact-overlay">
       <div className="contact-modal">
-        <h5 className="mb-3 section-title">📞 Contact Admin</h5>
+        <h5 className="mb-3 section-title">Contact administration</h5>
 
         {!sent ? (
           <>
             <textarea
               className="form-control mb-3 custom-textarea"
               rows="4"
-              placeholder="Write your problem or feedback..."
+              placeholder="Describe your enquiry or feedback…"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />
 
             <button className="btn-primary-custom w-100" onClick={handleSubmit}>
-              Send Message
+              Send message
             </button>
           </>
         ) : (
           <div className="alert alert-success text-center">
-            ✅ Message Sent Successfully!
+            Your message has been sent.
           </div>
         )}
       </div>
