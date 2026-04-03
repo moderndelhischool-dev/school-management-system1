@@ -844,10 +844,7 @@ function AdminCertificate({ darkMode }) {
         }}
       >
         <h5 className="sub-heading mb-1">1. Upload documents </h5>
-        <p className="small mb-2" style={{ color: textMuted }}>
-          Optional column <strong>For request</strong>: choose the student&apos;s pending
-          request so they see exactly which file matches it under &quot;My requests&quot;.
-        </p>
+        
         <div className="row g-2 mb-3">
           <div className="col-md-4">
             <label className="form-label small">Class</label>
