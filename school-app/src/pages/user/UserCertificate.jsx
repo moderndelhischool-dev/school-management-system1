@@ -1,249 +1,173 @@
-// import { useEffect, useState } from "react";
-// import { db } from "../../firebase/firebase";
-// import { collection, getDocs } from "firebase/firestore";
-
-// function UserCertificate({ darkMode }) {
-//   const [certificates, setCertificates] = useState([]);
-//   const [loading, setLoading] = useState(true);
-
-//   const fetchCertificates = async () => {
-//     const snapshot = await getDocs(collection(db, "certificates"));
-//     const data = snapshot.docs.map((doc) => ({
-//       id: doc.id,
-//       ...doc.data(),
-//     }));
-
-//     data.sort(
-//       (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0),
-//     );
-
-//     setCertificates(data);
-//     setLoading(false);
-//   };
-
-//   useEffect(() => {
-//     fetchCertificates();
-//   }, []);
-
-//   const handleView = (base64File) => {
-//     const byteCharacters = atob(base64File.split(",")[1]);
-//     const byteNumbers = new Array(byteCharacters.length);
-
-//     for (let i = 0; i < byteCharacters.length; i++) {
-//       byteNumbers[i] = byteCharacters.charCodeAt(i);
-//     }
-
-//     const byteArray = new Uint8Array(byteNumbers);
-//     const blob = new Blob([byteArray], { type: "application/pdf" });
-//     const blobUrl = URL.createObjectURL(blob);
-
-//     window.open(blobUrl, "_blank");
-//   };
-
-//   const handleDownload = (base64File, name) => {
-//     const link = document.createElement("a");
-//     link.href = base64File;
-//     link.download = name;
-//     link.click();
-//   };
-
-//   if (loading) {
-//     return (
-//       <div className="text-center mt-4">
-//         <div className="spinner-border text-purple"></div>
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div
-//       className="container mt-4"
-//       style={{
-//         color: darkMode ? "#fff" : "#000",
-//         transition: "all 0.3s ease",
-//       }}
-//     >
-//       <h4 className="mb-4 text-purple">📜 Available Certificates</h4>
-
-//       {certificates.length === 0 && (
-//         <p style={{ color: darkMode ? "#c4b5fd" : "#6b21a8" }}>
-//           No certificates available.
-//         </p>
-//       )}
-
-//       <div className="row">
-//         {certificates.map((item) => (
-//           <div key={item.id} className="col-12 col-md-6 col-lg-4 mb-4">
-//             <div
-//               className="card shadow-sm h-100 certificate-card"
-//               style={{
-//                 backgroundColor: darkMode ? "#1e1b4b" : "#ffffff",
-//                 color: darkMode ? "#fff" : "#000",
-//                 borderRadius: "16px",
-//                 transition: "all 0.3s ease",
-//                 border: "1px solid #ddd6fe",
-//               }}
-//             >
-//               {/* Top Icon */}
-//               <div
-//                 className="certificate-top"
-//                 style={{
-//                   background: darkMode
-//                     ? "linear-gradient(135deg,#312e81,#1e1b4b)"
-//                     : "linear-gradient(135deg,#f3e8ff,#ede9fe)",
-//                   padding: "30px",
-//                   textAlign: "center",
-//                   fontSize: "40px",
-//                   borderTopLeftRadius: "16px",
-//                   borderTopRightRadius: "16px",
-//                 }}
-//               >
-//                 📄
-//               </div>
-
-//               {/* Details */}
-//               <div className="p-3 d-flex flex-column">
-//                 <h6 className="fw-bold text-truncate">{item.fileName}</h6>
-
-//                 <small
-//                   className="mb-3"
-//                   style={{
-//                     color: darkMode ? "#c4b5fd" : "#6b21a8",
-//                   }}
-//                 >
-//                   {item.createdAt
-//                     ? new Date(item.createdAt.seconds * 1000).toLocaleString(
-//                         "en-IN",
-//                       )
-//                     : ""}
-//                 </small>
-
-//                 <div className="mt-auto d-flex gap-2">
-//                   <button
-//                     className="btn btn-purple btn-sm w-50"
-//                     onClick={() => handleView(item.file)}
-//                   >
-//                     View
-//                   </button>
-
-//                   <button
-//                     className="btn btn-outline-purple btn-sm w-50"
-//                     onClick={() => handleDownload(item.file, item.fileName)}
-//                   >
-//                     Download
-//                   </button>
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-
-//       <style>{`
-//         .text-purple {
-//           color: #7c3aed !important;
-//         }
-
-//         .text-purple-light {
-//           color: #a78bfa !important;
-//         }
-
-//         .btn-purple {
-//           background: linear-gradient(135deg,#7c3aed,#4c1d95);
-//           color: white;
-//           border: none;
-//         }
-
-//         .btn-purple:hover {
-//           box-shadow: 0 6px 18px rgba(124,58,237,0.4);
-//           transform: translateY(-2px);
-//         }
-
-//         .btn-outline-purple {
-//           border: 1px solid #7c3aed;
-//           color: #7c3aed;
-//           background: transparent;
-//         }
-
-//         .btn-outline-purple:hover {
-//           background: #7c3aed;
-//           color: white;
-//         }
-
-//         .text-purple {
-//           color: #7c3aed;
-//         }
-
-//         .certificate-card:hover {
-//           transform: translateY(-4px);
-//           box-shadow: 0 12px 30px rgba(124,58,237,0.25);
-//         }
-
-//         .text-purple {
-//           color: #7c3aed;
-//         }
-//       `}</style>
-//     </div>
-//   );
-// }
-
-// export default UserCertificate;
 import { useEffect, useState } from "react";
 import { db } from "../../firebase/firebase";
-import { collection, getDocs } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  query,
+  where,
+  Timestamp,
+} from "firebase/firestore";
 
-function UserCertificate({ darkMode }) {
+
+function UserCertificate({ student, darkMode }) {
   const [certificates, setCertificates] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [requestedDocument, setRequestedDocument] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [reqMessage, setReqMessage] = useState("");
 
-  const fetchCertificates = async () => {
-    const snapshot = await getDocs(collection(db, "certificates"));
-    const data = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    data.sort(
-      (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0),
-    );
-
-    setCertificates(data);
-    setLoading(false);
-  };
+  const studentId = student?.email;
 
   useEffect(() => {
-    fetchCertificates();
-  }, []);
-
-  const handleView = (base64File) => {
-    const byteCharacters = atob(base64File.split(",")[1]);
-    const byteNumbers = new Array(byteCharacters.length);
-
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    if (!studentId) {
+      setCertificates([]);
+      setRequests([]);
+      setLoading(false);
+      return;
     }
 
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: "application/pdf" });
-    const blobUrl = URL.createObjectURL(blob);
+    const load = async () => {
+      setLoading(true);
+      try {
+        const certSnap = await getDocs(
+          collection(db, "students", studentId, "certificates"),
+        );
+        const certData = certSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        certData.sort(
+          (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0),
+        );
+        setCertificates(certData);
 
-    window.open(blobUrl, "_blank");
+        const reqQ = query(
+          collection(db, "certificateRequests"),
+          where("studentId", "==", studentId),
+        );
+        const reqSnap = await getDocs(reqQ);
+        const reqData = reqSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        reqData.sort(
+          (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0),
+        );
+        setRequests(reqData);
+      } catch (e) {
+        console.error(e);
+        setCertificates([]);
+        setRequests([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [studentId]);
+
+  const handleSubmitRequest = async (e) => {
+    e.preventDefault();
+    const title = requestedDocument.trim();
+    if (!title) {
+      setReqMessage("Please write which document you need.");
+      return;
+    }
+    try {
+      setSubmitting(true);
+      setReqMessage("");
+      await addDoc(collection(db, "certificateRequests"), {
+        studentId,
+        studentName: student?.name || "",
+        studentEmail: student?.email || studentId,
+        studentClass: student?.class != null ? String(student.class) : "",
+        studentRoll:
+          student?.rollNo != null ? String(student.rollNo) : "",
+        documentTitle: title,
+        note: "",
+        status: "pending",
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      });
+      setReqMessage("Request sent. The office will review it.");
+      setRequestedDocument("");
+      const reqQ = query(
+        collection(db, "certificateRequests"),
+        where("studentId", "==", studentId),
+      );
+      const reqSnap = await getDocs(reqQ);
+      const reqData = reqSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      reqData.sort(
+        (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0),
+      );
+      setRequests(reqData);
+    } catch (err) {
+      setReqMessage(err?.message || "Could not send request.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleDownload = (base64File, name) => {
-    const link = document.createElement("a");
-    link.href = base64File;
-    link.download = name;
-    link.click();
+  const handleOpen = (url) => {
+    if (!url) return;
+    window.open(url, "_blank", "noopener,noreferrer");
   };
+
+  const handleDownload = async (url, name, mimeType) => {
+    if (!url) return;
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const type = mimeType || blob.type || "application/octet-stream";
+      const fileBlob =
+        blob.type === type ? blob : new Blob([blob], { type });
+      const blobUrl = URL.createObjectURL(fileBlob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = name || "document";
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const statusBadge = (status) => {
+    const s = status || "pending";
+    const map = {
+      pending: { bg: "#fef3c7", color: "#92400e", label: "Pending" },
+      fulfilled: { bg: "#d1fae5", color: "#065f46", label: "Ready / done" },
+      rejected: { bg: "#fee2e2", color: "#991b1b", label: "Rejected" },
+    };
+    const m = map[s] || map.pending;
+    return (
+      <span
+        className="badge rounded-pill"
+        style={{ background: m.bg, color: m.color }}
+      >
+        {m.label}
+      </span>
+    );
+  };
+
+  if (!studentId) {
+    return (
+      <div className="container mt-4">
+        <p style={{ color: darkMode ? "#94a3b8" : "#4B5563" }}>
+          No student profile is linked to this account.
+        </p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
       <div className="text-center mt-4">
-        <div className="spinner-border text-theme"></div>
+        <div className="spinner-border text-theme" />
       </div>
     );
   }
+
+  const inputBg = darkMode ? "#334155" : "#fff";
+  const inputBr = darkMode ? "#475569" : "#ced4da";
 
   return (
     <div
@@ -253,11 +177,127 @@ function UserCertificate({ darkMode }) {
         transition: "all 0.3s ease",
       }}
     >
-      <h4 className="mb-4 section-title">📜 Available Certificates</h4>
+      <h4 className="mb-3 section-title">📜 Certificates & documents</h4>
+
+      {/* Request a document */}
+      <div
+        className="card shadow-sm mb-4 p-4"
+        style={{
+          background: darkMode ? "#1B2A35" : "#f8fafc",
+          border: `1px solid ${darkMode ? "#334155" : "#e2e8f0"}`,
+          borderRadius: "16px",
+        }}
+      >
+        <h5 className="mb-2" style={{ color: darkMode ? "#D4A24C" : "#0F4C6C" }}>
+          Request a document
+        </h5>
+        
+        <form onSubmit={handleSubmitRequest}>
+          <label className="form-label small">Your request</label>
+          <input
+            type="text"
+            className="form-control mb-3"
+            required
+            autoComplete="off"
+            placeholder="Request for Document"
+            value={requestedDocument}
+            onChange={(e) => setRequestedDocument(e.target.value)}
+            style={{ background: inputBg, color: darkMode ? "#fff" : "#111", borderColor: inputBr }}
+          />
+          {reqMessage && (
+            <p className="small mb-2" style={{ color: darkMode ? "#86efac" : "#166534" }}>
+              {reqMessage}
+            </p>
+          )}
+          <button
+            type="submit"
+            className="btn-primary-custom"
+            disabled={submitting}
+          >
+            {submitting ? "Sending…" : "Send request"}
+          </button>
+        </form>
+      </div>
+
+      {/* My requests */}
+      {requests.length > 0 && (
+        <div className="mb-4">
+          <h5 className="mb-3" style={{ color: darkMode ? "#D4A24C" : "#0F4C6C" }}>
+            My requests
+          </h5>
+          <div className="table-responsive">
+            <table
+              className={`table table-sm ${darkMode ? "table-dark" : ""}`}
+              style={{ fontSize: "14px" }}
+            >
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Document</th>
+                  <th>Status</th>
+                  <th>Your file</th>
+                  <th>Note from school</th>
+                </tr>
+              </thead>
+              <tbody>
+                {requests.map((r) => {
+                  const linkedCert = certificates.find(
+                    (c) =>
+                      (r.fulfilledCertificateDocId &&
+                        c.id === r.fulfilledCertificateDocId) ||
+                      c.relatedRequestId === r.id,
+                  );
+                  const canOpen =
+                    (r.status || "pending") === "fulfilled" && linkedCert?.downloadURL;
+                  return (
+                    <tr key={r.id}>
+                      <td className="text-nowrap">
+                        {r.createdAt
+                          ? new Date(r.createdAt.seconds * 1000).toLocaleString(
+                              "en-IN",
+                            )
+                          : "—"}
+                      </td>
+                      <td>{r.documentTitle}</td>
+                      <td>{statusBadge(r.status)}</td>
+                      <td>
+                        {canOpen ? (
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-primary py-0"
+                            onClick={() => handleOpen(linkedCert.downloadURL)}
+                          >
+                            Open
+                          </button>
+                        ) : (
+                          <small style={{ color: darkMode ? "#94a3b8" : "#64748b" }}>
+                            —
+                          </small>
+                        )}
+                      </td>
+                      <td>
+                        <small>{r.adminNote || "—"}</small>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      <h5 className="mb-3" style={{ color: darkMode ? "#D4A24C" : "#0F4C6C" }}>
+        Documents from school
+      </h5>
+      <p className="small mb-4" style={{ color: darkMode ? "#94a3b8" : "#4B5563" }}>
+        Files uploaded by the office appear here. Open or download (PDF, Word,
+        images, etc.).
+      </p>
 
       {certificates.length === 0 && (
         <p style={{ color: darkMode ? "#D4A24C" : "#0F4C6C" }}>
-          No certificates available.
+          No documents uploaded yet.
         </p>
       )}
 
@@ -274,7 +314,6 @@ function UserCertificate({ darkMode }) {
                 border: "1px solid #E5E7EB",
               }}
             >
-              {/* Top Icon Section */}
               <div
                 className="certificate-top"
                 style={{
@@ -292,9 +331,18 @@ function UserCertificate({ darkMode }) {
                 📄
               </div>
 
-              {/* Details */}
               <div className="p-3 d-flex flex-column">
-                <h6 className="fw-bold text-truncate">{item.fileName}</h6>
+                <h6 className="fw-bold text-truncate" title={item.fileName}>
+                  {item.fileName}
+                </h6>
+
+                <small
+                  className="mb-1 text-truncate"
+                  style={{ color: darkMode ? "#94a3b8" : "#64748b" }}
+                  title={item.mimeType || ""}
+                >
+                  {item.mimeType || "File"}
+                </small>
 
                 <small
                   className="mb-3"
@@ -311,15 +359,23 @@ function UserCertificate({ darkMode }) {
 
                 <div className="mt-auto d-flex gap-2">
                   <button
+                    type="button"
                     className="btn-primary-custom btn-sm w-50"
-                    onClick={() => handleView(item.file)}
+                    onClick={() => handleOpen(item.downloadURL)}
                   >
-                    View
+                    Open
                   </button>
 
                   <button
+                    type="button"
                     className="btn-outline-custom btn-sm w-50"
-                    onClick={() => handleDownload(item.file, item.fileName)}
+                    onClick={() =>
+                      handleDownload(
+                        item.downloadURL,
+                        item.fileName,
+                        item.mimeType,
+                      )
+                    }
                   >
                     Download
                   </button>
@@ -331,40 +387,30 @@ function UserCertificate({ darkMode }) {
       </div>
 
       <style>{`
-
-/* TITLE */
 .section-title {
   color: #0F4C6C;
   font-weight: 700;
 }
-
-/* SPINNER */
 .text-theme {
   color: #0F4C6C;
 }
-
-/* CARD HOVER */
 .certificate-card:hover {
   transform: translateY(-6px);
   box-shadow: 0 15px 40px rgba(15,76,108,0.25);
 }
-
-/* PRIMARY BUTTON */
 .btn-primary-custom {
   background: linear-gradient(135deg,#0F4C6C,#1B5E84);
   color: white;
   border: none;
   border-radius: 30px;
+  padding: 8px 20px;
   transition: 0.3s ease;
 }
-
 .btn-primary-custom:hover {
   background: #D4A24C;
   color: #0F4C6C;
   transform: translateY(-2px);
 }
-
-/* OUTLINE BUTTON */
 .btn-outline-custom {
   border: 1px solid #0F4C6C;
   color: #0F4C6C;
@@ -372,28 +418,22 @@ function UserCertificate({ darkMode }) {
   border-radius: 30px;
   transition: 0.3s ease;
 }
-
 .btn-outline-custom:hover {
   background: #D4A24C;
   color: #0F4C6C;
   border-color: #D4A24C;
 }
-
-/* DARK MODE */
 body.dark-mode .section-title {
   color: #D4A24C;
 }
-
 body.dark-mode .btn-outline-custom {
   border: 1px solid #D4A24C;
   color: #D4A24C;
 }
-
 body.dark-mode .btn-outline-custom:hover {
   background: #D4A24C;
   color: #0F4C6C;
 }
-
       `}</style>
     </div>
   );

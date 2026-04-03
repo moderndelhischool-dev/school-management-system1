@@ -376,17 +376,34 @@
 
 // export default Navbar;
 import { Link, useNavigate, useLocation } from "react-router-dom";
-<<<<<<< HEAD
 import { useEffect, useState } from "react";
 import { HiOutlineMoon, HiOutlineSun } from "react-icons/hi";
-=======
-import { useState } from "react";
->>>>>>> e1345f7a0d5a95c064ab346d6f1fbf309139beb8
 
 function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark") {
+      document.body.classList.add("dark-mode");
+      setDarkMode(true);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    if (newMode) {
+      document.body.classList.add("dark-mode");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.body.classList.remove("dark-mode");
+      localStorage.setItem("theme", "light");
+    }
+  };
 
   const scrollToSection = (id) => {
     if (location.pathname !== "/") {
@@ -472,7 +489,6 @@ function Navbar() {
                   Register
                 </Link>
               </li>
-<<<<<<< HEAD
 
               <li className="nav-item">
                 <button
@@ -486,8 +502,6 @@ function Navbar() {
                   </span>
                 </button>
               </li>
-=======
->>>>>>> e1345f7a0d5a95c064ab346d6f1fbf309139beb8
             </ul>
           </div>
         </div>
@@ -595,6 +609,29 @@ function Navbar() {
         }
         .nav-login-btn:hover { background: #D4A24C; color: #0F4C6C; }
         .nav-signup-btn { background: #D4A24C; color: #0F4C6C; border-radius: 50px; border: none; padding: 6px 18px; }
+
+        .theme-circle {
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          border: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 16px;
+          transition: all 0.35s ease;
+        }
+        .theme-circle.light {
+          background: white;
+          color: #0F4C6C;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+        .theme-circle.dark {
+          background: #111;
+          color: #FFD700;
+          box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+        }
 
         .brand-mobile { display: none; }
         @media(max-width: 576px) {

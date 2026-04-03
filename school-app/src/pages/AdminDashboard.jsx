@@ -239,13 +239,9 @@ const PAGE_TO_SECTION = {
 };
 
 function AdminDashboard() {
-<<<<<<< HEAD
   const { section } = useParams();
   const navigate = useNavigate();
 
-=======
-  // Page persistence: Refresh karne par wahi page rahega
->>>>>>> e1345f7a0d5a95c064ab346d6f1fbf309139beb8
   const [page, setPage] = useState(() => {
     const fromUrl = section ? SECTION_TO_PAGE[section] : null;
     if (fromUrl) return fromUrl;
@@ -257,10 +253,16 @@ function AdminDashboard() {
   });
 
   const [showSidebar, setShowSidebar] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    try {
+      return localStorage.getItem("admin.darkMode") === "true";
+    } catch {
+      return false;
+    }
+  });
 
   // Sync current page with LocalStorage
   useEffect(() => {
-<<<<<<< HEAD
     if (!section) return;
     const p = SECTION_TO_PAGE[section];
     if (!p) {
@@ -294,11 +296,6 @@ function AdminDashboard() {
     navigate(`/admin/${seg}`, { replace: true });
   };
 
-=======
-    localStorage.setItem("admin.page", page);
-  }, [page]);
-
->>>>>>> e1345f7a0d5a95c064ab346d6f1fbf309139beb8
   const logout = async () => {
     await signOut(auth);
     window.location.href = "/";
@@ -329,13 +326,12 @@ function AdminDashboard() {
 
   return (
     <div className="admin-container" style={{ background: bgMain }}>
-      <div className="row g-0 m-0">
-        {/* 1. Desktop Sidebar */}
-        <div className="col-md-3 col-lg-2 p-0 d-none d-md-block">
-          <Sidebar setPage={setPage} activePage={page} />
+        {/* Desktop: Sidebar is position:fixed — main uses .admin-main-area to offset */}
+        <div className="d-none d-md-block">
+          <Sidebar setPage={setPagePersist} activePage={page} />
         </div>
 
-        {/* 2. Mobile Sidebar */}
+        {/* Mobile Sidebar */}
         <div
           className={`mobile-sidebar ${showSidebar ? "open" : ""}`}
           style={{ background: "linear-gradient(180deg, #0F4C6C, #1B5E84)" }}
@@ -351,7 +347,7 @@ function AdminDashboard() {
             </div>
             <Sidebar
               setPage={(p) => {
-                setPage(p);
+                setPagePersist(p);
                 setShowSidebar(false);
               }}
               activePage={page}
@@ -367,8 +363,8 @@ function AdminDashboard() {
           />
         )}
 
-        {/* 3. Main Content Area */}
-        <div className="col-12 col-md-9 col-lg-10 p-3 p-md-4 min-w-0">
+        {/* Main Content — offset on md+ so fixed sidebar does not cover it */}
+        <div className="admin-main-area p-3 p-md-4 min-w-0">
           {/* Top Header */}
           <div
             className="d-flex justify-content-between align-items-center mb-4"
@@ -381,17 +377,12 @@ function AdminDashboard() {
                 onClick={() => setShowSidebar(true)}
                 aria-label="Open menu"
               >
-<<<<<<< HEAD
                 <HiOutlineMenu size={22} />
-=======
-                ☰
->>>>>>> e1345f7a0d5a95c064ab346d6f1fbf309139beb8
               </button>
               <h4 className="mb-0 fw-semibold">Administrator</h4>
             </div>
             <div className="d-flex gap-2">
               <button
-<<<<<<< HEAD
                 className="btn btn-outline-light btn-sm"
                 style={{ borderRadius: "12px" }}
                 onClick={() => setDarkMode(!darkMode)}
@@ -399,8 +390,6 @@ function AdminDashboard() {
                 {darkMode ? "Light mode" : "Dark mode"}
               </button>
               <button
-=======
->>>>>>> e1345f7a0d5a95c064ab346d6f1fbf309139beb8
                 className="btn btn-danger btn-sm"
                 style={{ borderRadius: "12px" }}
                 onClick={logout}
@@ -416,34 +405,42 @@ function AdminDashboard() {
               <>
                 <div className="row g-4">
                   <div className="col-lg-5">
-                    <ClassBlocks darkMode={false} />
+                    <ClassBlocks darkMode={darkMode} />
                   </div>
                   <div className="col-lg-7">
-                    <AdminCalendar darkMode={false} />
+                    <AdminCalendar darkMode={darkMode} />
                   </div>
                 </div>
                 <div className="mt-4">
-                  <DashboardHome darkMode={false} />
+                  <DashboardHome darkMode={darkMode} />
                 </div>
               </>
             )}
 
-            {page === "add" && <AddStudent darkMode={false} />}
-            {page === "view" && <StudentList darkMode={false} />}
-            {page === "uniform" && <AdminUniform darkMode={false} />}
-            {page === "certificate" && <AdminCertificate darkMode={false} />}
-            {page === "events" && <EventManager darkMode={false} />}
-            {page === "fee-structure" && <AdminFeeStructure darkMode={false} />}
-            {page === "fees-history" && <FeesHistory darkMode={false} />}
+            {page === "add" && <AddStudent darkMode={darkMode} />}
+            {page === "view" && <StudentList darkMode={darkMode} />}
+            {page === "uniform" && <AdminUniform darkMode={darkMode} />}
+            {page === "certificate" && <AdminCertificate darkMode={darkMode} />}
+            {page === "events" && <EventManager darkMode={darkMode} />}
+            {page === "fee-structure" && <AdminFeeStructure darkMode={darkMode} />}
+            {page === "fees-history" && <FeesHistory darkMode={darkMode} />}
           </div>
         </div>
-      </div>
 
       <style>{`
         .admin-container { 
           min-height: 100vh; 
           transition: 0.3s ease; 
           overflow-x: hidden; 
+        }
+        /* Fixed sidebar is 260px — push main content so it does not sit underneath */
+        @media (min-width: 768px) {
+          .admin-main-area {
+            margin-left: 260px;
+            width: calc(100% - 260px);
+            max-width: calc(100% - 260px);
+            box-sizing: border-box;
+          }
         }
         .mobile-sidebar { 
           position: fixed; top: 0; left: 0; height: 100%; width: 280px; 
