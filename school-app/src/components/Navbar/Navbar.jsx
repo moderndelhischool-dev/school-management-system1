@@ -551,6 +551,7 @@ function Navbar() {
 
         .premium-brand:hover .brand-underline { width: 100%; }
 
+        
         /* ===== DESKTOP ===== */
         @media (min-width: 992px) {
           .nav-flex { display: flex; align-items: center; }
