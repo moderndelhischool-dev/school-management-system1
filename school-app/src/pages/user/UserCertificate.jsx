@@ -247,8 +247,10 @@ function UserCertificate({ student, darkMode }) {
                         c.id === r.fulfilledCertificateDocId) ||
                       c.relatedRequestId === r.id,
                   );
+                  const certUrl =
+                    linkedCert?.downloadURL || linkedCert?.file || "";
                   const canOpen =
-                    (r.status || "pending") === "fulfilled" && linkedCert?.downloadURL;
+                    (r.status || "pending") === "fulfilled" && certUrl;
                   return (
                     <tr key={r.id}>
                       <td className="text-nowrap">
@@ -265,7 +267,7 @@ function UserCertificate({ student, darkMode }) {
                           <button
                             type="button"
                             className="btn btn-sm btn-outline-primary py-0"
-                            onClick={() => handleOpen(linkedCert.downloadURL)}
+                            onClick={() => handleOpen(certUrl)}
                           >
                             Open
                           </button>
@@ -361,7 +363,9 @@ function UserCertificate({ student, darkMode }) {
                   <button
                     type="button"
                     className="btn-primary-custom btn-sm w-50"
-                    onClick={() => handleOpen(item.downloadURL)}
+                    onClick={() =>
+                      handleOpen(item.downloadURL || item.file || "")
+                    }
                   >
                     Open
                   </button>
@@ -371,7 +375,7 @@ function UserCertificate({ student, darkMode }) {
                     className="btn-outline-custom btn-sm w-50"
                     onClick={() =>
                       handleDownload(
-                        item.downloadURL,
+                        item.downloadURL || item.file || "",
                         item.fileName,
                         item.mimeType,
                       )

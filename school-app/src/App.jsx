@@ -82,7 +82,7 @@ function Layout() {
             <Route path="/register" element={<Register />} />
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/admin/:section" element={<AdminDashboard />} />
-            <Route path="/user" element={<UserDashboard />} />
+            <Route path="/user/*" element={<UserDashboard />} />
             <Route path="*" element={<Landing />} />
           </Routes>
         </Suspense>

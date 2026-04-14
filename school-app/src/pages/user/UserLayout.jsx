@@ -206,12 +206,58 @@
 // }
 
 // export default UserLayout;
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { HiOutlineMenu, HiOutlineMoon, HiOutlineSun } from "react-icons/hi";
 import UserSidebar from "../../components/UserSidebar";
 
+const VALID_USER_PAGES = new Set([
+  "home",
+  "profile",
+  "fees",
+  "history",
+  "uniform",
+  "certificate",
+  "contact",
+]);
+
+function pageFromPathname(pathname) {
+  const seg = pathname
+    .replace(/^\/user\/?/, "")
+    .split("/")
+    .filter(Boolean)[0];
+  if (!seg) return "home";
+  return VALID_USER_PAGES.has(seg) ? seg : "home";
+}
+
 function UserLayout({ children, onChangePassword }) {
-  const [activePage, setActivePage] = useState("home");
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const activePage = useMemo(
+    () => pageFromPathname(location.pathname),
+    [location.pathname],
+  );
+
+  const goToPage = useCallback(
+    (page) => {
+      const p = VALID_USER_PAGES.has(page) ? page : "home";
+      if (p === "home") navigate("/user");
+      else navigate(`/user/${p}`);
+    },
+    [navigate],
+  );
+
+  useEffect(() => {
+    const seg = location.pathname
+      .replace(/^\/user\/?/, "")
+      .split("/")
+      .filter(Boolean)[0];
+    if (seg && !VALID_USER_PAGES.has(seg)) {
+      navigate("/user", { replace: true });
+    }
+  }, [location.pathname, navigate]);
+
   const [showSidebar, setShowSidebar] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
@@ -245,7 +291,7 @@ function UserLayout({ children, onChangePassword }) {
         <div className="desktop-sidebar">
           <UserSidebar
             activePage={activePage}
-            setActivePage={setActivePage}
+            setActivePage={goToPage}
             onChangePassword={onChangePassword}
             darkMode={darkMode}
             toggleTheme={toggleTheme}
@@ -256,7 +302,10 @@ function UserLayout({ children, onChangePassword }) {
         <div className={`mobile-sidebar ${showSidebar ? "open" : ""}`}>
           <UserSidebar
             activePage={activePage}
-            setActivePage={setActivePage}
+            setActivePage={(page) => {
+              goToPage(page);
+              setShowSidebar(false);
+            }}
             onChangePassword={onChangePassword}
             darkMode={darkMode}
             toggleTheme={toggleTheme}
