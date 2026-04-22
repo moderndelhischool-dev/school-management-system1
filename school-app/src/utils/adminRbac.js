@@ -1,10 +1,9 @@
 export const ADMIN_ROLES = /** @type {const} */ ({
   ADMIN: "admin",
-  ACCOUNTANT: "accountant",
-  CLERK: "clerk",
+  STAFF: "staff",
 });
 
-/** @typedef {"admin"|"accountant"|"clerk"} AdminRole */
+/** @typedef {"admin"|"staff"} AdminRole */
 
 /**
  * @typedef {{
@@ -28,8 +27,7 @@ export const DEFAULT_ADMIN_ROLE_BY_UID = {};
 export function normalizeAdminRole(role) {
   const r = String(role || "").trim().toLowerCase();
   if (r === ADMIN_ROLES.ADMIN) return ADMIN_ROLES.ADMIN;
-  if (r === ADMIN_ROLES.ACCOUNTANT) return ADMIN_ROLES.ACCOUNTANT;
-  if (r === ADMIN_ROLES.CLERK) return ADMIN_ROLES.CLERK;
+  if (r === ADMIN_ROLES.STAFF) return ADMIN_ROLES.STAFF;
   return ADMIN_ROLES.ADMIN;
 }
 
@@ -44,30 +42,14 @@ export function normalizeAdminAccess(accessOrRole) {
 
 function roleDefaults(role) {
   const r = normalizeAdminRole(role);
-  if (r === ADMIN_ROLES.ACCOUNTANT) {
+  if (r === ADMIN_ROLES.STAFF) {
+    // Staff is explicit-access: default deny for everything unless granted.
     return /** @type {AdminPermissions} */ ({
-      pages: { dashboard: true, "fees-history": true },
+      pages: {},
       students: { view: false, add: false, edit: false, delete: false },
-      fees: { history: true, structure: false },
+      fees: { history: false, structure: false },
       requests: { uniform: false, certificate: false },
       events: { manage: false },
-      staff: { manage: false },
-    });
-  }
-  if (r === ADMIN_ROLES.CLERK) {
-    return /** @type {AdminPermissions} */ ({
-      pages: {
-        dashboard: true,
-        events: true,
-        add: true,
-        view: true,
-        uniform: true,
-        certificate: true,
-      },
-      students: { view: true, add: true, edit: true, delete: false },
-      fees: { history: false, structure: false },
-      requests: { uniform: true, certificate: true },
-      events: { manage: true },
       staff: { manage: false },
     });
   }
@@ -85,6 +67,8 @@ function roleDefaults(role) {
 export function resolvePermission(accessOrRole, key, defaultValue = true) {
   const access = normalizeAdminAccess(accessOrRole);
   const defaults = roleDefaults(access.role);
+  const baseDefault = access.role === ADMIN_ROLES.STAFF && defaultValue === true ? false : defaultValue;
+  if (access.role === ADMIN_ROLES.ADMIN) return true;
 
   // explicit pages override
   if (key?.startsWith("page:")) {
@@ -93,7 +77,7 @@ export function resolvePermission(accessOrRole, key, defaultValue = true) {
     if (explicit === true || explicit === false) return explicit;
     const def = defaults.pages?.[pageId];
     if (def === true || def === false) return def;
-    return defaultValue;
+    return baseDefault;
   }
 
   // action keys
@@ -104,7 +88,7 @@ export function resolvePermission(accessOrRole, key, defaultValue = true) {
   if (explicit === true || explicit === false) return explicit;
   const def = lookup(defaults || {}, key);
   if (def === true || def === false) return def;
-  return defaultValue;
+  return baseDefault;
 }
 
 export function canAdminAction(accessOrRole, domain, action, defaultValue = true) {
@@ -153,8 +137,7 @@ export function canAccessAdminPage(adminRole, pageId) {
 export function roleLabel(adminRole) {
   const r = normalizeAdminAccess(adminRole).role;
   if (r === ADMIN_ROLES.ADMIN) return "Administrator";
-  if (r === ADMIN_ROLES.ACCOUNTANT) return "Accountant";
-  if (r === ADMIN_ROLES.CLERK) return "Clerk";
+  if (r === ADMIN_ROLES.STAFF) return "Staff";
   return "Administrator";
 }
 

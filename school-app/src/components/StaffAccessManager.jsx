@@ -16,16 +16,15 @@ import { getApp, getApps, initializeApp } from "firebase/app";
 
 const ROLE_OPTIONS = [
   { id: ADMIN_ROLES.ADMIN, label: "Administrator" },
-  { id: ADMIN_ROLES.ACCOUNTANT, label: "Accountant" },
-  { id: ADMIN_ROLES.CLERK, label: "Clerk" },
+  { id: ADMIN_ROLES.STAFF, label: "Staff" },
 ];
 
 function emptyPerms() {
   return {
-    students: { view: true, add: true, edit: true, delete: false },
-    fees: { history: true, structure: false },
-    events: { manage: true },
-    requests: { uniform: true, certificate: true },
+    students: { view: false, add: false, edit: false, delete: false },
+    fees: { history: false, structure: false },
+    events: { manage: false },
+    requests: { uniform: false, certificate: false },
     staff: { manage: false },
   };
 }
@@ -35,7 +34,7 @@ function StaffAccessManager({ darkMode }) {
   const [adminUsers, setAdminUsers] = useState([]);
   const [searchEmail, setSearchEmail] = useState("");
   const [foundUser, setFoundUser] = useState(null);
-  const [editRole, setEditRole] = useState(ADMIN_ROLES.CLERK);
+  const [editRole, setEditRole] = useState(ADMIN_ROLES.STAFF);
   const [perms, setPerms] = useState(emptyPerms());
   const [msg, setMsg] = useState("");
   const [msgTone, setMsgTone] = useState("success");
@@ -106,7 +105,7 @@ function StaffAccessManager({ darkMode }) {
       }
       const d = snap.docs[0];
       const data = d.data() || {};
-      const role = normalizeAdminRole(data.adminRole || data.adminAccess?.role || data.staffRole || "clerk");
+      const role = normalizeAdminRole(data.adminRole || data.adminAccess?.role || data.staffRole || "staff");
       const p = data.adminAccess?.perms && typeof data.adminAccess.perms === "object"
         ? data.adminAccess.perms
         : emptyPerms();
@@ -639,7 +638,7 @@ function StaffAccessManager({ darkMode }) {
                       onClick={() => {
                         setSearchEmail(u.email || "");
                         setFoundUser({ uid: u.id, ...u });
-                        setEditRole(normalizeAdminRole(u.adminRole || u.adminAccess?.role || "clerk"));
+                        setEditRole(normalizeAdminRole(u.adminRole || u.adminAccess?.role || "staff"));
                         const p = u.adminAccess?.perms || emptyPerms();
                         setPerms({
                           ...emptyPerms(),

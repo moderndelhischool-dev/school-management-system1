@@ -433,7 +433,7 @@ function AdminDashboard() {
               >
                 <HiOutlineMenu size={22} />
               </button>
-              <h4 className="mb-0 fw-semibold">Administrator</h4>
+              <h4 className="mb-0 fw-semibold">{roleLabel(adminRole)}</h4>
             </div>
             <div className="d-flex gap-2">
               <span
