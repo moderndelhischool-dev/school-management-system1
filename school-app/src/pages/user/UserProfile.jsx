@@ -72,6 +72,22 @@ function UserProfile({ student, darkMode }) {
 
         <div className="col-md-6">
           <div className="profile-item">
+            <small className="profile-muted">Registration number</small>
+            <h6 className="font-monospace mb-0">
+              {profileData.registrationNo || "—"}
+            </h6>
+          </div>
+        </div>
+
+        <div className="col-md-6">
+          <div className="profile-item">
+            <small className="profile-muted">Roll number</small>
+            <h6 className="mb-0">{profileData.rollNo || "—"}</h6>
+          </div>
+        </div>
+
+        <div className="col-md-6">
+          <div className="profile-item">
             <small className="profile-muted">Fees Status</small>
             <h6
               className={

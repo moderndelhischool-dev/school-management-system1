@@ -93,6 +93,8 @@ function timestampFromDateInput(isoDateString) {
 }
 
 const CLASS_OPTIONS = [
+  "nursery",
+  "lkg",
   "ukg",
   "1",
   "2",
@@ -119,6 +121,7 @@ function AdminFeeStructure({ darkMode }) {
   const [examFee, setExamFee] = useState("");
   const [examFeeMonths, setExamFeeMonths] = useState([]);
   const [admissionFee, setAdmissionFee] = useState("");
+  const [sundryCharges, setSundryCharges] = useState("");
   const [newSessionStartDate, setNewSessionStartDate] = useState("");
   const [newSessionEndDate, setNewSessionEndDate] = useState("");
   const [sessionStartInput, setSessionStartInput] = useState("");
@@ -196,6 +199,7 @@ function AdminFeeStructure({ darkMode }) {
         setExamFee("");
         setExamFeeMonths([]);
         setAdmissionFee("");
+        setSundryCharges("");
         return;
       }
 
@@ -225,6 +229,7 @@ function AdminFeeStructure({ darkMode }) {
         Array.isArray(data.examFeeMonths) ? data.examFeeMonths : [],
       );
       setAdmissionFee(String(data.admissionFee ?? ""));
+      setSundryCharges(String(data.sundryCharges ?? ""));
     } finally {
       setLoading(false);
     }
@@ -376,6 +381,7 @@ function AdminFeeStructure({ darkMode }) {
         examFee: Number(examFee) || 0,
         examFeeMonths,
         admissionFee: Number(admissionFee) || 0,
+        sundryCharges: Number(sundryCharges) || 0,
         updatedAt: Timestamp.now(),
       };
 
@@ -493,6 +499,7 @@ function AdminFeeStructure({ darkMode }) {
     const tuition = Number(monthlyTuitionFee) || 0;
     const exam = Number(examFee) || 0;
     const admission = Number(admissionFee) || 0;
+    const sundry = Number(sundryCharges) || 0;
     const now = new Date();
     const monthName = now.toLocaleString("default", { month: "long" });
     const monthLabel = `${monthName} ${now.getFullYear()}`;
@@ -531,6 +538,8 @@ function AdminFeeStructure({ darkMode }) {
       const examMonthsMapApply = {
         [ckApply]: normalizeExamMonthNames(examFeeMonths),
       };
+      const admissionMapApply = { [ckApply]: admission };
+      const sundryMapApply = { [ckApply]: sundry };
 
       for (const studentDoc of students) {
         const student = studentDoc.data();
@@ -548,11 +557,15 @@ function AdminFeeStructure({ darkMode }) {
           merged,
           monthId,
           busRatePerKmApply,
+          admissionMapApply,
+          sundryMapApply,
         );
         const total = line.total;
         const effTuition = line.tuition;
         const busApplied = line.bus;
         const examLine = line.exam;
+        const admissionLine = line.admission || 0;
+        const sundryLine = line.sundry || 0;
         const paidExisting = Number(student.paidFees || 0);
         const paid = Math.min(Math.max(paidExisting, 0), total);
         const pending = Math.max(total - paid, 0);
@@ -574,7 +587,8 @@ function AdminFeeStructure({ darkMode }) {
             monthlyTuitionFeeApplied: effTuition,
             monthlyBusFeeApplied: busApplied,
             examFeeApplied: examLine,
-            admissionFeeApplied: admission,
+            admissionFeeApplied: admissionLine,
+            sundryChargesApplied: sundryLine,
             totalFees: total,
             paidFees: paid,
             pendingFees: pending,
@@ -604,7 +618,8 @@ function AdminFeeStructure({ darkMode }) {
             tuitionFee: effTuition,
             busFee: busApplied,
             examFee: examLine,
-            admissionFee: 0,
+            admissionFee: admissionLine,
+            sundryCharges: sundryLine,
             usesBus,
             date: Timestamp.now(),
             updatedAt: Timestamp.now(),
@@ -636,14 +651,7 @@ function AdminFeeStructure({ darkMode }) {
       }}
     >
       <h4 className="fw-bold mb-2 page-title">Session and class fee structure</h4>
-      <p className="mb-4 sub-text">
-        Set monthly tuition and <strong>bus fee per km</strong> (one-way distance ×
-        rate from Student list). There is no class-wide flat bus fee here. After
-        you pick an <strong>Academic session</strong>,
-        session details (status, dates) show in the panel directly under the
-        session row.
-      </p>
-
+     
       {msg && (
         <div className={`custom-msg ${msgType === "error" ? "error" : "ok"}`}>
           {msg}
@@ -714,10 +722,7 @@ function AdminFeeStructure({ darkMode }) {
               End session
             </button>
           </div>
-          <small className="session-help">
-            When a session is over, use &quot;End session&quot; to archive it.
-            Fee edits and bulk apply are blocked for ended sessions.
-          </small>
+          
         </div>
       </div>
 
@@ -751,12 +756,7 @@ function AdminFeeStructure({ darkMode }) {
             onChange={(e) => setNewSessionEndDate(e.target.value)}
           />
         </div>
-        <div className="col-md-4 d-flex align-items-end">
-          <small className="preview-text mb-1">
-            If set, these are stored on the new session document as the official
-            calendar range. You can edit them later under Session details.
-          </small>
-        </div>
+        
       </div>
 
       {selectedSession && selectedSessionRow && (
@@ -907,7 +907,7 @@ function AdminFeeStructure({ darkMode }) {
 
           <div className="col-md-4">
             <label className="field-label">
-              Default scholarship (₹ / month off tuition)
+              Default scholarship discount (₹ / month)
             </label>
             <input
               type="number"
@@ -917,14 +917,11 @@ function AdminFeeStructure({ darkMode }) {
               value={defaultScholarshipAmount}
               onChange={(e) => setDefaultScholarshipAmount(e.target.value)}
             />
-            <small className="preview-text">
-              Copied when adding a student with Scholarship = Yes. Reduces
-              tuition only; bus and exam unchanged.
-            </small>
+          
           </div>
 
           <div className="col-md-4">
-            <label className="field-label">Class / grade</label>
+            <label className="field-label">Class / Grade</label>
             <select
               className="form-select custom-input"
               value={selectedClass}
@@ -939,7 +936,7 @@ function AdminFeeStructure({ darkMode }) {
           </div>
 
           <div className="col-md-4">
-            <label className="field-label">Bus fee per km (₹ / km / month)</label>
+            <label className="field-label">Transport rate (₹ / km / month)</label>
             <input
               type="number"
               className="form-control custom-input"
@@ -947,14 +944,11 @@ function AdminFeeStructure({ darkMode }) {
               value={busFeePerKm}
               onChange={(e) => setBusFeePerKm(e.target.value)}
             />
-            <small className="preview-text">
-              Monthly bus ≈ one-way km × this rate (see Student list). If 0, bus
-              fee is 0 unless the student has a manual bus amount there.
-            </small>
+            
           </div>
 
           <div className="col-md-4">
-            <label className="field-label">Examination fee (optional, ₹)</label>
+            <label className="field-label">Exam fee (optional, ₹)</label>
             <input
               type="number"
               className="form-control custom-input"
@@ -962,9 +956,7 @@ function AdminFeeStructure({ darkMode }) {
               value={examFee}
               onChange={(e) => setExamFee(e.target.value)}
             />
-            <small className="preview-text">
-              Included in the monthly total only for the months selected below.
-            </small>
+            
           </div>
 
           <div className="col-12">
@@ -994,7 +986,7 @@ function AdminFeeStructure({ darkMode }) {
           </div>
 
           <div className="col-md-4">
-            <label className="field-label">Admission fee (optional, ₹)</label>
+            <label className="field-label">Admission fee</label>
             <input
               type="number"
               className="form-control custom-input"
@@ -1002,9 +994,18 @@ function AdminFeeStructure({ darkMode }) {
               value={admissionFee}
               onChange={(e) => setAdmissionFee(e.target.value)}
             />
-            <small className="preview-text">
-              One-time charge where applicable; stored for reference.
-            </small>
+            
+          </div>
+          <div className="col-md-4">
+            <label className="field-label">Sundry charges</label>
+            <input
+              type="number"
+              className="form-control custom-input"
+              placeholder="0"
+              value={sundryCharges}
+              onChange={(e) => setSundryCharges(e.target.value)}
+            />
+            
           </div>
         </div>
         </fieldset>

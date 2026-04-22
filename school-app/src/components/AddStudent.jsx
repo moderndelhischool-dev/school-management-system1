@@ -249,9 +249,9 @@
 // }
 
 // export default AddStudent;
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { db } from "../firebase/firebase";
-import { doc, setDoc, Timestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
 import {
   loadActiveSessionClassTuitionBusMap,
   scheduleCycleTotalForStudent,
@@ -259,6 +259,8 @@ import {
   normalizeClassKey,
   currentMonthKey,
 } from "../utils/feeBilling";
+import { allocateRegistrationNumber } from "../utils/registrationNumber";
+import { canAdminAction } from "../utils/adminRbac";
 
 function feeMonthFromForm(selectedMonth, feesDate, months) {
   let y = new Date().getFullYear();
@@ -272,14 +274,19 @@ function feeMonthFromForm(selectedMonth, feesDate, months) {
   return currentMonthKey(new Date(y, new Date().getMonth(), 1));
 }
 
-function AddStudent({ darkMode }) {
+function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
   const [rollNo, setRollNo] = useState("");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [fatherName, setFatherName] = useState("");
+  const [motherName, setMotherName] = useState("");
+  const [primaryContactNumber, setPrimaryContactNumber] = useState("");
+  const [alternateContactNumber, setAlternateContactNumber] = useState("");
+  const [aadharNumber, setAadharNumber] = useState("");
   const [cls, setCls] = useState("");
   const [gender, setGender] = useState(""); // Male, Female, Other
   const [usesBus, setUsesBus] = useState(false);
+  const [overrideTransportFee, setOverrideTransportFee] = useState(false);
   const [monthlyBusFee, setMonthlyBusFee] = useState("");
   const [busDistanceKm, setBusDistanceKm] = useState("");
   const [scholarshipYes, setScholarshipYes] = useState(false);
@@ -289,8 +296,11 @@ function AddStudent({ darkMode }) {
   const [totalFees, setTotalFees] = useState("");
   const [paidFees, setPaidFees] = useState("");
   const [feesDate, setFeesDate] = useState("");
+  const [feePreview, setFeePreview] = useState(null);
   const [successMsg, setSuccessMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  const [displayRegistrationNo, setDisplayRegistrationNo] = useState("");
 
   const months = [
     "January",
@@ -308,6 +318,45 @@ function AddStudent({ darkMode }) {
   ];
 
   useEffect(() => {
+   
+    const now = new Date();
+    const todayIso = now.toISOString().slice(0, 10);
+    setFeesDate((v) => v || todayIso);
+    setSelectedMonth((v) => v || months[now.getMonth()]);
+  }, []);
+
+  const CLASS_OPTIONS = [
+    "nursery",
+    "lkg",
+    "ukg",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+  ];
+
+  const selectedClassKey = useMemo(() => normalizeClassKey(cls), [cls]);
+  const classTuitionPreview = useMemo(() => {
+    if (!feeMaps?.tuitionMap) return 0;
+    if (!selectedClassKey) return 0;
+    return Number(feeMaps.tuitionMap?.[selectedClassKey] ?? 0) || 0;
+  }, [feeMaps?.tuitionMap, selectedClassKey]);
+
+  const classTransportRatePreview = useMemo(() => {
+    if (!feeMaps?.busRatePerKmMap) return 0;
+    if (!selectedClassKey) return 0;
+    return Number(feeMaps.busRatePerKmMap?.[selectedClassKey] ?? 0) || 0;
+  }, [feeMaps?.busRatePerKmMap, selectedClassKey]);
+
+  useEffect(() => {
     loadActiveSessionClassTuitionBusMap(db).then(setFeeMaps);
   }, []);
 
@@ -315,18 +364,33 @@ function AddStudent({ darkMode }) {
     if (!feeMaps?.tuitionMap || !String(cls || "").trim()) return;
     const ck = normalizeClassKey(cls);
     const schFrom = Number(feeMaps.scholarshipMap?.[ck] ?? 0);
+    const busRate = Number(feeMaps.busRatePerKmMap?.[ck] ?? 0);
     const feeMonthKey = feeMonthFromForm(selectedMonth, feesDate, months);
     const stub = {
       class: cls,
       usesBus,
-      busDistanceKm: usesBus ? Number(busDistanceKm || 0) : 0,
-      monthlyBusFee: usesBus ? Number(monthlyBusFee || 0) : 0,
+      busDistanceKm:
+        usesBus && !overrideTransportFee ? Number(busDistanceKm || 0) : 0,
+      monthlyBusFee:
+        usesBus && overrideTransportFee ? Number(monthlyBusFee || 0) : 0,
       scholarshipAmount: scholarshipYes ? schFrom : 0,
       scholarshipPercent: 0,
       scholarshipSessionId:
         scholarshipYes && schFrom > 0 ? feeMaps.activeSessionId || "" : "",
       feeMonth: feeMonthKey,
     };
+    const line = monthlyTotalWithExam(
+      feeMaps.tuitionMap,
+      feeMaps.busMap,
+      feeMaps.examFeeMap,
+      feeMaps.examMonthsMap,
+      stub,
+      feeMonthKey,
+      feeMaps.busRatePerKmMap || {},
+      feeMaps.admissionFeeMap || {},
+      feeMaps.sundryChargesMap || {},
+    );
+    setFeePreview(line);
     const net = scheduleCycleTotalForStudent(
       feeMaps.tuitionMap,
       feeMaps.busMap,
@@ -334,12 +398,15 @@ function AddStudent({ darkMode }) {
       feeMaps.examFeeMap,
       feeMaps.examMonthsMap,
       feeMaps.busRatePerKmMap || {},
+      feeMaps.admissionFeeMap || {},
+      feeMaps.sundryChargesMap || {},
     );
     setTotalFees(String(Math.round(net * 100) / 100));
   }, [
     feeMaps,
     cls,
     usesBus,
+    overrideTransportFee,
     busDistanceKm,
     monthlyBusFee,
     scholarshipYes,
@@ -348,12 +415,25 @@ function AddStudent({ darkMode }) {
   ]);
 
   const saveStudent = async () => {
+    if (!canAdminAction(adminAccess, "students", "add", true)) {
+      alert("Access denied: you do not have permission to add students.");
+      return;
+    }
     // Basic Validation
+    const primaryPhone = String(primaryContactNumber || "").trim();
+    const altPhone = String(alternateContactNumber || "").trim();
+    const aadRaw = String(aadharNumber || "").trim();
+    const aad = aadRaw ? aadRaw.replace(/\s+/g, "").replace(/-/g, "") : "";
+    if (aad && !/^\d{12}$/.test(aad)) {
+      alert("Aadhar number must be 12 digits.");
+      return;
+    }
     if (
       !rollNo ||
       !email ||
       !name ||
       !fatherName ||
+      !primaryPhone ||
       !cls ||
       !gender ||
       !selectedMonth ||
@@ -364,6 +444,7 @@ function AddStudent({ darkMode }) {
       return;
     }
     setLoading(true);
+    setDisplayRegistrationNo("");
 
     try {
       const maps = await loadActiveSessionClassTuitionBusMap(db);
@@ -371,13 +452,16 @@ function AddStudent({ darkMode }) {
       const ck = normalizeClassKey(cls);
       const schFrom = Number(maps.scholarshipMap?.[ck] ?? 0);
       const schAmt = scholarshipYes ? schFrom : 0;
+      const busRate = Number(maps.busRatePerKmMap?.[ck] ?? 0);
       const monthId = feeMonthFromForm(selectedMonth, feesDate, months);
 
       const stub = {
         class: cls,
         usesBus,
-        busDistanceKm: usesBus ? Number(busDistanceKm || 0) : 0,
-        monthlyBusFee: usesBus ? Number(monthlyBusFee || 0) : 0,
+        busDistanceKm:
+          usesBus && !overrideTransportFee ? Number(busDistanceKm || 0) : 0,
+        monthlyBusFee:
+          usesBus && overrideTransportFee ? Number(monthlyBusFee || 0) : 0,
         scholarshipAmount: schAmt,
         scholarshipPercent: 0,
         scholarshipSessionId:
@@ -392,6 +476,8 @@ function AddStudent({ darkMode }) {
         stub,
         monthId,
         maps.busRatePerKmMap || {},
+        maps.admissionFeeMap || {},
+        maps.sundryChargesMap || {},
       );
 
       const total = Math.round(line.total * 100) / 100;
@@ -400,16 +486,39 @@ function AddStudent({ darkMode }) {
       const status =
         pending === 0 ? "Completed" : paid > 0 ? "Partial" : "Pending";
 
+      const studentRef = doc(db, "students", email);
+      const existingSnap = await getDoc(studentRef);
+      const existingReg = String(
+        existingSnap.exists() ? existingSnap.data()?.registrationNo || "" : "",
+      ).trim();
+      let registrationNo = existingReg;
+      if (!registrationNo) {
+        if (!sid) {
+          alert(
+            "Mark an academic session as active (Fee structure → Sessions) before registering new students.",
+          );
+          setLoading(false);
+          return;
+        }
+        registrationNo = await allocateRegistrationNumber(db, { sessionId: sid });
+      }
+
       // 1. Main Student Record
-      await setDoc(doc(db, "students", email), {
+      await setDoc(studentRef, {
         rollNo,
+        registrationNo,
         email,
         name,
         fatherName,
+        motherName: String(motherName || "").trim(),
+        primaryContactNumber: primaryPhone,
+        alternateContactNumber: altPhone,
+        aadharNumber: aad,
         class: cls,
         gender,
         usesBus,
-        monthlyBusFee: usesBus ? Number(monthlyBusFee || 0) : 0,
+        monthlyBusFee:
+          usesBus && overrideTransportFee ? Number(monthlyBusFee || 0) : 0,
         busDistanceKm: usesBus ? Number(busDistanceKm || 0) : 0,
         scholarshipAmount: schAmt,
         scholarshipPercent: 0,
@@ -420,13 +529,17 @@ function AddStudent({ darkMode }) {
         monthlyTuitionFeeApplied: line.tuition,
         monthlyBusFeeApplied: line.bus,
         examFeeApplied: line.exam,
+        admissionFeeApplied: line.admission || 0,
+        sundryChargesApplied: line.sundry || 0,
         selectedMonth,
         totalFees: total,
         paidFees: paid,
         pendingFees: pending,
         feeStatus: status,
         feeDate: Timestamp.fromDate(new Date(feesDate)),
-        createdAt: Timestamp.now(),
+        createdAt: existingSnap.exists()
+          ? existingSnap.data()?.createdAt || Timestamp.now()
+          : Timestamp.now(),
       });
 
       // 2. Fees History Entry
@@ -441,6 +554,8 @@ function AddStudent({ darkMode }) {
           tuitionFee: line.tuition,
           busFee: line.bus,
           examFee: line.exam,
+          admissionFee: line.admission || 0,
+          sundryCharges: line.sundry || 0,
           date: Timestamp.fromDate(new Date(feesDate)),
           updatedAt: Timestamp.now(),
         },
@@ -448,12 +563,17 @@ function AddStudent({ darkMode }) {
       );
 
       setSuccessMsg("Student record saved successfully.");
+      setDisplayRegistrationNo(registrationNo);
 
       // Form Reset
       setRollNo("");
       setEmail("");
       setName("");
       setFatherName("");
+      setMotherName("");
+      setPrimaryContactNumber("");
+      setAlternateContactNumber("");
+      setAadharNumber("");
       setCls("");
       setGender("");
       setUsesBus(false);
@@ -492,6 +612,12 @@ function AddStudent({ darkMode }) {
           style={{ borderRadius: "12px" }}
         >
           {successMsg}
+          {displayRegistrationNo ? (
+            <div className="mt-2 pt-2" style={{ borderTop: "1px solid rgba(25,135,84,0.25)" }}>
+              <strong>Registration number:</strong>{" "}
+              <span className="font-monospace fs-5">{displayRegistrationNo}</span>
+            </div>
+          ) : null}
         </div>
       )}
 
@@ -512,6 +638,18 @@ function AddStudent({ darkMode }) {
               onChange={(e) => setRollNo(e.target.value)}
               placeholder="101"
             />
+            
+          </div>
+          <div className="col-12 col-md-3">
+            <label className="label">Registration number</label>
+            <input
+              className="form-control custom-input font-monospace"
+              readOnly
+              value={displayRegistrationNo}
+              placeholder="Save to assign"
+              title="Assigned on save"
+            />
+
           </div>
           <div className="col-12 col-md-3">
             <label className="label">Student name</label>
@@ -539,17 +677,76 @@ function AddStudent({ darkMode }) {
               onChange={(e) => setFatherName(e.target.value)}
             />
           </div>
-
           <div className="col-12 col-md-3">
-            <label className="label">Grade / class</label>
+            <label className="label">Mother's name</label>
             <input
               className="form-control custom-input"
-              value={cls}
-              onChange={(e) => setCls(e.target.value)}
+              value={motherName}
+              onChange={(e) => setMotherName(e.target.value)}
+              placeholder="Optional"
             />
           </div>
           <div className="col-12 col-md-3">
-            <label className="label">Apply default scholarship</label>
+            <label className="label">Primary contact number</label>
+            <input
+              className="form-control custom-input"
+              value={primaryContactNumber}
+              onChange={(e) => setPrimaryContactNumber(e.target.value)}
+              placeholder="10-digit number"
+              inputMode="numeric"
+            />
+          </div>
+          <div className="col-12 col-md-3">
+            <label className="label">Alternate contact number</label>
+            <input
+              className="form-control custom-input"
+              value={alternateContactNumber}
+              onChange={(e) => setAlternateContactNumber(e.target.value)}
+              placeholder="Optional"
+              inputMode="numeric"
+            />
+          </div>
+          <div className="col-12 col-md-3">
+            <label className="label">Aadhar number</label>
+            <input
+              className="form-control custom-input"
+              value={aadharNumber}
+              onChange={(e) => setAadharNumber(e.target.value)}
+              placeholder="12 digits (optional)"
+              inputMode="numeric"
+              maxLength={14}
+            />
+          </div>
+
+          <div className="col-12 col-md-3">
+            <label className="label">Class / Grade</label>
+            <select
+              className="form-select custom-input"
+              value={cls}
+              onChange={(e) => setCls(e.target.value)}
+            >
+              <option value="">Select class / grade</option>
+              {CLASS_OPTIONS.map((c) => (
+                <option key={c} value={c}>
+                  {c.toUpperCase()}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="col-12 col-md-3">
+            <label className="label">Monthly tuition fee (₹)</label>
+            <input
+              type="number"
+              className="form-control custom-input"
+              readOnly
+              value={classTuitionPreview || ""}
+              placeholder="Select class"
+              title="From Fee Structure (active session)"
+            />
+           
+          </div>
+          <div className="col-12 col-md-3">
+            <label className="label">Scholarship</label>
             <select
               className="form-select custom-input"
               value={scholarshipYes ? "yes" : "no"}
@@ -558,18 +755,10 @@ function AddStudent({ darkMode }) {
               <option value="no">No</option>
               <option value="yes">Yes</option>
             </select>
-            {feeMaps && String(cls || "").trim() ? (
-              <small className="text-muted d-block mt-1">
-                Class default: ₹
-                {Number(
-                  feeMaps.scholarshipMap?.[normalizeClassKey(cls)] ?? 0,
-                )}{" "}
-                per month (tuition only). Configure under Fee structure.
-              </small>
-            ) : null}
+            
           </div>
           <div className="col-12 col-md-3">
-            <label className="label">Scholarship remarks (optional)</label>
+            <label className="label">Scholarship notes (optional)</label>
             <input
               className="form-control custom-input"
               value={scholarshipNote}
@@ -607,7 +796,7 @@ function AddStudent({ darkMode }) {
             </select>
           </div>
           <div className="col-12 col-md-3">
-            <label className="label">Payment date</label>
+            <label className="label">Billing date</label>
             <input
               type="date"
               className="form-control custom-input"
@@ -621,14 +810,23 @@ function AddStudent({ darkMode }) {
             <select
               className="form-select custom-input"
               value={usesBus ? "yes" : "no"}
-              onChange={(e) => setUsesBus(e.target.value === "yes")}
+              onChange={(e) => {
+                const yes = e.target.value === "yes";
+                setUsesBus(yes);
+                if (!yes) {
+                  setBusDistanceKm("");
+                  setMonthlyBusFee("");
+                  setOverrideTransportFee(false);
+                }
+              }}
             >
               <option value="no">No</option>
               <option value="yes">Yes</option>
             </select>
+            
           </div>
           <div className="col-12 col-md-3">
-            <label className="label">One-way distance (km)</label>
+            <label className="label">Bus distance</label>
             <input
               type="number"
               min="0"
@@ -637,22 +835,37 @@ function AddStudent({ darkMode }) {
               value={busDistanceKm}
               onChange={(e) => setBusDistanceKm(e.target.value)}
               placeholder="e.g. 5"
-              disabled={!usesBus}
+              disabled={!usesBus || overrideTransportFee}
             />
+            
           </div>
           <div className="col-12 col-md-3">
-            <label className="label">Manual transport fee (₹/month)</label>
+            <label className="label">Transport fee override</label>
+            <select
+              className="form-select custom-input"
+              value={overrideTransportFee ? "yes" : "no"}
+              onChange={(e) => {
+                const yes = e.target.value === "yes";
+                setOverrideTransportFee(yes);
+                if (!yes) setMonthlyBusFee("");
+              }}
+              disabled={!usesBus}
+            >
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </select>
+          </div>
+          <div className="col-12 col-md-3">
+            <label className="label">Manual transport fee (₹ / month)</label>
             <input
               type="number"
               className="form-control custom-input"
               value={monthlyBusFee}
               onChange={(e) => setMonthlyBusFee(e.target.value)}
               placeholder="0"
-              disabled={!usesBus}
+              disabled={!usesBus || !overrideTransportFee}
             />
-            <small className="text-muted">
-              Use when per-km rate does not apply; otherwise leave blank.
-            </small>
+            
           </div>
 
           <div className="col-12 col-md-3">
@@ -664,10 +877,7 @@ function AddStudent({ darkMode }) {
               value={totalFees}
               title="Calculated from fee schedule (tuition, transport, exams, scholarship)"
             />
-            <small className="text-muted">
-              Sum of tuition, transport, and examination components, after any
-              scholarship.
-            </small>
+            
           </div>
           <div className="col-12 col-md-3">
             <label className="label text-success">Amount paid (₹)</label>

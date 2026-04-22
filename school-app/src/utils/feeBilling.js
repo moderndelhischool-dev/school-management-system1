@@ -87,6 +87,8 @@ export function monthlyTotalWithExam(
   student,
   feeMonthKey,
   busRatePerKmMap = {},
+  admissionFeeMap = {},
+  sundryChargesMap = {},
 ) {
   const base = monthlyBaseForStudent(
     tuitionMap,
@@ -100,7 +102,20 @@ export function monthlyTotalWithExam(
     student,
     feeMonthKey,
   );
-  return { ...base, exam, total: base.total + exam };
+  const ck = normalizeClassKey(student.class);
+  const admission = feeMonthKey?.endsWith("-04")
+    ? Number(admissionFeeMap?.[ck] || 0)
+    : 0;
+  const sundry = feeMonthKey?.endsWith("-04")
+    ? Number(sundryChargesMap?.[ck] || 0)
+    : 0;
+  return {
+    ...base,
+    exam,
+    admission,
+    sundry,
+    total: base.total + exam + admission + sundry,
+  };
 }
 
 export async function loadActiveSessionClassTuitionBusMap(db) {
@@ -118,6 +133,8 @@ export async function loadActiveSessionClassTuitionBusMap(db) {
   const examFeeMap = {};
   const examMonthsMap = {};
   const scholarshipMap = {};
+  const admissionFeeMap = {};
+  const sundryChargesMap = {};
 
   feeSnap.docs.forEach((d) => {
     const data = d.data() || {};
@@ -140,6 +157,8 @@ export async function loadActiveSessionClassTuitionBusMap(db) {
     examMonthsMap[classKey] = normalizeExamMonthNames(data.examFeeMonths);
     scholarshipMap[classKey] =
       Number(data.defaultScholarshipAmount ?? data.scholarshipAmount ?? 0) || 0;
+    admissionFeeMap[classKey] = Number(data.admissionFee) || 0;
+    sundryChargesMap[classKey] = Number(data.sundryCharges) || 0;
   });
 
   return {
@@ -150,6 +169,8 @@ export async function loadActiveSessionClassTuitionBusMap(db) {
     examFeeMap,
     examMonthsMap,
     scholarshipMap,
+    admissionFeeMap,
+    sundryChargesMap,
   };
 }
 
@@ -228,6 +249,8 @@ export function scheduleCycleTotalForStudent(
   examFeeMap = {},
   examMonthsMap = {},
   busRatePerKmMap = {},
+  admissionFeeMap = {},
+  sundryChargesMap = {},
 ) {
   const feeMonthKey = student.feeMonth || currentMonthKey();
   const { total } = monthlyTotalWithExam(
@@ -238,6 +261,8 @@ export function scheduleCycleTotalForStudent(
     student,
     feeMonthKey,
     busRatePerKmMap,
+    admissionFeeMap,
+    sundryChargesMap,
   );
   const carry = Number(student.carryForwardTotal || 0);
   return total + carry;
@@ -251,6 +276,8 @@ export function resolveDisplayTotalFees(
   examFeeMap = {},
   examMonthsMap = {},
   busRatePerKmMap = {},
+  admissionFeeMap = {},
+  sundryChargesMap = {},
 ) {
   const schedule = scheduleCycleTotalForStudent(
     tuitionMap,
@@ -259,6 +286,8 @@ export function resolveDisplayTotalFees(
     examFeeMap,
     examMonthsMap,
     busRatePerKmMap,
+    admissionFeeMap,
+    sundryChargesMap,
   );
   const hasStored =
     student.totalFees !== undefined &&
@@ -281,6 +310,8 @@ export function resolveDisplayPendingFees(
   examFeeMap = {},
   examMonthsMap = {},
   busRatePerKmMap = {},
+  admissionFeeMap = {},
+  sundryChargesMap = {},
 ) {
   const total = resolveDisplayTotalFees(
     student,
@@ -289,6 +320,8 @@ export function resolveDisplayPendingFees(
     examFeeMap,
     examMonthsMap,
     busRatePerKmMap,
+    admissionFeeMap,
+    sundryChargesMap,
   );
   const paid = Number(student.paidFees || 0);
   return Math.max(total - paid, 0);
@@ -342,12 +375,14 @@ export async function rollStudentToNextMonthClean(db, studentId, student) {
     busRatePerKmMap,
     examFeeMap,
     examMonthsMap,
+    admissionFeeMap,
+    sundryChargesMap,
     activeSessionId,
   } = await loadActiveSessionClassTuitionBusMap(db);
   const prevFeeMonth = student.feeMonth || currentMonthKey();
   const nextId = nextMonthKey(prevFeeMonth);
   const nextName = monthNameFromKey(nextId);
-  const { tuition, bus, exam, total } = monthlyTotalWithExam(
+  const { tuition, bus, exam, admission, sundry, total } = monthlyTotalWithExam(
     tuitionMap,
     busMap,
     examFeeMap,
@@ -355,6 +390,8 @@ export async function rollStudentToNextMonthClean(db, studentId, student) {
     student,
     nextId,
     busRatePerKmMap || {},
+    admissionFeeMap || {},
+    sundryChargesMap || {},
   );
   const now = Timestamp.now();
   const y = Number(nextId.split("-")[0]);
@@ -396,6 +433,8 @@ export async function rollStudentToNextMonthClean(db, studentId, student) {
       tuitionFee: tuition,
       busFee: bus,
       examFee: exam,
+      admissionFee: admission,
+      sundryCharges: sundry,
       carryForwardTuition: 0,
       carryForwardBus: 0,
       carryFromMonth: "",
@@ -413,6 +452,12 @@ export async function rollStudentToNextMonthClean(db, studentId, student) {
     monthlyTuitionFeeApplied: tuition,
     monthlyBusFeeApplied: bus,
     examFeeApplied: exam,
+    admissionFeeApplied: nextId.endsWith("-04")
+      ? Number(admissionFeeMap?.[normalizeClassKey(student.class)] || 0)
+      : 0,
+    sundryChargesApplied: nextId.endsWith("-04")
+      ? Number(sundryChargesMap?.[normalizeClassKey(student.class)] || 0)
+      : 0,
     carryForwardTuition: 0,
     carryForwardBus: 0,
     carryForwardTotal: 0,
@@ -437,6 +482,8 @@ export async function advanceOneMonthWithCarryForward(db, studentId, student) {
     busRatePerKmMap,
     examFeeMap,
     examMonthsMap,
+    admissionFeeMap,
+    sundryChargesMap,
     activeSessionId,
   } = await loadActiveSessionClassTuitionBusMap(db);
 
@@ -474,6 +521,8 @@ export async function advanceOneMonthWithCarryForward(db, studentId, student) {
       student,
       nextId,
       busRatePerKmMap || {},
+      admissionFeeMap || {},
+      sundryChargesMap || {},
     );
 
   const grandTotal = Math.round((totalPending + newTotal) * 100) / 100;
@@ -518,6 +567,12 @@ export async function advanceOneMonthWithCarryForward(db, studentId, student) {
       tuitionFee: mergedTuitionLine,
       busFee: mergedBusLine,
       examFee: mergedExamLine,
+      admissionFee: nextId.endsWith("-04")
+        ? Number(admissionFeeMap?.[normalizeClassKey(student.class)] || 0)
+        : 0,
+      sundryCharges: nextId.endsWith("-04")
+        ? Number(sundryChargesMap?.[normalizeClassKey(student.class)] || 0)
+        : 0,
       carryForwardTuition: carryT,
       carryForwardBus: carryB,
       carryForwardExam: carryE,
@@ -550,6 +605,12 @@ export async function advanceOneMonthWithCarryForward(db, studentId, student) {
     monthlyTuitionFeeApplied: newT,
     monthlyBusFeeApplied: newB,
     examFeeApplied: newE,
+    admissionFeeApplied: nextId.endsWith("-04")
+      ? Number(admissionFeeMap?.[normalizeClassKey(student.class)] || 0)
+      : 0,
+    sundryChargesApplied: nextId.endsWith("-04")
+      ? Number(sundryChargesMap?.[normalizeClassKey(student.class)] || 0)
+      : 0,
     carryForwardTuition: carryT,
     carryForwardBus: carryB,
     carryForwardTotal: Math.round((carryT + carryB + carryE) * 100) / 100,

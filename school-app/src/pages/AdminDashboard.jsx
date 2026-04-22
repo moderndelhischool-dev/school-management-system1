@@ -200,6 +200,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase/firebase";
+import { db } from "../firebase/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 // Components Import
 import Sidebar from "../components/Sidebar";
@@ -213,7 +215,14 @@ import AdminCertificate from "../components/AdminCertificate";
 import EventManager from "./EventManager";
 import AdminFeeStructure from "../components/AdminFeeStructure";
 import FeesHistory from "../components/FeesHistory";
+import StaffAccessManager from "../components/StaffAccessManager";
 import { HiOutlineMenu } from "react-icons/hi";
+import {
+  canAccessAdminPage,
+  normalizeAdminAccess,
+  normalizeAdminRole,
+  roleLabel,
+} from "../utils/adminRbac";
 
 /** URL segment → internal `page` id (see Sidebar menu ids). */
 const SECTION_TO_PAGE = {
@@ -225,6 +234,7 @@ const SECTION_TO_PAGE = {
   uniform: "uniform",
   certificate: "certificate",
   "fee-structure": "fee-structure",
+  staff: "staff-access",
 };
 
 const PAGE_TO_SECTION = {
@@ -236,6 +246,7 @@ const PAGE_TO_SECTION = {
   uniform: "uniform",
   certificate: "certificate",
   "fee-structure": "fee-structure",
+  "staff-access": "staff",
 };
 
 function AdminDashboard() {
@@ -260,6 +271,40 @@ function AdminDashboard() {
       return false;
     }
   });
+
+  const [adminRole, setAdminRole] = useState("admin");
+  const [adminAccess, setAdminAccess] = useState({ role: "admin", perms: {} });
+  const [roleLoading, setRoleLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const u = auth.currentUser;
+        if (!u) return;
+        const snap = await getDoc(doc(db, "users", u.uid));
+        if (!snap.exists()) return;
+        const data = snap.data() || {};
+        const r = normalizeAdminRole(data.adminRole || data.staffRole || data.role);
+        const access = normalizeAdminAccess(
+          data.adminAccess && typeof data.adminAccess === "object"
+            ? data.adminAccess
+            : { role: r, perms: {} },
+        );
+        if (!cancelled) {
+          setAdminRole(access.role);
+          setAdminAccess(access);
+        }
+      } catch (e) {
+        console.error("Admin role load failed:", e);
+      } finally {
+        if (!cancelled) setRoleLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Sync current page with LocalStorage
   useEffect(() => {
@@ -286,6 +331,10 @@ function AdminDashboard() {
   }, [darkMode]);
 
   const setPagePersist = (p) => {
+    if (!canAccessAdminPage(adminAccess, p)) {
+      window.alert("Access denied: you do not have permission to open this section.");
+      return;
+    }
     setPage(p);
     try {
       localStorage.setItem("admin.page", p);
@@ -328,7 +377,11 @@ function AdminDashboard() {
     <div className="admin-container" style={{ background: bgMain }}>
         {/* Desktop: Sidebar is position:fixed — main uses .admin-main-area to offset */}
         <div className="d-none d-md-block">
-          <Sidebar setPage={setPagePersist} activePage={page} />
+          <Sidebar
+            setPage={setPagePersist}
+            activePage={page}
+            adminRole={adminAccess}
+          />
         </div>
 
         {/* Mobile Sidebar */}
@@ -351,6 +404,7 @@ function AdminDashboard() {
                 setShowSidebar(false);
               }}
               activePage={page}
+              adminRole={adminAccess}
             />
           </div>
         </div>
@@ -382,6 +436,18 @@ function AdminDashboard() {
               <h4 className="mb-0 fw-semibold">Administrator</h4>
             </div>
             <div className="d-flex gap-2">
+              <span
+                className="d-none d-md-inline-flex align-items-center px-3 py-1"
+                style={{
+                  background: "rgba(255,255,255,0.18)",
+                  borderRadius: "999px",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                }}
+                title="Signed-in staff role"
+              >
+                {roleLabel(adminRole)}
+              </span>
               <button
                 className="btn btn-outline-light btn-sm"
                 style={{ borderRadius: "12px" }}
@@ -401,6 +467,36 @@ function AdminDashboard() {
 
           {/* Dynamic Page Container */}
           <div style={getPageWrapperStyle()}>
+            {roleLoading ? (
+              <div className="p-4 text-center">Loading permissions…</div>
+            ) : !canAccessAdminPage(adminAccess, page) ? (
+              <div className="p-4">
+                <div
+                  className="p-4 rounded-4"
+                  style={{
+                    background: darkMode ? "#0f172a" : "#f8fafc",
+                    border: darkMode
+                      ? "1px solid rgba(148,163,184,0.2)"
+                      : "1px solid #e5e7eb",
+                  }}
+                >
+                  <h5 className="mb-2 fw-bold">Access denied</h5>
+                  <div className="text-muted">
+                    Your staff role <b>{roleLabel(adminRole)}</b> does not have
+                    permission to view this section.
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-primary mt-3"
+                    onClick={() => setPagePersist("dashboard")}
+                    style={{ borderRadius: "12px" }}
+                  >
+                    Go to Dashboard
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
             {page === "dashboard" && (
               <>
                 <div className="row g-4">
@@ -417,13 +513,30 @@ function AdminDashboard() {
               </>
             )}
 
-            {page === "add" && <AddStudent darkMode={darkMode} />}
-            {page === "view" && <StudentList darkMode={darkMode} />}
-            {page === "uniform" && <AdminUniform darkMode={darkMode} />}
-            {page === "certificate" && <AdminCertificate darkMode={darkMode} />}
-            {page === "events" && <EventManager darkMode={darkMode} />}
-            {page === "fee-structure" && <AdminFeeStructure darkMode={darkMode} />}
-            {page === "fees-history" && <FeesHistory darkMode={darkMode} />}
+            {!roleLoading && canAccessAdminPage(adminAccess, page) && (
+              <>
+                {page === "add" && (
+                  <AddStudent darkMode={darkMode} adminAccess={adminAccess} />
+                )}
+                {page === "view" && (
+                  <StudentList darkMode={darkMode} adminAccess={adminAccess} />
+                )}
+                {page === "uniform" && <AdminUniform darkMode={darkMode} />}
+                {page === "certificate" && (
+                  <AdminCertificate darkMode={darkMode} />
+                )}
+                {page === "events" && <EventManager darkMode={darkMode} />}
+                {page === "fee-structure" && (
+                  <AdminFeeStructure darkMode={darkMode} />
+                )}
+                {page === "fees-history" && (
+                  <FeesHistory darkMode={darkMode} adminAccess={adminAccess} />
+                )}
+                {page === "staff-access" && (
+                  <StaffAccessManager darkMode={darkMode} />
+                )}
+              </>
+            )}
           </div>
         </div>
 

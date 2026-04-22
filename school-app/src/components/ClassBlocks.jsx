@@ -194,9 +194,14 @@ function ClassBlocks({ darkMode }) {
         {Object.keys(classCount)
           .sort((a, b) => {
             const convert = (cls) => {
+              const s = String(cls || "").trim().toLowerCase();
+              if (s === "nursery") return -1;
+              if (s === "lkg") return 0;
+              if (s === "ukg") return 1;
               if (cls === "+1") return 11;
               if (cls === "+2") return 12;
-              return parseInt(cls);
+              const n = parseInt(s.replace("+", ""), 10);
+              return Number.isFinite(n) ? n : 999;
             };
             return convert(a) - convert(b);
           })

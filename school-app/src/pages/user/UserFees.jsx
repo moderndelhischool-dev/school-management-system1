@@ -320,6 +320,8 @@ function UserFees({ student, darkMode }) {
     busRatePerKmMap: {},
     examFeeMap: {},
     examMonthsMap: {},
+    admissionFeeMap: {},
+    sundryChargesMap: {},
   });
   const [displayFees, setDisplayFees] = useState(student?.pendingFees || 0);
   const [showBreakdown, setShowBreakdown] = useState(false);
@@ -339,6 +341,8 @@ function UserFees({ student, darkMode }) {
           busRatePerKmMap: maps.busRatePerKmMap || {},
           examFeeMap: maps.examFeeMap || {},
           examMonthsMap: maps.examMonthsMap || {},
+          admissionFeeMap: maps.admissionFeeMap || {},
+          sundryChargesMap: maps.sundryChargesMap || {},
         });
       }
     });
@@ -355,6 +359,8 @@ function UserFees({ student, darkMode }) {
         feeMaps.examFeeMap,
         feeMaps.examMonthsMap,
         feeMaps.busRatePerKmMap,
+        feeMaps.admissionFeeMap,
+        feeMaps.sundryChargesMap,
       )
     : 0;
 
@@ -366,6 +372,8 @@ function UserFees({ student, darkMode }) {
         feeMaps.examFeeMap,
         feeMaps.examMonthsMap,
         feeMaps.busRatePerKmMap,
+        feeMaps.admissionFeeMap,
+        feeMaps.sundryChargesMap,
       )
     : 0;
 
@@ -437,7 +445,7 @@ function UserFees({ student, darkMode }) {
       handler: async (response) => {
         const paymentId = response.razorpay_payment_id;
         try {
-          await applyRazorpayPaymentApproval(db, {
+          const result = await applyRazorpayPaymentApproval(db, {
             paymentId,
             paidAmount: amount,
             student: liveStudent,
@@ -451,6 +459,8 @@ function UserFees({ student, darkMode }) {
           setReceipt({
             amount,
             paymentId,
+            receiptNo: result?.receiptNo || "",
+            feeMonth: result?.feeMonth || liveStudent?.feeMonth || "",
             date: new Date().toLocaleDateString("en-IN"),
             time: new Date().toLocaleTimeString("en-IN"),
           });
@@ -459,10 +469,7 @@ function UserFees({ student, darkMode }) {
           setMsg("Payment recorded successfully.");
 
           if (newBalance <= 0) {
-            setMsg("All fees for this period are paid. Refreshing…");
-            setTimeout(() => {
-              window.location.reload();
-            }, 3000);
+            setMsg("All fees for this period are paid.");
           }
         } catch (err) {
           setMsgTone("error");
@@ -504,30 +511,43 @@ function UserFees({ student, darkMode }) {
     docPdf.setFontSize(10);
     docPdf.text(`Student Name:  ${liveStudent.name}`, 40, 140);
     docPdf.text(`Roll Number:   ${liveStudent.rollNo || "N/A"}`, 40, 160);
-    docPdf.text(`Class:         ${liveStudent.class}`, 40, 180);
-    docPdf.text(`Transaction ID: ${receipt.paymentId}`, 40, 200);
-    docPdf.text(`Date & Time:    ${receipt.date} | ${receipt.time}`, 40, 220);
+    docPdf.text(
+      `Registration: ${liveStudent.registrationNo || "N/A"}`,
+      40,
+      180,
+    );
+    docPdf.text(`Class:         ${liveStudent.class}`, 40, 200);
+    if (receipt.receiptNo) {
+      docPdf.text(`Receipt No:    ${receipt.receiptNo}`, 40, 220);
+      docPdf.text(`Transaction ID: ${receipt.paymentId}`, 40, 240);
+      docPdf.text(`Billing month:  ${receipt.feeMonth || liveStudent?.feeMonth || "—"}`, 40, 260);
+      docPdf.text(`Date & Time:    ${receipt.date} | ${receipt.time}`, 40, 280);
+    } else {
+      docPdf.text(`Transaction ID: ${receipt.paymentId}`, 40, 220);
+      docPdf.text(`Date & Time:    ${receipt.date} | ${receipt.time}`, 40, 240);
+      docPdf.text(`Billing month:  ${receipt.feeMonth || liveStudent?.feeMonth || "—"}`, 40, 260);
+    }
 
     docPdf.setFillColor(245, 247, 250);
-    docPdf.rect(40, 250, 340, 50, "F");
+    docPdf.rect(40, 305, 340, 50, "F");
     docPdf.setTextColor(15, 76, 108);
     docPdf.setFont("helvetica", "bold");
     docPdf.setFontSize(12);
-    docPdf.text("Total Amount Paid:", 60, 280);
-    docPdf.text(`INR ${receipt.amount}.00`, 290, 280);
+    docPdf.text("Total Amount Paid:", 60, 335);
+    docPdf.text(`INR ${receipt.amount}.00`, 290, 335);
 
     docPdf.setDrawColor(34, 197, 94);
     docPdf.setLineWidth(2);
-    docPdf.roundedRect(280, 330, 100, 30, 5, 5, "S");
+    docPdf.roundedRect(280, 385, 100, 30, 5, 5, "S");
     docPdf.setTextColor(34, 197, 94);
     docPdf.setFontSize(14);
-    docPdf.text("SUCCESS", 298, 350);
+    docPdf.text("SUCCESS", 298, 405);
 
     docPdf.setTextColor(150, 150, 150);
     docPdf.setFontSize(8);
     docPdf.text("This is a computer-generated receipt.", 140, 550);
 
-    docPdf.save(`Receipt_${receipt.paymentId}.pdf`);
+    docPdf.save(`Receipt_${receipt.receiptNo || receipt.paymentId}.pdf`);
   };
 
   const carryT = Number(liveStudent?.carryForwardTuition || 0);
@@ -540,6 +560,10 @@ function UserFees({ student, darkMode }) {
     Number(liveStudent?.currentMonthBus) ||
     Number(liveStudent?.monthlyBusFeeApplied || 0);
   const hasCarry = carryTotal > 0;
+  const curExam = Number(liveStudent?.examFeeApplied || 0);
+  const curAdmission = Number(liveStudent?.admissionFeeApplied || 0);
+  const curSundry = Number(liveStudent?.sundryChargesApplied || 0);
+  const showAprilColumns = curAdmission > 0 || curSundry > 0;
 
   return (
     <Fragment>
@@ -712,6 +736,13 @@ function UserFees({ student, darkMode }) {
                   <th>Part</th>
                   <th className="text-end">Tuition (₹)</th>
                   <th className="text-end">Bus (₹)</th>
+                  <th className="text-end">Exam (₹)</th>
+                  {showAprilColumns ? (
+                    <>
+                      <th className="text-end">Admission (₹)</th>
+                      <th className="text-end">Sundry (₹)</th>
+                    </>
+                  ) : null}
                   <th className="text-end">Total (₹)</th>
                 </tr>
               </thead>
@@ -726,6 +757,13 @@ function UserFees({ student, darkMode }) {
                     </td>
                     <td className="text-end">{carryT}</td>
                     <td className="text-end">{carryB}</td>
+                    <td className="text-end">0</td>
+                    {showAprilColumns ? (
+                      <>
+                        <td className="text-end">0</td>
+                        <td className="text-end">0</td>
+                      </>
+                    ) : null}
                     <td className="text-end fw-bold">{carryTotal}</td>
                   </tr>
                 )}
@@ -742,15 +780,25 @@ function UserFees({ student, darkMode }) {
                   <td className="text-end">
                     {liveStudent?.usesBus ? curBus : "—"}
                   </td>
+                  <td className="text-end">{curExam}</td>
+                  {showAprilColumns ? (
+                    <>
+                      <td className="text-end">{curAdmission}</td>
+                      <td className="text-end">{curSundry}</td>
+                    </>
+                  ) : null}
                   <td className="text-end fw-bold">
-                    {curTu + (liveStudent?.usesBus ? curBus : 0)}
+                    {curTu +
+                      (liveStudent?.usesBus ? curBus : 0) +
+                      curExam +
+                      (showAprilColumns ? curAdmission + curSundry : 0)}
                   </td>
                 </tr>
                 <tr className="table-active">
                   <td>
                     <strong>Total bill (this cycle)</strong>
                   </td>
-                  <td className="text-end" colSpan={2}>
+                  <td className="text-end" colSpan={showAprilColumns ? 6 : 4}>
                     —
                   </td>
                   <td className="text-end fw-bold text-danger">
@@ -759,7 +807,7 @@ function UserFees({ student, darkMode }) {
                 </tr>
                 <tr>
                   <td>Paid (this cycle)</td>
-                  <td className="text-end" colSpan={2} />
+                  <td className="text-end" colSpan={showAprilColumns ? 6 : 4} />
                   <td className="text-end">
                     ₹{Number(liveStudent?.paidFees || 0)}
                   </td>
@@ -768,7 +816,7 @@ function UserFees({ student, darkMode }) {
                   <td>
                     <strong>Pending</strong>
                   </td>
-                  <td className="text-end" colSpan={2} />
+                  <td className="text-end" colSpan={showAprilColumns ? 6 : 4} />
                   <td className="text-end fw-bold text-danger">
                     ₹{displayFees}
                   </td>

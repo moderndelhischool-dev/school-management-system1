@@ -475,6 +475,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import Swal from "sweetalert2";
+import { canAdminAction } from "../utils/adminRbac";
 import {
   loadActiveSessionClassTuitionBusMap,
   monthlyTotalWithExam,
@@ -486,13 +487,15 @@ import {
   autoRollAfterFullPayment,
 } from "../utils/feeBilling";
 
-function StudentList({ darkMode }) {
+function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
   const [students, setStudents] = useState([]);
   const [classTuitionMap, setClassTuitionMap] = useState({});
   const [classBusMap, setClassBusMap] = useState({});
   const [classBusRatePerKmMap, setClassBusRatePerKmMap] = useState({});
   const [classExamFeeMap, setClassExamFeeMap] = useState({});
   const [classExamMonthsMap, setClassExamMonthsMap] = useState({});
+  const [classAdmissionFeeMap, setClassAdmissionFeeMap] = useState({});
+  const [classSundryChargesMap, setClassSundryChargesMap] = useState({});
   const [activeSessionId, setActiveSessionId] = useState("");
   const [selectedClass, setSelectedClass] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -537,6 +540,8 @@ function StudentList({ darkMode }) {
       busRatePerKmMap,
       examFeeMap,
       examMonthsMap,
+      admissionFeeMap,
+      sundryChargesMap,
       activeSessionId: sid,
     } = await loadActiveSessionClassTuitionBusMap(db);
     setClassTuitionMap(tuitionMap);
@@ -544,6 +549,8 @@ function StudentList({ darkMode }) {
     setClassBusRatePerKmMap(busRatePerKmMap || {});
     setClassExamFeeMap(examFeeMap || {});
     setClassExamMonthsMap(examMonthsMap || {});
+    setClassAdmissionFeeMap(admissionFeeMap || {});
+    setClassSundryChargesMap(sundryChargesMap || {});
     setActiveSessionId(sid || "");
   };
 
@@ -560,6 +567,8 @@ function StudentList({ darkMode }) {
       classExamFeeMap,
       classExamMonthsMap,
       classBusRatePerKmMap,
+      classAdmissionFeeMap,
+      classSundryChargesMap,
     );
 
   const getStudentPending = (student) =>
@@ -570,6 +579,8 @@ function StudentList({ darkMode }) {
       classExamFeeMap,
       classExamMonthsMap,
       classBusRatePerKmMap,
+      classAdmissionFeeMap,
+      classSundryChargesMap,
     );
 
   const getStudentMonthlyBus = (s) =>
@@ -620,6 +631,8 @@ function StudentList({ darkMode }) {
       editStudent,
       getEditFeeMonthKey(),
       classBusRatePerKmMap,
+      classAdmissionFeeMap,
+      classSundryChargesMap,
     );
     const carry = Number(editStudent.carryForwardTotal || 0);
     return line + carry;
@@ -632,6 +645,14 @@ function StudentList({ darkMode }) {
 
   /* ================= FIXED BULK UPDATE (Dual History Entry) ================= */
   const handleBulkNextMonth = async () => {
+    if (!canAdminAction(adminAccess, "fees", "history", true)) {
+      Swal.fire({
+        icon: "warning",
+        title: "Access denied",
+        text: "You do not have permission to update fee history.",
+      });
+      return;
+    }
     const completedStudents = students.filter(
       (s) => s.feeStatus === "Completed",
     );
@@ -731,6 +752,14 @@ function StudentList({ darkMode }) {
 
   /* ================= SINGLE UPDATE LOGIC ================= */
   const updateStudent = async () => {
+    if (!canAdminAction(adminAccess, "students", "edit", true)) {
+      Swal.fire({
+        icon: "warning",
+        title: "Access denied",
+        text: "You do not have permission to edit students.",
+      });
+      return;
+    }
     const total = getEditTotal();
     let paid = Number(editStudent.paidFees) || 0;
     const usesBus = !!editStudent.usesBus;
@@ -749,6 +778,13 @@ function StudentList({ darkMode }) {
     const feeDateValue = editStudent.feeDate
       ? Timestamp.fromDate(new Date(editStudent.feeDate))
       : Timestamp.now();
+    const ck = normalizeClassKey(editStudent.class);
+    const admissionApplied = monthId.endsWith("-04")
+      ? Number(classAdmissionFeeMap[ck] || 0)
+      : 0;
+    const sundryApplied = monthId.endsWith("-04")
+      ? Number(classSundryChargesMap[ck] || 0)
+      : 0;
 
     const examLine = examFeeForMonth(
       classExamFeeMap,
@@ -793,6 +829,8 @@ function StudentList({ darkMode }) {
         scholarshipNote: String(editStudent.scholarshipNote || "").slice(0, 240),
         monthlyTuitionFeeApplied: effectiveTuition,
         examFeeApplied: examLine,
+        admissionFeeApplied: admissionApplied,
+        sundryChargesApplied: sundryApplied,
         totalFees: total,
         paidFees: paid,
         pendingFees: pendingFees,
@@ -817,6 +855,8 @@ function StudentList({ darkMode }) {
           tuitionFee: effectiveTuition,
           busFee: usesBus ? resolvedMonthlyBus : 0,
           examFee: examLine,
+          admissionFee: admissionApplied,
+          sundryCharges: sundryApplied,
           date: feeDateValue,
           updatedAt: Timestamp.now(),
         },
@@ -836,6 +876,14 @@ function StudentList({ darkMode }) {
   };
 
   const handleDelete = async () => {
+    if (!canAdminAction(adminAccess, "students", "delete", false)) {
+      Swal.fire({
+        icon: "warning",
+        title: "Access denied",
+        text: "You do not have permission to delete students.",
+      });
+      return;
+    }
     try {
       await deleteDoc(doc(db, "students", deleteStudent.id));
       setDeleteStudent(null);
@@ -853,9 +901,31 @@ function StudentList({ darkMode }) {
   const classes = [...new Set(students.map((s) => s.class))];
   const filteredStudents = students.filter((s) => {
     const matchClass = selectedClass ? s.class === selectedClass : true;
-    const matchSearch =
-      (s.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (s.rollNo || "").toString().includes(searchTerm);
+    const q = String(searchTerm || "").trim().toLowerCase();
+    const matchSearch = (() => {
+      if (!q) return true;
+      const nameHit = (s.name || "").toLowerCase().includes(q);
+      const fatherHit = (s.fatherName || "").toLowerCase().includes(q);
+      const motherHit = (s.motherName || "").toLowerCase().includes(q);
+      const rollHit = (s.rollNo || "").toString().toLowerCase().includes(q);
+      const regHit = (s.registrationNo || "")
+        .toString()
+        .toLowerCase()
+        .includes(q);
+      const emailHit = (s.email || "").toLowerCase().includes(q);
+      const primaryPhone = String(s.primaryContactNumber || s.phone || "").toLowerCase();
+      const altPhone = String(s.alternateContactNumber || "").toLowerCase();
+      const phoneHit = primaryPhone.includes(q) || altPhone.includes(q);
+      return (
+        nameHit ||
+        fatherHit ||
+        motherHit ||
+        rollHit ||
+        regHit ||
+        phoneHit ||
+        emailHit
+      );
+    })();
     return matchClass && matchSearch;
   });
 
@@ -882,7 +952,7 @@ function StudentList({ darkMode }) {
         <button
           className="btn bulk-update-btn"
           onClick={handleBulkNextMonth}
-          disabled={updatingAll}
+          disabled={updatingAll || !canAdminAction(adminAccess, "fees", "history", true)}
         >
           {updatingAll ? "Processing…" : "Advance completed fees to next month"}
         </button>
@@ -891,7 +961,7 @@ function StudentList({ darkMode }) {
       <div className="mb-4">
         <input
           type="text"
-          placeholder="Search by name or roll number…"
+          placeholder="Search by name, roll, contact or email…"
           className="form-control search-input"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -903,6 +973,7 @@ function StudentList({ darkMode }) {
           <thead className="blue-head">
             <tr>
               <th>Roll number</th>
+              <th>Registration no.</th>
               <th>Student name</th>
               <th>Father&apos;s name</th>
               <th>Email</th>
@@ -925,6 +996,9 @@ function StudentList({ darkMode }) {
             {filteredStudents.map((s) => (
               <tr key={s.id}>
                 <td>{s.rollNo || "—"}</td>
+                <td className="font-monospace small">
+                  {s.registrationNo || "—"}
+                </td>
                 <td>{s.name}</td>
                 <td>{s.fatherName || "—"}</td>
                 <td>{s.email || "—"}</td>
@@ -969,39 +1043,47 @@ function StudentList({ darkMode }) {
                   </span>
                 </td>
                 <td>
-                  <button
-                    className="btn btn-sm edit-btn"
-                    onClick={() =>
-                      setEditStudent({
-                        ...s,
-                        usesBus: !!s.usesBus,
-                        monthlyBusFee: s.monthlyBusFee ?? "",
-                        busDistanceKm:
-                          s.busDistanceKm !== undefined && s.busDistanceKm !== null
-                            ? s.busDistanceKm
+                  {canAdminAction(adminAccess, "students", "edit", true) ? (
+                    <button
+                      className="btn btn-sm edit-btn"
+                      onClick={() =>
+                        setEditStudent({
+                          ...s,
+                          usesBus: !!s.usesBus,
+                          monthlyBusFee: s.monthlyBusFee ?? "",
+                          busDistanceKm:
+                            s.busDistanceKm !== undefined && s.busDistanceKm !== null
+                              ? s.busDistanceKm
+                              : "",
+                          scholarshipAmount:
+                            s.scholarshipAmount !== undefined &&
+                            s.scholarshipAmount !== null
+                              ? s.scholarshipAmount
+                              : "",
+                          scholarshipNote: s.scholarshipNote ?? "",
+                          feeDate: s.feeDate
+                            ? s.feeDate.toDate().toISOString().split("T")[0]
                             : "",
-                        scholarshipAmount:
-                          s.scholarshipAmount !== undefined &&
-                          s.scholarshipAmount !== null
-                            ? s.scholarshipAmount
-                            : "",
-                        scholarshipNote: s.scholarshipNote ?? "",
-                        feeDate: s.feeDate
-                          ? s.feeDate.toDate().toISOString().split("T")[0]
-                          : "",
-                      })
-                    }
-                  >
-                    Edit
-                  </button>
+                        })
+                      }
+                    >
+                      Edit
+                    </button>
+                  ) : (
+                    <span className="text-muted small">—</span>
+                  )}
                 </td>
                 <td>
-                  <button
-                    className="btn btn-sm delete-btn"
-                    onClick={() => setDeleteStudent(s)}
-                  >
-                    Delete
-                  </button>
+                  {canAdminAction(adminAccess, "students", "delete", false) ? (
+                    <button
+                      className="btn btn-sm delete-btn"
+                      onClick={() => setDeleteStudent(s)}
+                    >
+                      Delete
+                    </button>
+                  ) : (
+                    <span className="text-muted small">—</span>
+                  )}
                 </td>
               </tr>
             ))}
@@ -1021,6 +1103,15 @@ function StudentList({ darkMode }) {
                 onChange={(e) =>
                   setEditStudent({ ...editStudent, rollNo: e.target.value })
                 }
+              />
+            </div>
+            <div className="col-md-4">
+              <label className="small fw-bold">Registration number</label>
+              <input
+                className="form-control dark-input font-monospace"
+                readOnly
+                value={editStudent.registrationNo || ""}
+                placeholder="Not assigned"
               />
             </div>
             <div className="col-md-4">

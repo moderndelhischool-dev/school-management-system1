@@ -102,7 +102,7 @@
 // }
 
 // export default Sidebar;
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   HiOutlineViewGrid,
   HiOutlineCalendar,
@@ -112,41 +112,51 @@ import {
   HiOutlineDocumentText,
   HiOutlineClipboardList,
   HiOutlineCurrencyRupee,
+  HiOutlineKey,
 } from "react-icons/hi";
+import { canAccessAdminPage, roleLabel } from "../utils/adminRbac";
 
-function Sidebar({ setPage, activePage }) {
+function Sidebar({ setPage, activePage, adminRole = "admin" }) {
   const [active, setActive] = useState(activePage || "dashboard");
 
   useEffect(() => {
     if (activePage) setActive(activePage);
   }, [activePage]);
 
-  const menuItems = [
-    { id: "dashboard", label: "Dashboard", icon: <HiOutlineViewGrid /> },
-    { id: "events", label: "Event Manager", icon: <HiOutlineCalendar /> },
-    { id: "add", label: "Add Student", icon: <HiOutlineUserAdd /> },
-    { id: "view", label: "View Students", icon: <HiOutlineUsers /> },
-    {
-      id: "fees-history",
-      label: "Fees History",
-      icon: <HiOutlineClipboardList />,
-    },
-    {
-      id: "uniform",
-      label: "Uniform Requests",
-      icon: <HiOutlineShoppingBag />,
-    },
-    {
-      id: "certificate",
-      label: "Certificates",
-      icon: <HiOutlineDocumentText />,
-    },
-    {
-      id: "fee-structure",
-      label: "Fee Structure",
-      icon: <HiOutlineCurrencyRupee />,
-    },
-  ];
+  const menuItems = useMemo(() => {
+    const all = [
+      { id: "dashboard", label: "Dashboard", icon: <HiOutlineViewGrid /> },
+      { id: "events", label: "Event Management", icon: <HiOutlineCalendar /> },
+      { id: "add", label: "Student Registration", icon: <HiOutlineUserAdd /> },
+      { id: "view", label: "Students", icon: <HiOutlineUsers /> },
+      {
+        id: "fees-history",
+        label: "Fee Collection History",
+        icon: <HiOutlineClipboardList />,
+      },
+      {
+        id: "uniform",
+        label: "Uniform Requests",
+        icon: <HiOutlineShoppingBag />,
+      },
+      {
+        id: "certificate",
+        label: "Certificates",
+        icon: <HiOutlineDocumentText />,
+      },
+      {
+        id: "fee-structure",
+        label: "Fee Structure",
+        icon: <HiOutlineCurrencyRupee />,
+      },
+      // {
+      //   id: "staff-access",
+      //   label: "Staff & Access",
+      //   icon: <HiOutlineKey />,
+      // },
+    ];
+    return all.filter((x) => canAccessAdminPage(adminRole, x.id));
+  }, [adminRole]);
 
   return (
     <div className="sidebar-main-container">
@@ -180,7 +190,7 @@ function Sidebar({ setPage, activePage }) {
       <div className="sidebar-footer-info">
         <div className="status-indicator"></div>
         <span>
-          Logged in as <b>Admin</b>
+          Logged in as <b>{roleLabel(adminRole)}</b>
         </span>
       </div>
 

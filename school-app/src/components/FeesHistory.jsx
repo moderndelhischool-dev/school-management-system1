@@ -294,6 +294,7 @@ import {
 } from "firebase/firestore";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { canAdminAction } from "../utils/adminRbac";
 
 function sanitizeFilenamePart(s) {
   return String(s || "x")
@@ -322,6 +323,12 @@ function downloadAdminFeeSlipPdf(student, row) {
       y,
     );
     y += 7;
+    docPdf.text(
+      `Registration no.: ${student.registrationNo ?? "N/A"}`,
+      14,
+      y,
+    );
+    y += 7;
     docPdf.text(`Email: ${student.email || "N/A"}`, 14, y);
     y += 7;
     docPdf.text(`Receipt generated: ${new Date().toLocaleString()}`, 14, y);
@@ -333,6 +340,8 @@ function downloadAdminFeeSlipPdf(student, row) {
       startY: y + 10,
       head: [["Description", "Details"]],
       body: [
+        ["Receipt No", row.lastReceiptNo || "—"],
+        ["Payment ID", row.lastPaymentId || "—"],
         ["Billing month", row.monthDisplay || row.id || "N/A"],
         ["Amount due (month)", `INR ${row.amount}`],
         ["Amount paid", `INR ${row.paid}`],
@@ -370,7 +379,16 @@ function downloadAdminFeeSlipPdf(student, row) {
   }
 }
 
-function FeesHistory() {
+function FeesHistory({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
+  if (!canAdminAction(adminAccess, "fees", "history", true)) {
+    return (
+      <div className="p-4">
+        <div className="alert alert-warning mb-0">
+          Access denied: you do not have permission to view fee collection history.
+        </div>
+      </div>
+    );
+  }
   const [students, setStudents] = useState([]);
   const [selectedClass, setSelectedClass] = useState(null);
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -404,6 +422,8 @@ function FeesHistory() {
               date: d.date || null,
               mode: d.mode || "",
               receivedBy: d.receivedBy || "",
+              lastPaymentId: d.lastPaymentId || "",
+              lastReceiptNo: d.lastReceiptNo || "",
             };
           });
           return { id: docSnap.id, ...student, feesHistory: feesArray };
@@ -416,6 +436,8 @@ function FeesHistory() {
   }, []);
 
   const classOrder = [
+    "nursery",
+    "lkg",
     "ukg",
     "1",
     "2",
@@ -485,7 +507,12 @@ function FeesHistory() {
                   <div className="d-flex justify-content-between align-items-center w-100">
                     <div>
                       <h6 className="mb-0 fw-bold">{s.name}</h6>
-                      <small>Roll No: {s.rollNo || "N/A"}</small>
+                      <small>
+                        Roll: {s.rollNo || "—"} · Reg.:{" "}
+                        <span className="font-monospace">
+                          {s.registrationNo || "—"}
+                        </span>
+                      </small>
                     </div>
                     <span className="fees-arrow">View History →</span>
                   </div>
@@ -551,6 +578,12 @@ function FeesTable({ student }) {
         <div className="d-flex flex-wrap gap-4" style={{ fontSize: "14px" }}>
           <span>
             <strong>Roll:</strong> {student.rollNo}
+          </span>
+          <span>
+            <strong>Reg. no.:</strong>{" "}
+            <span className="font-monospace">
+              {student.registrationNo || "—"}
+            </span>
           </span>
           <span>
             <strong>Class:</strong> {student.class}

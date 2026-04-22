@@ -393,7 +393,9 @@ function PaymentHistory({ email, darkMode, studentName }) {
         startY: 50,
         head: [["Description", "Details"]],
         body: [
+          ["Receipt No", p.receiptNo || "—"],
           ["Transaction ID", p.paymentId || p.id],
+          ["Billing month", p.feeMonth || "—"],
           ["Month", p.month || "N/A"],
           ["Amount Paid", `INR ${p.paidAmount}`],
           ["Payment Mode", p.mode || "Online"],

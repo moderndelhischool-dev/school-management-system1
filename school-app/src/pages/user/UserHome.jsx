@@ -169,6 +169,8 @@ function UserHome() {
   const [busRatePerKmMap, setBusRatePerKmMap] = useState({});
   const [examFeeMap, setExamFeeMap] = useState({});
   const [examMonthsMap, setExamMonthsMap] = useState({});
+  const [admissionFeeMap, setAdmissionFeeMap] = useState({});
+  const [sundryChargesMap, setSundryChargesMap] = useState({});
   const [lastPaidMonth, setLastPaidMonth] = useState("");
   const [submittedMonths, setSubmittedMonths] = useState([]);
 
@@ -202,6 +204,8 @@ function UserHome() {
       setBusRatePerKmMap(maps.busRatePerKmMap || {});
       setExamFeeMap(maps.examFeeMap || {});
       setExamMonthsMap(maps.examMonthsMap || {});
+      setAdmissionFeeMap(maps.admissionFeeMap || {});
+      setSundryChargesMap(maps.sundryChargesMap || {});
 
       const feesSnap = await getDocs(collection(db, "students", user.email, "fees"));
       let latestCompleted = "";
@@ -258,6 +262,8 @@ function UserHome() {
     examFeeMap,
     examMonthsMap,
     busRatePerKmMap,
+    admissionFeeMap,
+    sundryChargesMap,
   );
 
   const feesMonth = student.feeMonth
@@ -280,15 +286,25 @@ function UserHome() {
 
       <div className="row g-3">
         {/* CLASS */}
-        <div className="col-12 col-md-4">
+        <div className="col-12 col-sm-6 col-xl-3">
           <div className="card shadow-sm p-3 h-100 userhome-card">
             <small className="home-muted">Class</small>
             <h5 className="fw-semibold mb-0">{student.class}</h5>
           </div>
         </div>
 
+        {/* REGISTRATION NUMBER */}
+        <div className="col-12 col-sm-6 col-xl-3">
+          <div className="card shadow-sm p-3 h-100 userhome-card">
+            <small className="home-muted">Registration no.</small>
+            <h5 className="fw-semibold mb-0 font-monospace text-break">
+              {student.registrationNo || "—"}
+            </h5>
+          </div>
+        </div>
+
         {/* FEES STATUS */}
-        <div className="col-12 col-md-4">
+        <div className="col-12 col-sm-6 col-xl-3">
           <div className="card shadow-sm p-3 h-100 userhome-card">
             <small className="home-muted">Fees Status</small>
 
@@ -337,7 +353,7 @@ function UserHome() {
         </div>
 
         {/* PENDING FEES */}
-        <div className="col-12 col-md-4">
+        <div className="col-12 col-sm-6 col-xl-3">
           <div className="card shadow-sm p-3 h-100 userhome-card">
             <small className="home-muted">Pending Fees</small>
 
