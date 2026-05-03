@@ -148,6 +148,11 @@ function Sidebar({ setPage, activePage, adminRole = "admin" }) {
         label: "Fee Structure",
         icon: <HiOutlineCurrencyRupee />,
       },
+      // {
+      //   id: "staff-access",
+      //   label: "Staff & Access",
+      //   icon: <HiOutlineKey />,
+      // },
     ];
     return all.filter((x) => canAccessAdminPage(adminRole, x.id));
   }, [adminRole]);
