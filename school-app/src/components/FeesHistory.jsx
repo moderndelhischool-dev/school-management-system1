@@ -392,6 +392,7 @@ function FeesHistory({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
   const [students, setStudents] = useState([]);
   const [selectedClass, setSelectedClass] = useState(null);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [receiptQuery, setReceiptQuery] = useState("");
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -467,10 +468,71 @@ function FeesHistory({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
       )
     : [];
 
+  const normalizedReceiptQuery = receiptQuery.trim().toLowerCase();
+  const receiptMatches =
+    normalizedReceiptQuery.length >= 3
+      ? students.flatMap((student) =>
+          (student.feesHistory || [])
+            .filter((row) =>
+              String(row.lastReceiptNo || "")
+                .toLowerCase()
+                .includes(normalizedReceiptQuery),
+            )
+            .map((row) => ({ student, row })),
+        )
+      : [];
+
+  const openMatchedStudent = (student) => {
+    const cls = String(student.class || "").replace(/^\+/, "");
+    setSelectedClass(cls || null);
+    setSelectedStudent(student);
+  };
+
   return (
     <div className="fees-history-root">
       <div className="fees-content-box">
         <h2 className="fees-main-title">Fees History Dashboard</h2>
+        <div className="fees-receipt-search mb-4">
+          <label className="form-label fw-semibold mb-2">
+            Search by receipt number
+          </label>
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Example: RCPT-2026-000123"
+            value={receiptQuery}
+            onChange={(e) => setReceiptQuery(e.target.value)}
+          />
+          {normalizedReceiptQuery.length > 0 && normalizedReceiptQuery.length < 3 && (
+            <small className="text-muted">
+              Enter at least 3 characters to search.
+            </small>
+          )}
+        </div>
+
+        {normalizedReceiptQuery.length >= 3 && (
+          <div className="fees-receipt-result-box mb-4">
+            <h6 className="mb-3">
+              Receipt matches ({receiptMatches.length})
+            </h6>
+            {receiptMatches.length === 0 ? (
+              <p className="mb-0 text-muted">No matching receipt found.</p>
+            ) : (
+              receiptMatches.map(({ student, row }) => (
+                <button
+                  key={`${student.id}-${row.id}-${row.lastReceiptNo}`}
+                  type="button"
+                  className="fees-receipt-result-item"
+                  onClick={() => openMatchedStudent(student)}
+                >
+                  <strong>{row.lastReceiptNo}</strong> - {student.name} (Class{" "}
+                  {student.class || "—"}, Roll {student.rollNo || "—"}) -{" "}
+                  {row.monthDisplay}
+                </button>
+              ))
+            )}
+          </div>
+        )}
 
         {!selectedClass && (
           <div className="fees-class-grid">
@@ -539,6 +601,26 @@ function FeesHistory({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
         .fees-history-root { color: #1e293b; }
         .fees-content-box { background: transparent; padding: 10px; }
         .fees-main-title { text-align: center; color: #D4A24C; font-weight: 800; margin-bottom: 25px; }
+        .fees-receipt-search { max-width: 520px; margin: 0 auto; }
+        .fees-receipt-result-box {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 14px;
+        }
+        .fees-receipt-result-item {
+          width: 100%;
+          text-align: left;
+          border: 1px solid #e2e8f0;
+          background: #fff;
+          color: #1e293b;
+          border-radius: 10px;
+          padding: 10px 12px;
+          margin-bottom: 8px;
+          cursor: pointer;
+        }
+        .fees-receipt-result-item:last-child { margin-bottom: 0; }
+        .fees-receipt-result-item:hover { border-color: #D4A24C; background: #fffbeb; }
 
         .fees-class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; }
         .fees-class-item {

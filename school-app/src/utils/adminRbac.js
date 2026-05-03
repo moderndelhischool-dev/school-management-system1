@@ -84,6 +84,21 @@ export function resolvePermission(accessOrRole, key, defaultValue = true) {
   const lookup = (obj, path) =>
     path.split(".").reduce((acc, k) => (acc && acc[k] !== undefined ? acc[k] : undefined), obj);
 
+  // Allow flat alias flags in perms for easier setup screens / backward compatibility.
+  // Example: can_student_registration, can_edit_student, etc.
+  const flatAliasByKey = {
+    "students.add": "can_student_registration",
+    "students.edit": "can_edit_student",
+    "students.delete": "can_delete_student",
+    "fees.structure": "can_add_fee_structure",
+    "requests.certificate": "can_upload_certificates",
+  };
+  const flatAlias = flatAliasByKey[key];
+  if (flatAlias) {
+    const flatValue = access.perms?.[flatAlias];
+    if (flatValue === true || flatValue === false) return flatValue;
+  }
+
   const explicit = lookup(access.perms || {}, key);
   if (explicit === true || explicit === false) return explicit;
   const def = lookup(defaults || {}, key);
@@ -106,11 +121,6 @@ export function canAccessAdminPage(adminRole, pageId) {
 
   // Common access
   if (page === "dashboard") return true;
-
-  // Staff access manager (admin only by default)
-  if (page === "staff-access") {
-    return resolvePermission(access, "staff.manage", access.role === ADMIN_ROLES.ADMIN);
-  }
 
   // Explicit page overrides (optional)
   const explicitPage = resolvePermission(access, `page:${page}`, undefined);

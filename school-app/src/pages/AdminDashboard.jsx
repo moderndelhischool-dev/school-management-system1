@@ -198,7 +198,7 @@
 // export default AdminDashboard;
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { signOut } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "../firebase/firebase";
 import { db } from "../firebase/firebase";
 import { doc, getDoc } from "firebase/firestore";
@@ -215,7 +215,6 @@ import AdminCertificate from "../components/AdminCertificate";
 import EventManager from "./EventManager";
 import AdminFeeStructure from "../components/AdminFeeStructure";
 import FeesHistory from "../components/FeesHistory";
-import StaffAccessManager from "../components/StaffAccessManager";
 import { HiOutlineMenu } from "react-icons/hi";
 import {
   canAccessAdminPage,
@@ -234,7 +233,6 @@ const SECTION_TO_PAGE = {
   uniform: "uniform",
   certificate: "certificate",
   "fee-structure": "fee-structure",
-  staff: "staff-access",
 };
 
 const PAGE_TO_SECTION = {
@@ -246,7 +244,6 @@ const PAGE_TO_SECTION = {
   uniform: "uniform",
   certificate: "certificate",
   "fee-structure": "fee-structure",
-  "staff-access": "staff",
 };
 
 function AdminDashboard() {
@@ -272,20 +269,38 @@ function AdminDashboard() {
     }
   });
 
-  const [adminRole, setAdminRole] = useState("admin");
-  const [adminAccess, setAdminAccess] = useState({ role: "admin", perms: {} });
+  const [adminAccess, setAdminAccess] = useState(() => {
+    try {
+      const raw = localStorage.getItem("admin.access");
+      if (raw) return normalizeAdminAccess(JSON.parse(raw));
+    } catch {
+      // ignore
+    }
+    
+    return normalizeAdminAccess({ role: "admin", perms: {} });
+  });
+  const [adminRole, setAdminRole] = useState(() => adminAccess.role);
   const [roleLoading, setRoleLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    const unsub = onAuthStateChanged(auth, async (u) => {
       try {
-        const u = auth.currentUser;
-        if (!u) return;
+        if (!u) {
+          if (!cancelled) setRoleLoading(false);
+          return;
+        }
         const snap = await getDoc(doc(db, "users", u.uid));
-        if (!snap.exists()) return;
+        if (!snap.exists()) {
+          if (!cancelled) setRoleLoading(false);
+          return;
+        }
         const data = snap.data() || {};
-        const r = normalizeAdminRole(data.adminRole || data.staffRole || data.role);
+
+        const baseRole =
+          data.role === "admin" ? "admin" : data.adminRole || data.staffRole || "staff";
+        const r = normalizeAdminRole(data.adminAccess?.role || baseRole);
+
         const access = normalizeAdminAccess(
           data.adminAccess && typeof data.adminAccess === "object"
             ? data.adminAccess
@@ -294,15 +309,25 @@ function AdminDashboard() {
         if (!cancelled) {
           setAdminRole(access.role);
           setAdminAccess(access);
+          try {
+            localStorage.setItem("admin.access", JSON.stringify(access));
+          } catch {
+            // ignore
+          }
         }
       } catch (e) {
         console.error("Admin role load failed:", e);
       } finally {
         if (!cancelled) setRoleLoading(false);
       }
-    })();
+    });
     return () => {
       cancelled = true;
+      try {
+        unsub();
+      } catch {
+        // ignore
+      }
     };
   }, []);
 
@@ -523,17 +548,20 @@ function AdminDashboard() {
                 )}
                 {page === "uniform" && <AdminUniform darkMode={darkMode} />}
                 {page === "certificate" && (
-                  <AdminCertificate darkMode={darkMode} />
+                  <AdminCertificate
+                    darkMode={darkMode}
+                    adminAccess={adminAccess}
+                  />
                 )}
                 {page === "events" && <EventManager darkMode={darkMode} />}
                 {page === "fee-structure" && (
-                  <AdminFeeStructure darkMode={darkMode} />
+                  <AdminFeeStructure
+                    darkMode={darkMode}
+                    adminAccess={adminAccess}
+                  />
                 )}
                 {page === "fees-history" && (
                   <FeesHistory darkMode={darkMode} adminAccess={adminAccess} />
-                )}
-                {page === "staff-access" && (
-                  <StaffAccessManager darkMode={darkMode} />
                 )}
               </>
             )}

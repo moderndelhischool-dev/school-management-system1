@@ -14,6 +14,7 @@ import {
   orderBy,
   limit,
 } from "firebase/firestore";
+import { canAdminAction } from "../utils/adminRbac";
 
 /** Firestore doc limit — base64 expands */
 const MAX_SIZE = 750 * 1024;
@@ -124,7 +125,19 @@ function studentsInClassSorted(allStudents, className) {
     .sort((a, b) => rollSortKey(a.rollNo) - rollSortKey(b.rollNo));
 }
 
-function AdminCertificate({ darkMode }) {
+function AdminCertificate({
+  darkMode,
+  adminAccess = { role: "admin", perms: {} },
+}) {
+  if (!canAdminAction(adminAccess, "requests", "certificate", true)) {
+    return (
+      <div className="p-4">
+        <div className="alert alert-warning mb-0">
+          Access denied: you do not have permission to upload certificates.
+        </div>
+      </div>
+    );
+  }
   const [students, setStudents] = useState([]);
   const [requests, setRequests] = useState([]);
   const [sentDocs, setSentDocs] = useState([]);

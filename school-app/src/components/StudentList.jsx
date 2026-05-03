@@ -502,6 +502,74 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
   const [editStudent, setEditStudent] = useState(null);
   const [deleteStudent, setDeleteStudent] = useState(null);
   const [updatingAll, setUpdatingAll] = useState(false);
+  const [editPhotoFile, setEditPhotoFile] = useState(null);
+  const [editPhotoPreview, setEditPhotoPreview] = useState("");
+  const [printStudent, setPrintStudent] = useState(null);
+
+  const withSalutation = (rawName, kind) => {
+    const name = String(rawName || "").trim();
+    if (!name) return "—";
+    const lower = name.toLowerCase();
+    const already =
+      lower.startsWith("mr ") ||
+      lower.startsWith("mr.") ||
+      lower.startsWith("mrs ") ||
+      lower.startsWith("mrs.") ||
+      lower.startsWith("ms ") ||
+      lower.startsWith("ms.") ||
+      lower.startsWith("miss ") ||
+      lower.startsWith("smt ") ||
+      lower.startsWith("smt.") ||
+      lower.startsWith("shri ") ||
+      lower.startsWith("shri.");
+    if (already) return name;
+    const prefix = kind === "mother" ? "Mrs. " : "Mr. ";
+    return `${prefix}${name}`;
+  };
+
+  const MAX_PHOTO_SIZE = 220 * 1024;
+  const isAllowedStudentPhoto = (file) => {
+    if (!file) return false;
+    const t = String(file.type || "").toLowerCase();
+    if (t.startsWith("image/")) return true;
+    const name = String(file.name || "").toLowerCase();
+    return (
+      name.endsWith(".png") ||
+      name.endsWith(".jpg") ||
+      name.endsWith(".jpeg") ||
+      name.endsWith(".webp")
+    );
+  };
+
+  const readFileAsDataURL = (file) =>
+    new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result || ""));
+      r.onerror = () => reject(new Error("Could not read photo"));
+      r.readAsDataURL(file);
+    });
+
+  const openRegistrationPrint = (s) => setPrintStudent(s);
+  const safeText = (v) => String(v ?? "").replace(/[<>]/g, "");
+  const withSalForPrint = (raw, kind) => {
+    const name = String(raw || "").trim();
+    if (!name) return "—";
+    const lower = name.toLowerCase();
+    const already =
+      lower.startsWith("mr ") ||
+      lower.startsWith("mr.") ||
+      lower.startsWith("mrs ") ||
+      lower.startsWith("mrs.") ||
+      lower.startsWith("ms ") ||
+      lower.startsWith("ms.") ||
+      lower.startsWith("miss ") ||
+      lower.startsWith("smt ") ||
+      lower.startsWith("smt.") ||
+      lower.startsWith("shri ") ||
+      lower.startsWith("shri.");
+    if (already) return name;
+    return `${kind === "mother" ? "Mrs. " : "Mr. "}${name}`;
+  };
 
   const months = [
     "January",
@@ -642,6 +710,27 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
     loadStudents();
     loadFeeMaps();
   }, []);
+
+  // Close edit modal on Escape
+  useEffect(() => {
+    if (!editStudent) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setEditStudent(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [editStudent]);
+
+  useEffect(() => {
+    if (!editStudent) {
+      setEditPhotoFile(null);
+      setEditPhotoPreview("");
+      return;
+    }
+    const fromDoc = String(editStudent.photoDataUrl || "");
+    setEditPhotoPreview(fromDoc);
+    setEditPhotoFile(null);
+  }, [editStudent]);
 
   /* ================= FIXED BULK UPDATE (Dual History Entry) ================= */
   const handleBulkNextMonth = async () => {
@@ -809,6 +898,37 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
 
     try {
       const studentRef = doc(db, "students", editStudent.id);
+      // Photo handling
+      let photoPatch = {};
+      if (editPhotoFile) {
+        if (!isAllowedStudentPhoto(editPhotoFile)) {
+          Swal.fire({ icon: "warning", title: "Photo must be an image (png/jpg/webp)" });
+          return;
+        }
+        if (editPhotoFile.size > MAX_PHOTO_SIZE) {
+          Swal.fire({
+            icon: "warning",
+            title: `Photo must be under ${Math.floor(MAX_PHOTO_SIZE / 1024)} KB`,
+          });
+          return;
+        }
+        const photoDataUrl = await readFileAsDataURL(editPhotoFile);
+        photoPatch = {
+          photoDataUrl,
+          photoFileName: editPhotoFile.name || "photo",
+          photoMimeType: editPhotoFile.type || "image/*",
+          photoUpdatedAt: Timestamp.now(),
+        };
+      } else if (editStudent.photoDataUrl === "") {
+        // Explicit remove
+        photoPatch = {
+          photoDataUrl: deleteField(),
+          photoFileName: deleteField(),
+          photoMimeType: deleteField(),
+          photoUpdatedAt: deleteField(),
+        };
+      }
+
       await updateDoc(studentRef, {
         ...editStudent,
         usesBus,
@@ -827,6 +947,7 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
                 Math.max(0, Number(editStudent.scholarshipPercent || 0)),
               ),
         scholarshipNote: String(editStudent.scholarshipNote || "").slice(0, 240),
+        ...photoPatch,
         monthlyTuitionFeeApplied: effectiveTuition,
         examFeeApplied: examLine,
         admissionFeeApplied: admissionApplied,
@@ -869,6 +990,8 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
 
       Swal.fire({ icon: "success", title: "Student updated" });
       setEditStudent(null);
+      setEditPhotoFile(null);
+      setEditPhotoPreview("");
       loadStudents();
     } catch (e) {
       Swal.fire({ icon: "error", title: "Could not save changes" });
@@ -968,15 +1091,20 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
         />
       </div>
 
-      <div className="table-responsive">
-        <table className={`table ${darkMode ? "table-dark" : ""}`}>
+      <div className="table-responsive student-table-wrap">
+        <table className={`table student-table ${darkMode ? "table-dark" : ""}`}>
           <thead className="blue-head">
             <tr>
+              <th>Photo</th>
               <th>Roll number</th>
               <th>Registration no.</th>
               <th>Student name</th>
               <th>Father&apos;s name</th>
+              <th>Mother&apos;s name</th>
               <th>Email</th>
+              <th>Primary contact</th>
+              <th>Alternate contact</th>
+              <th>Aadhar</th>
               <th>Class</th>
               <th>Monthly tuition</th>
               <th>Scholarship</th>
@@ -988,6 +1116,7 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
               <th>Total due</th>
               <th>Balance</th>
               <th>Status</th>
+              <th>Registration</th>
               <th>Edit</th>
               <th>Delete</th>
             </tr>
@@ -995,13 +1124,28 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
           <tbody>
             {filteredStudents.map((s) => (
               <tr key={s.id}>
+                <td>
+                  <div className="student-avatar">
+                    {s.photoDataUrl ? (
+                      <img src={s.photoDataUrl} alt="Student" />
+                    ) : (
+                      <span className="student-avatar-fallback">
+                        {(s.name || "S").trim().slice(0, 1).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                </td>
                 <td>{s.rollNo || "—"}</td>
                 <td className="font-monospace small">
                   {s.registrationNo || "—"}
                 </td>
                 <td>{s.name}</td>
-                <td>{s.fatherName || "—"}</td>
+                <td>{withSalutation(s.fatherName, "father")}</td>
+                <td>{withSalutation(s.motherName, "mother")}</td>
                 <td>{s.email || "—"}</td>
+                <td>{s.primaryContactNumber || s.phone || "—"}</td>
+                <td>{s.alternateContactNumber || "—"}</td>
+                <td className="font-monospace small">{s.aadharNumber || "—"}</td>
                 <td>{s.class}</td>
                 <td>₹{getClassTuition(s.class)}</td>
                 <td>
@@ -1043,6 +1187,15 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
                   </span>
                 </td>
                 <td>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-primary"
+                    onClick={() => openRegistrationPrint(s)}
+                  >
+                    Download
+                  </button>
+                </td>
+                <td>
                   {canAdminAction(adminAccess, "students", "edit", true) ? (
                     <button
                       className="btn btn-sm edit-btn"
@@ -1061,6 +1214,14 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
                               ? s.scholarshipAmount
                               : "",
                           scholarshipNote: s.scholarshipNote ?? "",
+                          primaryContactNumber:
+                            s.primaryContactNumber ?? s.phone ?? "",
+                          alternateContactNumber: s.alternateContactNumber ?? "",
+                          aadharNumber: s.aadharNumber ?? "",
+                          motherName: s.motherName ?? "",
+                          photoDataUrl: s.photoDataUrl ?? "",
+                          photoFileName: s.photoFileName ?? "",
+                          photoMimeType: s.photoMimeType ?? "",
                           feeDate: s.feeDate
                             ? s.feeDate.toDate().toISOString().split("T")[0]
                             : "",
@@ -1092,9 +1253,121 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
       </div>
 
       {editStudent && (
-        <div className="edit-card mt-4 p-4 shadow-lg">
-          <h5 className="mb-4">Edit student</h5>
-          <div className="row g-3">
+        <div
+          className="modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setEditStudent(null);
+          }}
+        >
+          <div className={`edit-modal ${darkMode ? "dark" : ""}`}>
+            <div className="edit-modal-header">
+              <div className="min-w-0">
+                <div className="edit-modal-title">Edit student</div>
+                <div className="edit-modal-subtitle">
+                  {editStudent?.name ? (
+                    <>
+                      <span className="fw-semibold">{editStudent.name}</span>
+                      {editStudent?.registrationNo
+                        ? ` · ${editStudent.registrationNo}`
+                        : ""}
+                    </>
+                  ) : (
+                    "Update student details"
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-secondary"
+                onClick={() => setEditStudent(null)}
+                aria-label="Close edit dialog"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="edit-modal-body">
+              <div className="row g-3">
+            <div className="col-12">
+              <div className="d-flex align-items-center justify-content-between flex-wrap gap-3 p-2 rounded-3 edit-photo-strip">
+                <div className="d-flex align-items-center gap-3">
+                  <div className="edit-photo-preview">
+                    {editPhotoPreview ? (
+                      <img src={editPhotoPreview} alt="Student" />
+                    ) : (
+                      <span className="student-avatar-fallback">
+                        {(editStudent?.name || "S").trim().slice(0, 1).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="fw-bold" style={{ fontSize: 14 }}>
+                      Student photo
+                    </div>
+                    <div className="small text-muted">
+                      PNG/JPG/WebP · max {Math.floor(MAX_PHOTO_SIZE / 1024)} KB
+                    </div>
+                  </div>
+                </div>
+                <div className="d-flex align-items-center gap-2 flex-wrap">
+                  <label className="btn btn-outline-primary btn-sm mb-0">
+                    Change photo
+                    <input
+                      type="file"
+                      accept="image/*,.png,.jpg,.jpeg,.webp"
+                      hidden
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] || null;
+                        if (!f) return;
+                        if (!isAllowedStudentPhoto(f)) {
+                          Swal.fire({
+                            icon: "warning",
+                            title: "Photo must be an image (png/jpg/webp)",
+                          });
+                          e.target.value = "";
+                          return;
+                        }
+                        if (f.size > MAX_PHOTO_SIZE) {
+                          Swal.fire({
+                            icon: "warning",
+                            title: `Photo must be under ${Math.floor(MAX_PHOTO_SIZE / 1024)} KB`,
+                          });
+                          e.target.value = "";
+                          return;
+                        }
+                        setEditPhotoFile(f);
+                        const url = URL.createObjectURL(f);
+                        setEditPhotoPreview(url);
+                      }}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="btn btn-outline-danger btn-sm"
+                    disabled={!editPhotoPreview}
+                    onClick={() => {
+                      setEditPhotoFile(null);
+                      setEditPhotoPreview("");
+                      setEditStudent((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              photoDataUrl: "",
+                              photoFileName: "",
+                              photoMimeType: "",
+                            }
+                          : prev,
+                      );
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <div className="col-md-4">
               <label className="small fw-bold">Roll number</label>
               <input
@@ -1135,12 +1408,58 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
               />
             </div>
             <div className="col-md-4">
+              <label className="small fw-bold">Mother&apos;s name</label>
+              <input
+                className="form-control dark-input"
+                value={editStudent.motherName || ""}
+                onChange={(e) =>
+                  setEditStudent({ ...editStudent, motherName: e.target.value })
+                }
+              />
+            </div>
+            <div className="col-md-4">
               <label className="small fw-bold">Email</label>
               <input
                 className="form-control dark-input"
                 value={editStudent.email || ""}
                 onChange={(e) =>
                   setEditStudent({ ...editStudent, email: e.target.value })
+                }
+              />
+            </div>
+            <div className="col-md-4">
+              <label className="small fw-bold">Primary contact number</label>
+              <input
+                className="form-control dark-input"
+                value={editStudent.primaryContactNumber || ""}
+                onChange={(e) =>
+                  setEditStudent({
+                    ...editStudent,
+                    primaryContactNumber: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div className="col-md-4">
+              <label className="small fw-bold">Alternate contact number</label>
+              <input
+                className="form-control dark-input"
+                value={editStudent.alternateContactNumber || ""}
+                onChange={(e) =>
+                  setEditStudent({
+                    ...editStudent,
+                    alternateContactNumber: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div className="col-md-4">
+              <label className="small fw-bold">Aadhar number</label>
+              <input
+                className="form-control dark-input font-monospace"
+                value={editStudent.aadharNumber || ""}
+                onChange={(e) =>
+                  setEditStudent({ ...editStudent, aadharNumber: e.target.value })
                 }
               />
             </div>
@@ -1202,20 +1521,7 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
                   })
                 }
               />
-              <small className="text-muted d-block mt-1">
-                This amount reduces tuition each month; bus and examination fees
-                are unchanged. It applies for the active academic session—when a
-                new session starts, save again or set the amount to zero.
-                {Number(editStudent.scholarshipPercent) > 0 &&
-                !Number(editStudent.scholarshipAmount) ? (
-                  <span className="d-block text-warning mt-1">
-                    Legacy percentage on file (
-                    {editStudent.scholarshipPercent}%); enter a rupee amount
-                    above to use a fixed monthly scholarship (stored as rupees
-                    only).
-                  </span>
-                ) : null}
-              </small>
+             
             </div>
             <div className="col-md-8">
               <label className="small fw-bold">Scholarship reference (optional)</label>
@@ -1266,10 +1572,7 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
                   })
                 }
               />
-              <small className="text-muted d-block mt-1">
-                If fee structure has ₹/km, bus = distance × rate. Otherwise use
-                manual fee below or class default.
-              </small>
+              
             </div>
             <div className="col-md-4">
               <label className="small fw-bold">Manual monthly bus fee (₹)</label>
@@ -1347,17 +1650,17 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
                 disabled
               />
             </div>
-          </div>
-          <div className="mt-4 d-flex gap-3">
-            <button className="btn update-btn" onClick={updateStudent}>
-              Save changes
-            </button>
-            <button
-              className="btn cancel-btn"
-              onClick={() => setEditStudent(null)}
-            >
-              Cancel
-            </button>
+              </div>
+            </div>
+
+            <div className="edit-modal-footer">
+              <button className="btn cancel-btn" onClick={() => setEditStudent(null)}>
+                Cancel
+              </button>
+              <button className="btn update-btn" onClick={updateStudent}>
+                Save changes
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1378,6 +1681,150 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
             >
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+      {printStudent && (
+        <div
+          className="modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setPrintStudent(null);
+          }}
+        >
+          <div className={`print-modal ${darkMode ? "dark" : ""}`}>
+            <div className="print-modal-header no-print">
+              <div className="min-w-0">
+                <div className="print-modal-title">Registration preview</div>
+                <div className="print-modal-subtitle">
+                  {printStudent?.name ? (
+                    <>
+                      <span className="fw-semibold">{printStudent.name}</span>
+                      {printStudent?.registrationNo
+                        ? ` · ${printStudent.registrationNo}`
+                        : ""}
+                    </>
+                  ) : (
+                    "Student registration"
+                  )}
+                </div>
+              </div>
+              <div className="d-flex gap-2">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-primary"
+                  onClick={() => window.print()}
+                >
+                  Print / Save PDF
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={() => setPrintStudent(null)}
+                  aria-label="Close registration preview"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="print-modal-body">
+              <div className="print-area">
+                <div className="print-card">
+                  <div className="print-card-header">
+                    <div className="print-card-heading">Student Registration</div>
+                    <div className="print-card-badge">
+                      {safeText(printStudent.registrationNo || "—")}
+                    </div>
+                  </div>
+                  <div className="print-card-content">
+                    <div className="print-card-photo">
+                      {printStudent.photoDataUrl ? (
+                        <img src={printStudent.photoDataUrl} alt="Student" />
+                      ) : (
+                        <div className="print-card-no-photo">No photo</div>
+                      )}
+                    </div>
+                    <div className="print-grid">
+                      <div className="print-field">
+                        <div className="print-label">Student</div>
+                        <div className="print-val">
+                          {safeText(printStudent.name || "—")}
+                        </div>
+                      </div>
+                      <div className="print-field">
+                        <div className="print-label">Email</div>
+                        <div className="print-val">
+                          {safeText(printStudent.email || "—")}
+                        </div>
+                      </div>
+                      <div className="print-field">
+                        <div className="print-label">Roll no.</div>
+                        <div className="print-val">
+                          {safeText(printStudent.rollNo || "—")}
+                        </div>
+                      </div>
+                      <div className="print-field">
+                        <div className="print-label">Class</div>
+                        <div className="print-val">
+                          {safeText(printStudent.class || "—")}
+                        </div>
+                      </div>
+                      <div className="print-field">
+                        <div className="print-label">Father</div>
+                        <div className="print-val">
+                          {safeText(
+                            withSalForPrint(printStudent.fatherName, "father"),
+                          )}
+                        </div>
+                      </div>
+                      <div className="print-field">
+                        <div className="print-label">Mother</div>
+                        <div className="print-val">
+                          {safeText(
+                            withSalForPrint(printStudent.motherName, "mother"),
+                          )}
+                        </div>
+                      </div>
+                      <div className="print-field">
+                        <div className="print-label">Primary contact</div>
+                        <div className="print-val">
+                          {safeText(
+                            printStudent.primaryContactNumber ||
+                              printStudent.phone ||
+                              "—",
+                          )}
+                        </div>
+                      </div>
+                      <div className="print-field">
+                        <div className="print-label">Alternate contact</div>
+                        <div className="print-val">
+                          {safeText(printStudent.alternateContactNumber || "—")}
+                        </div>
+                      </div>
+                      <div className="print-field">
+                        <div className="print-label">Aadhar</div>
+                        <div className="print-val">
+                          {safeText(printStudent.aadharNumber || "—")}
+                        </div>
+                      </div>
+                      <div className="print-field">
+                        <div className="print-label">Billing month</div>
+                        <div className="print-val">
+                          {safeText(printStudent.selectedMonth || "—")}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="print-hint no-print">
+                Tip: Print dialog me “Destination” → “Save as PDF” select kar lo.
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -1420,6 +1867,139 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
     color: #ffffff; 
     border: 1px solid #334155; 
     box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  }
+
+  /* TABLE: keep headers/values single-line + horizontal scroll */
+  .student-table-wrap { overflow-x: auto; }
+  .student-table { table-layout: auto; }
+  .student-table th,
+  .student-table td {
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+  .student-table th { font-size: 13px; }
+  .student-table td { font-size: 13px; }
+  .student-table tbody tr {
+    transition: background-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  }
+  .student-table tbody tr:hover {
+    background: ${darkMode ? "rgba(212,162,76,0.08)" : "rgba(15,76,108,0.06)"};
+  }
+  .student-table tbody tr:hover td {
+    background: transparent; /* keep row hover consistent with bootstrap cells */
+  }
+
+  .student-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid ${darkMode ? "rgba(148,163,184,0.25)" : "#e5e7eb"};
+    background: ${darkMode ? "rgba(15,23,42,0.55)" : "#f8fafc"};
+    display: grid;
+    place-items: center;
+  }
+  .student-avatar img { width: 100%; height: 100%; object-fit: cover; display:block; }
+  .student-avatar-fallback { font-weight: 800; color: ${darkMode ? "#e2e8f0" : "#0F4C6C"}; font-size: 13px; }
+
+  /* EDIT MODAL (professional) */
+  .edit-modal {
+    width: min(1100px, calc(100vw - 28px));
+    max-height: calc(100vh - 28px);
+    overflow: hidden;
+    background: ${darkMode ? "#0b1220" : "#ffffff"};
+    color: ${darkMode ? "#f1f5f9" : "#111827"};
+    border-radius: 16px;
+    border: 1px solid ${darkMode ? "rgba(148,163,184,0.18)" : "#e5e7eb"};
+    box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+    display: flex;
+    flex-direction: column;
+  }
+  .edit-modal.dark { background: #0b1220; color: #f1f5f9; }
+  .edit-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 18px;
+    border-bottom: 1px solid ${darkMode ? "rgba(148,163,184,0.18)" : "#e5e7eb"};
+  }
+  .edit-modal-title { font-weight: 800; font-size: 16px; }
+  .edit-modal-subtitle { font-size: 12px; opacity: 0.75; }
+  .edit-modal-body {
+    padding: 16px 18px;
+    overflow: auto;
+  }
+  .edit-photo-strip {
+    border: 1px solid ${darkMode ? "rgba(148,163,184,0.18)" : "#e5e7eb"};
+    background: ${darkMode ? "rgba(15,23,42,0.35)" : "#f8fafc"};
+  }
+  .edit-photo-preview {
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid ${darkMode ? "rgba(148,163,184,0.25)" : "#e5e7eb"};
+    background: ${darkMode ? "rgba(15,23,42,0.55)" : "#ffffff"};
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+  }
+  .edit-photo-preview img { width: 100%; height: 100%; object-fit: cover; display:block; }
+
+  /* PRINT MODAL */
+  .print-modal {
+    width: min(980px, calc(100vw - 28px));
+    max-height: calc(100vh - 28px);
+    overflow: hidden;
+    background: ${darkMode ? "#0b1220" : "#ffffff"};
+    color: ${darkMode ? "#f1f5f9" : "#111827"};
+    border-radius: 16px;
+    border: 1px solid ${darkMode ? "rgba(148,163,184,0.18)" : "#e5e7eb"};
+    box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+    display: flex;
+    flex-direction: column;
+  }
+  .print-modal-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    padding: 16px 18px;
+    border-bottom: 1px solid ${darkMode ? "rgba(148,163,184,0.18)" : "#e5e7eb"};
+  }
+  .print-modal-title { font-weight: 800; font-size: 16px; }
+  .print-modal-subtitle { font-size: 12px; opacity: 0.75; }
+  .print-modal-body { padding: 16px 18px; overflow: auto; }
+  .print-hint { margin-top: 10px; font-size: 12px; opacity: 0.75; }
+
+  .print-card { background:#fff; border:1px solid #e5e7eb; border-radius:16px; overflow:hidden; box-shadow:0 16px 45px rgba(15,76,108,.12); }
+  .print-card-header { padding:16px 18px; background: linear-gradient(90deg,#0F4C6C,#1B5E84); color:#fff; display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .print-card-heading { font-weight: 800; font-size: 16px; }
+  .print-card-badge { background: rgba(255,255,255,0.18); padding: 6px 10px; border-radius: 999px; font-weight: 800; font-size: 12px; }
+  .print-card-content { padding: 18px; display:grid; grid-template-columns: 140px 1fr; gap: 16px; }
+  .print-card-photo { width:140px; height:170px; border-radius:14px; border:1px solid #e5e7eb; background:#f8fafc; overflow:hidden; display:grid; place-items:center; }
+  .print-card-photo img { width:100%; height:100%; object-fit:cover; display:block; }
+  .print-card-no-photo { font-size: 12px; color:#64748b; }
+  .print-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+  .print-field { border:1px solid #e5e7eb; border-radius:12px; padding:10px 12px; background:#fff; }
+  .print-label { font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.06em; }
+  .print-val { margin-top:4px; font-size:14px; font-weight:650; color:#111827; }
+
+  @media print {
+    .no-print { display:none !important; }
+    body * { visibility: hidden !important; }
+    .print-area, .print-area * { visibility: visible !important; }
+    .print-area { position: absolute !important; left: 0; top: 0; width: 100% !important; }
+    .print-card { box-shadow: none !important; }
+  }
+  .edit-modal-footer {
+    padding: 14px 18px;
+    border-top: 1px solid ${darkMode ? "rgba(148,163,184,0.18)" : "#e5e7eb"};
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    background: ${darkMode ? "rgba(15,23,42,0.6)" : "#f8fafc"};
   }
 `}</style>
     </div>

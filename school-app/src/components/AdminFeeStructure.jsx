@@ -11,6 +11,7 @@ import {
   writeBatch,
   deleteField,
 } from "firebase/firestore";
+import { canAdminAction } from "../utils/adminRbac";
 import {
   normalizeClassKey,
   monthlyTotalWithExam,
@@ -110,7 +111,10 @@ const CLASS_OPTIONS = [
   "12",
 ];
 
-function AdminFeeStructure({ darkMode }) {
+function AdminFeeStructure({
+  darkMode,
+  adminAccess = { role: "admin", perms: {} },
+}) {
   const [sessions, setSessions] = useState([]);
   const [newSession, setNewSession] = useState("");
   const [selectedSession, setSelectedSession] = useState("");
@@ -152,6 +156,10 @@ function AdminFeeStructure({ darkMode }) {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
   const [msgType, setMsgType] = useState("success");
+
+  const canManageFeeStructure = useMemo(() => {
+    return canAdminAction(adminAccess, "fees", "structure", false);
+  }, [adminAccess]);
 
   const canSave = useMemo(() => {
     return selectedSession && selectedClass && monthlyTuitionFee !== "";
@@ -255,6 +263,10 @@ function AdminFeeStructure({ darkMode }) {
   }, [selectedSession, sessions]);
 
   const saveSessionCalendarDates = async () => {
+    if (!canManageFeeStructure) {
+      showMessage("Access denied: you do not have permission to manage fees.", "error");
+      return;
+    }
     if (!selectedSession) {
       showMessage("Select a session first.", "error");
       return;
@@ -300,6 +312,10 @@ function AdminFeeStructure({ darkMode }) {
   };
 
   const createSession = async () => {
+    if (!canManageFeeStructure) {
+      showMessage("Access denied: you do not have permission to manage fees.", "error");
+      return;
+    }
     const trimmed = newSession.trim();
     if (!trimmed) {
       showMessage("Enter a session identifier (e.g. 2026–2027).", "error");
@@ -351,6 +367,10 @@ function AdminFeeStructure({ darkMode }) {
   };
 
   const saveFeeStructure = async () => {
+    if (!canManageFeeStructure) {
+      showMessage("Access denied: you do not have permission to manage fees.", "error");
+      return;
+    }
     if (!canSave) {
       showMessage("Select session, class, and enter monthly tuition.", "error");
       return;
@@ -405,6 +425,10 @@ function AdminFeeStructure({ darkMode }) {
   };
 
   const markActiveSession = async () => {
+    if (!canManageFeeStructure) {
+      showMessage("Access denied: you do not have permission to manage fees.", "error");
+      return;
+    }
     if (!selectedSession) {
       showMessage("Select an academic session first.", "error");
       return;
@@ -443,6 +467,10 @@ function AdminFeeStructure({ darkMode }) {
   };
 
   const expireSelectedSession = async () => {
+    if (!canManageFeeStructure) {
+      showMessage("Access denied: you do not have permission to manage fees.", "error");
+      return;
+    }
     if (!selectedSession) {
       showMessage("Select an academic session first.", "error");
       return;
@@ -480,6 +508,10 @@ function AdminFeeStructure({ darkMode }) {
   };
 
   const applyFeesToExistingStudents = async () => {
+    if (!canManageFeeStructure) {
+      showMessage("Access denied: you do not have permission to manage fees.", "error");
+      return;
+    }
     if (!selectedSession || !selectedClass || monthlyTuitionFee === "") {
       showMessage(
         "Select a session and class, and enter monthly tuition first.",
@@ -651,6 +683,12 @@ function AdminFeeStructure({ darkMode }) {
       }}
     >
       <h4 className="fw-bold mb-2 page-title">Session and class fee structure</h4>
+      {!canManageFeeStructure && (
+        <div className="custom-msg error">
+          Access denied: you do not have permission to open or manage Fee
+          Structure.
+        </div>
+      )}
      
       {msg && (
         <div className={`custom-msg ${msgType === "error" ? "error" : "ok"}`}>
@@ -865,7 +903,7 @@ function AdminFeeStructure({ darkMode }) {
                   type="button"
                   className="btn save-btn w-100"
                   onClick={saveSessionCalendarDates}
-                  disabled={saving || !selectedSession}
+              disabled={saving || !selectedSession || !canManageFeeStructure}
                 >
                   {saving ? "Saving…" : "Save calendar dates"}
                 </button>
@@ -948,7 +986,7 @@ function AdminFeeStructure({ darkMode }) {
           </div>
 
           <div className="col-md-4">
-            <label className="field-label">Exam fee (optional, ₹)</label>
+            <label className="field-label">Examination fee (optional, ₹)</label>
             <input
               type="number"
               className="form-control custom-input"
@@ -986,7 +1024,7 @@ function AdminFeeStructure({ darkMode }) {
           </div>
 
           <div className="col-md-4">
-            <label className="field-label">Admission fee</label>
+            <label className="field-label">Admission fee (April only, ₹)</label>
             <input
               type="number"
               className="form-control custom-input"
@@ -997,7 +1035,7 @@ function AdminFeeStructure({ darkMode }) {
             
           </div>
           <div className="col-md-4">
-            <label className="field-label">Sundry charges</label>
+            <label className="field-label">Sundry charges (April only, ₹)</label>
             <input
               type="number"
               className="form-control custom-input"
@@ -1014,14 +1052,20 @@ function AdminFeeStructure({ darkMode }) {
           <button
             className="btn apply-btn me-2"
             onClick={applyFeesToExistingStudents}
-            disabled={applying || saving || loading || isSelectedSessionExpired}
+            disabled={
+              applying ||
+              saving ||
+              loading ||
+              isSelectedSessionExpired ||
+              !canManageFeeStructure
+            }
           >
             {applying ? "Applying…" : "Apply to students in this class"}
           </button>
           <button
             className="btn save-btn"
             onClick={saveFeeStructure}
-            disabled={saving || loading || isSelectedSessionExpired}
+            disabled={saving || loading || isSelectedSessionExpired || !canManageFeeStructure}
           >
             {saving ? "Saving…" : "Save fee structure"}
           </button>

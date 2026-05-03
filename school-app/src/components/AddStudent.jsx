@@ -274,6 +274,30 @@ function feeMonthFromForm(selectedMonth, feesDate, months) {
   return currentMonthKey(new Date(y, new Date().getMonth(), 1));
 }
 
+const MAX_PHOTO_SIZE = 220 * 1024; // keep Firestore doc safe (base64 expands)
+
+function isAllowedStudentPhoto(file) {
+  if (!file) return false;
+  const t = String(file.type || "").toLowerCase();
+  if (t.startsWith("image/")) return true;
+  const name = String(file.name || "").toLowerCase();
+  return (
+    name.endsWith(".png") ||
+    name.endsWith(".jpg") ||
+    name.endsWith(".jpeg") ||
+    name.endsWith(".webp")
+  );
+}
+
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result || ""));
+    r.onerror = () => reject(new Error("Could not read photo"));
+    r.readAsDataURL(file);
+  });
+}
+
 function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
   const [rollNo, setRollNo] = useState("");
   const [email, setEmail] = useState("");
@@ -301,6 +325,8 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
   const [loading, setLoading] = useState(false);
   
   const [displayRegistrationNo, setDisplayRegistrationNo] = useState("");
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState("");
 
   const months = [
     "January",
@@ -488,8 +514,9 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
 
       const studentRef = doc(db, "students", email);
       const existingSnap = await getDoc(studentRef);
+      const existing = existingSnap.exists() ? existingSnap.data() || {} : {};
       const existingReg = String(
-        existingSnap.exists() ? existingSnap.data()?.registrationNo || "" : "",
+        existingSnap.exists() ? existing.registrationNo || "" : "",
       ).trim();
       let registrationNo = existingReg;
       if (!registrationNo) {
@@ -503,8 +530,33 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
         registrationNo = await allocateRegistrationNumber(db, { sessionId: sid });
       }
 
+      // Photo handling (optional)
+      let photoDataUrl = "";
+      let photoFileName = "";
+      let photoMimeType = "";
+      if (photoFile) {
+        if (!isAllowedStudentPhoto(photoFile)) {
+          alert("Photo must be an image (png/jpg/webp).");
+          setLoading(false);
+          return;
+        }
+        if (photoFile.size > MAX_PHOTO_SIZE) {
+          alert(`Photo must be under ${Math.floor(MAX_PHOTO_SIZE / 1024)} KB.`);
+          setLoading(false);
+          return;
+        }
+        photoDataUrl = await readFileAsDataURL(photoFile);
+        photoFileName = photoFile.name || "photo";
+        photoMimeType = photoFile.type || "image/*";
+      } else if (existing.photoDataUrl) {
+        // Preserve existing photo when editing an existing student without selecting a new photo
+        photoDataUrl = String(existing.photoDataUrl || "");
+        photoFileName = String(existing.photoFileName || "");
+        photoMimeType = String(existing.photoMimeType || "");
+      }
+
       // 1. Main Student Record
-      await setDoc(studentRef, {
+      const studentPayload = {
         rollNo,
         registrationNo,
         email,
@@ -516,6 +568,14 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
         aadharNumber: aad,
         class: cls,
         gender,
+        ...(photoDataUrl
+          ? {
+              photoDataUrl,
+              photoFileName,
+              photoMimeType,
+              photoUpdatedAt: Timestamp.now(),
+            }
+          : {}),
         usesBus,
         monthlyBusFee:
           usesBus && overrideTransportFee ? Number(monthlyBusFee || 0) : 0,
@@ -538,9 +598,10 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
         feeStatus: status,
         feeDate: Timestamp.fromDate(new Date(feesDate)),
         createdAt: existingSnap.exists()
-          ? existingSnap.data()?.createdAt || Timestamp.now()
+          ? existing.createdAt || Timestamp.now()
           : Timestamp.now(),
-      });
+      };
+      await setDoc(studentRef, studentPayload);
 
       // 2. Fees History Entry
       const historyRef = doc(db, "students", email, "fees", monthId);
@@ -585,6 +646,8 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
       setTotalFees("");
       setPaidFees("");
       setFeesDate("");
+      setPhotoFile(null);
+      setPhotoPreview("");
     } catch (error) {
       console.error("Error:", error);
       alert("Could not save. Please try again or contact support.");
@@ -630,6 +693,100 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
       >
         {/* Grid: 5 rows (md+): row1–2 = 4 cols each, row3 = 4 cols (2 fields + spacers), row4 = divider, row5 = submit */}
         <div className="row g-3">
+          <div className="col-12">
+            <div
+              className="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-2"
+              style={{
+                padding: "12px 14px",
+                borderRadius: "14px",
+                border: `1px solid ${darkMode ? "#334155" : "#e5e7eb"}`,
+                background: darkMode ? "rgba(15,23,42,0.35)" : "#f8fafc",
+              }}
+            >
+              <div className="d-flex align-items-center gap-3">
+                <div
+                  className="photo-preview"
+                  style={{
+                    width: 54,
+                    height: 54,
+                    borderRadius: 14,
+                    overflow: "hidden",
+                    background: darkMode ? "#0f172a" : "#ffffff",
+                    border: `1px solid ${darkMode ? "#334155" : "#e5e7eb"}`,
+                    display: "grid",
+                    placeItems: "center",
+                    flex: "0 0 auto",
+                  }}
+                  title="Student photo"
+                >
+                  {photoPreview ? (
+                    <img
+                      src={photoPreview}
+                      alt="Student"
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  ) : (
+                    <span
+                      className="text-muted small"
+                      style={{ opacity: darkMode ? 0.7 : 0.8 }}
+                    >
+                      No photo
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <div className="fw-bold" style={{ fontSize: 14 }}>
+                    Student photo (optional)
+                  </div>
+                  <div className="text-muted small">
+                    PNG/JPG/WebP · max {Math.floor(MAX_PHOTO_SIZE / 1024)} KB
+                  </div>
+                </div>
+              </div>
+
+              <div className="d-flex align-items-center gap-2 flex-wrap">
+                <label className="btn btn-outline-primary btn-sm mb-0">
+                  Upload photo
+                  <input
+                    type="file"
+                    accept="image/*,.png,.jpg,.jpeg,.webp"
+                    hidden
+                    onChange={(e) => {
+                      const f = e.target.files?.[0] || null;
+                      if (!f) return;
+                      if (!isAllowedStudentPhoto(f)) {
+                        alert("Photo must be an image (png/jpg/webp).");
+                        e.target.value = "";
+                        return;
+                      }
+                      if (f.size > MAX_PHOTO_SIZE) {
+                        alert(
+                          `Photo must be under ${Math.floor(MAX_PHOTO_SIZE / 1024)} KB.`,
+                        );
+                        e.target.value = "";
+                        return;
+                      }
+                      setPhotoFile(f);
+                      const url = URL.createObjectURL(f);
+                      setPhotoPreview(url);
+                    }}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="btn btn-outline-danger btn-sm"
+                  disabled={!photoPreview}
+                  onClick={() => {
+                    setPhotoFile(null);
+                    setPhotoPreview("");
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="col-12 col-md-3">
             <label className="label">Roll number</label>
             <input
@@ -750,7 +907,11 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
             <select
               className="form-select custom-input"
               value={scholarshipYes ? "yes" : "no"}
-              onChange={(e) => setScholarshipYes(e.target.value === "yes")}
+              onChange={(e) => {
+                const yes = e.target.value === "yes";
+                setScholarshipYes(yes);
+                if (!yes) setScholarshipNote("");
+              }}
             >
               <option value="no">No</option>
               <option value="yes">Yes</option>
@@ -765,6 +926,7 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
               onChange={(e) => setScholarshipNote(e.target.value)}
               placeholder="Optional"
               maxLength={240}
+              disabled={!scholarshipYes}
             />
           </div>
           <div className="col-12 col-md-3">

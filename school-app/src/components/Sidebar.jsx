@@ -112,7 +112,6 @@ import {
   HiOutlineDocumentText,
   HiOutlineClipboardList,
   HiOutlineCurrencyRupee,
-  HiOutlineKey,
 } from "react-icons/hi";
 import { canAccessAdminPage, roleLabel } from "../utils/adminRbac";
 
@@ -148,11 +147,6 @@ function Sidebar({ setPage, activePage, adminRole = "admin" }) {
         id: "fee-structure",
         label: "Fee Structure",
         icon: <HiOutlineCurrencyRupee />,
-      },
-      {
-        id: "staff-access",
-        label: "Staff & Access",
-        icon: <HiOutlineKey />,
       },
     ];
     return all.filter((x) => canAccessAdminPage(adminRole, x.id));
