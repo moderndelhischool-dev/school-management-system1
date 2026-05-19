@@ -217,10 +217,13 @@ export function monthlyBaseForStudent(
   const km = Number(student.busDistanceKm ?? student.busKm ?? 0);
   const usesBus = !!student.usesBus;
   const manualBus = Number(student.monthlyBusFee || 0);
+  const overrideTransport = !!student.overrideTransportFee;
 
   let bus = 0;
   if (!usesBus) {
     bus = 0;
+  } else if (overrideTransport && manualBus > 0) {
+    bus = manualBus;
   } else if (ratePerKm > 0 && km > 0) {
     bus = Math.round(km * ratePerKm * 100) / 100;
   } else if (manualBus > 0) {

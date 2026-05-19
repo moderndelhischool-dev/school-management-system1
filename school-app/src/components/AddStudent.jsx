@@ -298,6 +298,30 @@ function readFileAsDataURL(file) {
   });
 }
 
+function ReqMark() {
+  return (
+    <span className="text-danger ms-1" title="Required">
+      *
+    </span>
+  );
+}
+
+function FieldLabel({ children, required = false }) {
+  return (
+    <label className="label">
+      {children}
+      {required ? <ReqMark /> : null}
+    </label>
+  );
+}
+
+/** First letter of each word capitalized — e.g. anil → Anil, paramjeet kaur → Paramjeet Kaur */
+function capitalizePersonName(value) {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .replace(/(^|\s)\S/g, (ch) => ch.toUpperCase());
+}
+
 function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
   const [rollNo, setRollNo] = useState("");
   const [email, setEmail] = useState("");
@@ -314,6 +338,7 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
   const [monthlyBusFee, setMonthlyBusFee] = useState("");
   const [busDistanceKm, setBusDistanceKm] = useState("");
   const [scholarshipYes, setScholarshipYes] = useState(false);
+  const [additionalScholarshipOff, setAdditionalScholarshipOff] = useState("");
   const [scholarshipNote, setScholarshipNote] = useState("");
   const [feeMaps, setFeeMaps] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState("");
@@ -325,6 +350,7 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
   const [loading, setLoading] = useState(false);
   
   const [displayRegistrationNo, setDisplayRegistrationNo] = useState("");
+  const [lastSavedRegistrationNo, setLastSavedRegistrationNo] = useState("");
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState("");
 
@@ -382,16 +408,25 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
     return Number(feeMaps.busRatePerKmMap?.[selectedClassKey] ?? 0) || 0;
   }, [feeMaps?.busRatePerKmMap, selectedClassKey]);
 
+  const defaultClassScholarship = useMemo(() => {
+    if (!feeMaps?.scholarshipMap || !selectedClassKey) return 0;
+    return Number(feeMaps.scholarshipMap?.[selectedClassKey] ?? 0) || 0;
+  }, [feeMaps?.scholarshipMap, selectedClassKey]);
+
+  const resolvedScholarshipAmount = useMemo(() => {
+    if (!scholarshipYes) return 0;
+    const extra = Math.max(0, Number(additionalScholarshipOff) || 0);
+    return defaultClassScholarship + extra;
+  }, [scholarshipYes, defaultClassScholarship, additionalScholarshipOff]);
+
   useEffect(() => {
     loadActiveSessionClassTuitionBusMap(db).then(setFeeMaps);
   }, []);
 
   useEffect(() => {
     if (!feeMaps?.tuitionMap || !String(cls || "").trim()) return;
-    const ck = normalizeClassKey(cls);
-    const schFrom = Number(feeMaps.scholarshipMap?.[ck] ?? 0);
-    const busRate = Number(feeMaps.busRatePerKmMap?.[ck] ?? 0);
     const feeMonthKey = feeMonthFromForm(selectedMonth, feesDate, months);
+    const schAmt = resolvedScholarshipAmount;
     const stub = {
       class: cls,
       usesBus,
@@ -399,10 +434,10 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
         usesBus && !overrideTransportFee ? Number(busDistanceKm || 0) : 0,
       monthlyBusFee:
         usesBus && overrideTransportFee ? Number(monthlyBusFee || 0) : 0,
-      scholarshipAmount: scholarshipYes ? schFrom : 0,
+      scholarshipAmount: schAmt,
       scholarshipPercent: 0,
       scholarshipSessionId:
-        scholarshipYes && schFrom > 0 ? feeMaps.activeSessionId || "" : "",
+        scholarshipYes && schAmt > 0 ? feeMaps.activeSessionId || "" : "",
       feeMonth: feeMonthKey,
     };
     const line = monthlyTotalWithExam(
@@ -436,6 +471,8 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
     busDistanceKm,
     monthlyBusFee,
     scholarshipYes,
+    additionalScholarshipOff,
+    resolvedScholarshipAmount,
     selectedMonth,
     feesDate,
   ]);
@@ -471,13 +508,15 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
     }
     setLoading(true);
     setDisplayRegistrationNo("");
+    setLastSavedRegistrationNo("");
 
     try {
       const maps = await loadActiveSessionClassTuitionBusMap(db);
       const sid = maps.activeSessionId || "";
       const ck = normalizeClassKey(cls);
       const schFrom = Number(maps.scholarshipMap?.[ck] ?? 0);
-      const schAmt = scholarshipYes ? schFrom : 0;
+      const schExtra = Math.max(0, Number(additionalScholarshipOff) || 0);
+      const schAmt = scholarshipYes ? Math.max(0, schFrom + schExtra) : 0;
       const busRate = Number(maps.busRatePerKmMap?.[ck] ?? 0);
       const monthId = feeMonthFromForm(selectedMonth, feesDate, months);
 
@@ -560,9 +599,9 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
         rollNo,
         registrationNo,
         email,
-        name,
-        fatherName,
-        motherName: String(motherName || "").trim(),
+        name: capitalizePersonName(String(name || "").trim()),
+        fatherName: capitalizePersonName(String(fatherName || "").trim()),
+        motherName: capitalizePersonName(String(motherName || "").trim()),
         primaryContactNumber: primaryPhone,
         alternateContactNumber: altPhone,
         aadharNumber: aad,
@@ -577,9 +616,11 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
             }
           : {}),
         usesBus,
+        overrideTransportFee: usesBus ? !!overrideTransportFee : false,
         monthlyBusFee:
           usesBus && overrideTransportFee ? Number(monthlyBusFee || 0) : 0,
-        busDistanceKm: usesBus ? Number(busDistanceKm || 0) : 0,
+        busDistanceKm:
+          usesBus && !overrideTransportFee ? Number(busDistanceKm || 0) : 0,
         scholarshipAmount: schAmt,
         scholarshipPercent: 0,
         scholarshipSessionId: schAmt > 0 ? sid : "",
@@ -624,9 +665,10 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
       );
 
       setSuccessMsg("Student record saved successfully.");
-      setDisplayRegistrationNo(registrationNo);
+      setLastSavedRegistrationNo(registrationNo);
 
       // Form Reset
+      setDisplayRegistrationNo("");
       setRollNo("");
       setEmail("");
       setName("");
@@ -638,9 +680,11 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
       setCls("");
       setGender("");
       setUsesBus(false);
+      setOverrideTransportFee(false);
       setMonthlyBusFee("");
       setBusDistanceKm("");
       setScholarshipYes(false);
+      setAdditionalScholarshipOff("");
       setScholarshipNote("");
       setSelectedMonth("");
       setTotalFees("");
@@ -654,7 +698,10 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
     }
 
     setLoading(false);
-    setTimeout(() => setSuccessMsg(""), 3000);
+    setTimeout(() => {
+      setSuccessMsg("");
+      setLastSavedRegistrationNo("");
+    }, 3000);
   };
 
   return (
@@ -667,7 +714,13 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
         borderRadius: "20px",
       }}
     >
-      <h4 className="heading mb-4">Register new student</h4>
+      <h4 className="heading mb-2">Register new student</h4>
+      <p
+        className="small mb-4"
+        style={{ color: darkMode ? "#94a3b8" : "#64748b" }}
+      >
+        <span className="text-danger">*</span> Required field
+      </p>
 
       {successMsg && (
         <div
@@ -675,10 +728,10 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
           style={{ borderRadius: "12px" }}
         >
           {successMsg}
-          {displayRegistrationNo ? (
+          {lastSavedRegistrationNo ? (
             <div className="mt-2 pt-2" style={{ borderTop: "1px solid rgba(25,135,84,0.25)" }}>
               <strong>Registration number:</strong>{" "}
-              <span className="font-monospace fs-5">{displayRegistrationNo}</span>
+              <span className="font-monospace fs-5">{lastSavedRegistrationNo}</span>
             </div>
           ) : null}
         </div>
@@ -788,7 +841,7 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
           </div>
 
           <div className="col-12 col-md-3">
-            <label className="label">Roll number</label>
+            <FieldLabel required>Roll number</FieldLabel>
             <input
               className="form-control custom-input"
               value={rollNo}
@@ -809,16 +862,16 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
 
           </div>
           <div className="col-12 col-md-3">
-            <label className="label">Student name</label>
+            <FieldLabel required>Student name</FieldLabel>
             <input
               className="form-control custom-input"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => setName(capitalizePersonName(e.target.value))}
               placeholder="Full name"
             />
           </div>
           <div className="col-12 col-md-3">
-            <label className="label">Email address</label>
+            <FieldLabel required>Email address</FieldLabel>
             <input
               className="form-control custom-input"
               value={email}
@@ -827,11 +880,13 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
             />
           </div>
           <div className="col-12 col-md-3">
-            <label className="label">Father's name</label>
+            <FieldLabel required>Father&apos;s name</FieldLabel>
             <input
               className="form-control custom-input"
               value={fatherName}
-              onChange={(e) => setFatherName(e.target.value)}
+              onChange={(e) =>
+                setFatherName(capitalizePersonName(e.target.value))
+              }
             />
           </div>
           <div className="col-12 col-md-3">
@@ -839,12 +894,14 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
             <input
               className="form-control custom-input"
               value={motherName}
-              onChange={(e) => setMotherName(e.target.value)}
+              onChange={(e) =>
+                setMotherName(capitalizePersonName(e.target.value))
+              }
               placeholder="Optional"
             />
           </div>
           <div className="col-12 col-md-3">
-            <label className="label">Primary contact number</label>
+            <FieldLabel required>Primary contact number</FieldLabel>
             <input
               className="form-control custom-input"
               value={primaryContactNumber}
@@ -876,7 +933,7 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
           </div>
 
           <div className="col-12 col-md-3">
-            <label className="label">Class / Grade</label>
+            <FieldLabel required>Class / Grade</FieldLabel>
             <select
               className="form-select custom-input"
               value={cls}
@@ -910,13 +967,52 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
               onChange={(e) => {
                 const yes = e.target.value === "yes";
                 setScholarshipYes(yes);
-                if (!yes) setScholarshipNote("");
+                if (!yes) {
+                  setAdditionalScholarshipOff("");
+                  setScholarshipNote("");
+                }
               }}
             >
               <option value="no">No</option>
               <option value="yes">Yes</option>
             </select>
-            
+          </div>
+          <div className="col-12 col-md-3">
+            <label className="label">Default scholarship (₹ / month)</label>
+            <input
+              type="number"
+              className="form-control custom-input"
+              readOnly
+              value={scholarshipYes ? defaultClassScholarship : ""}
+              placeholder={scholarshipYes ? "0" : "—"}
+              title="From Fee Structure for this class"
+              disabled={!scholarshipYes}
+            />
+          </div>
+          <div className="col-12 col-md-3">
+            <label className="label">Additional off (₹ / month)</label>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              className="form-control custom-input"
+              value={additionalScholarshipOff}
+              onChange={(e) => setAdditionalScholarshipOff(e.target.value)}
+              placeholder="0"
+              disabled={!scholarshipYes}
+              title="Extra discount on top of class default"
+            />
+            {scholarshipYes && (
+              <small
+                className="d-block mt-1"
+                style={{
+                  fontSize: 11,
+                  color: darkMode ? "#94a3b8" : "#64748b",
+                }}
+              >
+                Total scholarship: ₹{resolvedScholarshipAmount}/month
+              </small>
+            )}
           </div>
           <div className="col-12 col-md-3">
             <label className="label">Scholarship notes (optional)</label>
@@ -930,7 +1026,7 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
             />
           </div>
           <div className="col-12 col-md-3">
-            <label className="label">Gender</label>
+            <FieldLabel required>Gender</FieldLabel>
             <select
               className="form-select custom-input"
               value={gender}
@@ -943,7 +1039,7 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
             </select>
           </div>
           <div className="col-12 col-md-3">
-            <label className="label">Billing month</label>
+            <FieldLabel required>Billing month</FieldLabel>
             <select
               className="form-select custom-input"
               value={selectedMonth}
@@ -958,7 +1054,7 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
             </select>
           </div>
           <div className="col-12 col-md-3">
-            <label className="label">Billing date</label>
+            <FieldLabel required>Billing date</FieldLabel>
             <input
               type="date"
               className="form-control custom-input"
@@ -1042,7 +1138,9 @@ function AddStudent({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
             
           </div>
           <div className="col-12 col-md-3">
-            <label className="label text-success">Amount paid (₹)</label>
+            <FieldLabel required>
+              <span className="text-success">Amount paid (₹)</span>
+            </FieldLabel>
             <input
               type="number"
               className="form-control custom-input border-success"

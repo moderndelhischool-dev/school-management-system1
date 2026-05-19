@@ -668,6 +668,46 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
     return "Pending";
   };
 
+  const inferOverrideTransport = (student, busRatePerKmMap) => {
+    if (student?.overrideTransportFee === true) return true;
+    if (student?.overrideTransportFee === false) return false;
+    const ck = normalizeClassKey(student?.class);
+    const rate = Number(busRatePerKmMap?.[ck] || 0);
+    const km = Number(student?.busDistanceKm || 0);
+    const manual = Number(student?.monthlyBusFee || 0);
+    if (rate > 0 && km > 0) {
+      const calc = Math.round(km * rate * 100) / 100;
+      return manual > 0 && Math.abs(manual - calc) > 0.01;
+    }
+    return manual > 0 && rate <= 0;
+  };
+
+  /** Fee calc stub — km mode ignores stored monthlyBusFee so km edits update live */
+  const getEditFeeStudent = () => {
+    if (!editStudent) return null;
+    const usesBus = !!editStudent.usesBus;
+    const override = !!editStudent.overrideTransportFee;
+    return {
+      ...editStudent,
+      overrideTransportFee: override,
+      busDistanceKm:
+        usesBus && !override ? Number(editStudent.busDistanceKm || 0) : 0,
+      monthlyBusFee:
+        usesBus && override ? Number(editStudent.monthlyBusFee || 0) : 0,
+    };
+  };
+
+  const getEditMonthlyBus = () => {
+    const stub = getEditFeeStudent();
+    if (!stub) return 0;
+    return monthlyBaseForStudent(
+      classTuitionMap,
+      classBusMap,
+      stub,
+      classBusRatePerKmMap,
+    ).bus;
+  };
+
   const getEditTuition = () => (editStudent ? getClassTuition(editStudent.class) : 0);
 
   const getEditFeeMonthKey = () => {
@@ -690,19 +730,20 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
       : 0;
 
   const getEditTotal = () => {
-    if (!editStudent) return 0;
+    const stub = getEditFeeStudent();
+    if (!stub) return 0;
     const { total: line } = monthlyTotalWithExam(
       classTuitionMap,
       classBusMap,
       classExamFeeMap,
       classExamMonthsMap,
-      editStudent,
+      stub,
       getEditFeeMonthKey(),
       classBusRatePerKmMap,
       classAdmissionFeeMap,
       classSundryChargesMap,
     );
-    const carry = Number(editStudent.carryForwardTotal || 0);
+    const carry = Number(stub.carryForwardTotal || 0);
     return line + carry;
   };
 
@@ -882,13 +923,26 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
       monthId,
     );
 
+    const overrideTransport = !!editStudent.overrideTransportFee;
+    const feeStub = {
+      ...editStudent,
+      overrideTransportFee: overrideTransport,
+      busDistanceKm:
+        usesBus && !overrideTransport
+          ? Number(editStudent.busDistanceKm || 0)
+          : 0,
+      monthlyBusFee:
+        usesBus && overrideTransport
+          ? Number(editStudent.monthlyBusFee || 0)
+          : 0,
+    };
     const {
       bus: resolvedMonthlyBus,
       tuition: effectiveTuition,
     } = monthlyBaseForStudent(
       classTuitionMap,
       classBusMap,
-      editStudent,
+      feeStub,
       classBusRatePerKmMap,
     );
     const scholarshipAmt = Math.max(
@@ -932,8 +986,16 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
       await updateDoc(studentRef, {
         ...editStudent,
         usesBus,
-        busDistanceKm: usesBus ? Number(editStudent.busDistanceKm || 0) : 0,
-        monthlyBusFee: usesBus ? resolvedMonthlyBus : 0,
+        overrideTransportFee: usesBus ? overrideTransport : false,
+        busDistanceKm:
+          usesBus && !overrideTransport
+            ? Number(editStudent.busDistanceKm || 0)
+            : 0,
+        monthlyBusFee:
+          usesBus && overrideTransport
+            ? Number(editStudent.monthlyBusFee || 0)
+            : 0,
+        monthlyBusFeeApplied: resolvedMonthlyBus,
         scholarshipAmount: scholarshipAmt,
         scholarshipSessionId:
           scholarshipAmt > 0
@@ -1203,7 +1265,16 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
                         setEditStudent({
                           ...s,
                           usesBus: !!s.usesBus,
-                          monthlyBusFee: s.monthlyBusFee ?? "",
+                          overrideTransportFee: inferOverrideTransport(
+                            s,
+                            classBusRatePerKmMap,
+                          ),
+                          monthlyBusFee: inferOverrideTransport(
+                            s,
+                            classBusRatePerKmMap,
+                          )
+                            ? (s.monthlyBusFee ?? "")
+                            : "",
                           busDistanceKm:
                             s.busDistanceKm !== undefined && s.busDistanceKm !== null
                               ? s.busDistanceKm
@@ -1544,15 +1615,42 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
               <select
                 className="form-control dark-input"
                 value={editStudent.usesBus ? "yes" : "no"}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const yes = e.target.value === "yes";
                   setEditStudent({
                     ...editStudent,
-                    usesBus: e.target.value === "yes",
-                  })
-                }
+                    usesBus: yes,
+                    ...(!yes
+                      ? {
+                          busDistanceKm: "",
+                          monthlyBusFee: "",
+                          overrideTransportFee: false,
+                        }
+                      : {}),
+                  });
+                }}
               >
                 <option value="no">No</option>
                 <option value="yes">Yes</option>
+              </select>
+            </div>
+            <div className="col-md-4">
+              <label className="small fw-bold">Transport fee override</label>
+              <select
+                className="form-control dark-input"
+                value={editStudent.overrideTransportFee ? "yes" : "no"}
+                disabled={!editStudent.usesBus}
+                onChange={(e) => {
+                  const yes = e.target.value === "yes";
+                  setEditStudent({
+                    ...editStudent,
+                    overrideTransportFee: yes,
+                    ...(yes ? {} : { monthlyBusFee: "" }),
+                  });
+                }}
+              >
+                <option value="no">No — km × class rate</option>
+                <option value="yes">Yes — manual fee</option>
               </select>
             </div>
             <div className="col-md-4">
@@ -1563,7 +1661,9 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
                 step="0.1"
                 className="form-control dark-input"
                 value={editStudent.busDistanceKm ?? ""}
-                disabled={!editStudent.usesBus}
+                disabled={
+                  !editStudent.usesBus || !!editStudent.overrideTransportFee
+                }
                 placeholder="e.g. 4.5"
                 onChange={(e) =>
                   setEditStudent({
@@ -1580,8 +1680,10 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
                 type="number"
                 className="form-control dark-input"
                 value={editStudent.monthlyBusFee || ""}
-                disabled={!editStudent.usesBus}
-                placeholder="Use when no per-km rate"
+                disabled={
+                  !editStudent.usesBus || !editStudent.overrideTransportFee
+                }
+                placeholder="Only when override is Yes"
                 onChange={(e) =>
                   setEditStudent({
                     ...editStudent,
@@ -1589,16 +1691,26 @@ function StudentList({ darkMode, adminAccess = { role: "admin", perms: {} } }) {
                   })
                 }
               />
+            </div>
+            <div className="col-md-4">
+              <label className="small fw-bold">Calculated bus fee (₹)</label>
+              <input
+                type="number"
+                className="form-control dark-input"
+                value={editStudent.usesBus ? getEditMonthlyBus() : 0}
+                disabled
+              />
               {editStudent.usesBus &&
+                !editStudent.overrideTransportFee &&
                 Number(
                   classBusRatePerKmMap[normalizeClassKey(editStudent.class)] ||
                     0,
                 ) > 0 && (
                   <small className="text-info d-block mt-1">
-                    Class ₹/km: ₹
-                    {classBusRatePerKmMap[normalizeClassKey(editStudent.class)]}{" "}
-                    → effective bus this month: ₹
-                    {getStudentMonthlyBus(editStudent)}
+                    ₹
+                    {classBusRatePerKmMap[normalizeClassKey(editStudent.class)]}
+                    /km × {editStudent.busDistanceKm || 0} km = ₹
+                    {getEditMonthlyBus()}
                   </small>
                 )}
             </div>
